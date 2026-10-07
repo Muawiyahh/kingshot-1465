@@ -113,7 +113,7 @@ export function Hero({
           </motion.div>
         </div>
 
-        <motion.div style={{ x: visualX, y: visualY }} className="relative">
+        <motion.div style={{ x: visualX, y: visualY }} className="relative lg:left-4 xl:left-10">
           {visual}
         </motion.div>
       </div>
