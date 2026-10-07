@@ -1,5 +1,8 @@
 /** Slot/time helpers. All KvK times are UTC, matching in-game server time. */
 
+import type { Messages } from "@/lib/i18n/messages/en";
+
+/** Standard positions, stored in English and shown translated (see positionLabel). */
 export const POSITION_PRESETS = [
   "Construction",
   "Research",
@@ -7,6 +10,20 @@ export const POSITION_PRESETS = [
   "Chief Minister",
   "Noble Advisor",
 ] as const;
+
+const POSITION_KEYS: Record<string, keyof Messages["positionNames"]> = {
+  construction: "construction",
+  research: "research",
+  training: "training",
+  "chief minister": "chiefMinister",
+  "noble advisor": "nobleAdvisor",
+};
+
+/** Translates standard position names; custom names typed by leaders are shown as-is. */
+export function positionLabel(position: string, t: Messages) {
+  const key = POSITION_KEYS[position.trim().toLowerCase()];
+  return key ? t.positionNames[key] : position;
+}
 
 export function slotCount(slotMinutes: number) {
   return Math.floor((24 * 60) / slotMinutes);
@@ -35,8 +52,9 @@ export function isSlotLive(date: string, index: number, slotMinutes: number, now
   return now >= start && now < start + slotMinutes * 60_000;
 }
 
-export function formatDay(date: string) {
-  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
+/** "Mon 12 Oct" in the given BCP 47 locale (e.g. "de-DE"). */
+export function formatDay(date: string, tag = "en-GB") {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(tag, {
     weekday: "short",
     day: "numeric",
     month: "short",

@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { useI18n } from "@/components/i18n-provider";
 import { slotCount, slotStartLabel } from "@/lib/kvk";
 
 /** Grid of UTC time slots rendered as checkboxes named "slot" so it posts with a plain form. */
@@ -15,6 +16,7 @@ export function SlotPicker({
   onChange: (next: Set<number>) => void;
   disabled?: boolean;
 }) {
+  const { t } = useI18n();
   const count = slotCount(slotMinutes);
 
   function toggle(i: number) {
@@ -40,9 +42,9 @@ export function SlotPicker({
 
   return (
     <fieldset disabled={disabled} className="space-y-3">
-      <legend className="sr-only">Preferred UTC slots</legend>
+      <legend className="sr-only">{t.slotPicker.legend}</legend>
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="text-muted">Quick add:</span>
+        <span className="text-muted">{t.slotPicker.quickAdd}</span>
         {blocks.map((b) => (
           <button
             key={b.label}
@@ -58,7 +60,7 @@ export function SlotPicker({
           onClick={() => onChange(new Set())}
           className="ml-auto cursor-pointer rounded-full px-3 py-1.5 text-muted hover:text-fg"
         >
-          Clear
+          {t.slotPicker.clear}
         </button>
       </div>
       <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-6 lg:grid-cols-8">

@@ -1,78 +1,103 @@
 import clsx from "clsx";
-import { getAlliance, type Alliance, type Charge } from "@/lib/alliances";
+import { getAlliance, type Alliance, type Weapon } from "@/lib/alliances";
 
-// 8-pointed star around (12,12): alternating outer/inner radius.
-const STAR = Array.from({ length: 16 }, (_, i) => {
-  const r = i % 2 === 0 ? 10.5 : 4.4;
-  const a = (Math.PI / 8) * i - Math.PI / 2;
-  return `${(12 + r * Math.cos(a)).toFixed(2)},${(12 + r * Math.sin(a)).toFixed(2)}`;
-}).join(" ");
-
-/** Heraldic emblem drawn in a 24×24 box. */
-function ChargeArt({ charge, trim, field }: { charge: Charge; trim: string; field: string }) {
-  switch (charge) {
-    case "crown":
+/** Weapons are drawn lying horizontally in a 64×20 box centred on (0,0), tip pointing right. */
+function WeaponShape({ weapon, trim, field }: { weapon: Weapon; trim: string; field: string }) {
+  switch (weapon) {
+    case "sword":
+      return (
+        <g>
+          <path fill={trim} d="M-13 -2.5H23L32 0 23 2.5H-13Z" />
+          <path d="M-12 0H22" stroke={field} strokeWidth=".8" opacity=".5" />
+          <rect x="-17.5" y="-8.5" width="4.5" height="17" rx="2.2" fill={trim} />
+          <rect x="-27" y="-1.7" width="10" height="3.4" rx="1.2" fill={trim} opacity=".85" />
+          <path d="M-25 -1.7v3.4M-22 -1.7v3.4M-19.5 -1.7v3.4" stroke={field} strokeWidth=".7" opacity=".5" />
+          <circle cx="-29.5" cy="0" r="2.9" fill={trim} />
+        </g>
+      );
+    case "axe":
       return (
         <g fill={trim}>
-          <path d="M3 17.5 4.8 7.5 9.4 11.8 12 5.5l2.6 6.3 4.6-4.3L21 17.5Z" />
-          <rect x="3" y="18.8" width="18" height="2.4" rx="1" />
-          <circle cx="4.8" cy="6.3" r="1.3" />
-          <circle cx="12" cy="4.3" r="1.3" />
-          <circle cx="19.2" cy="6.3" r="1.3" />
+          <rect x="-31" y="-1.4" width="58" height="2.8" rx="1.4" opacity=".92" />
+          <circle cx="-31" cy="0" r="2.3" />
+          <path d="M9 -2C9 -6 11 -9.5 14 -10 20 -10.5 25 -8 27.5 -5.5 23 -4 22 -2 22 0 22 2 23 4 27.5 5.5 25 8 20 10.5 14 10 11 9.5 9 6 9 2Z" />
+          <path d="M9 -2V2L3.5 0Z" />
+          <path d="M13 -6.2Q20 -5.4 24.4 -4" stroke={field} strokeWidth=".8" fill="none" opacity=".5" />
         </g>
       );
-    case "swords":
+    case "mace":
       return (
-        <g stroke={trim} strokeLinecap="round" fill="none">
-          <path d="M4.5 4.5 16.5 16.5M19.5 4.5 7.5 16.5" strokeWidth="2.2" />
-          <path d="M13.8 18.6 18.6 13.8M5.4 13.8l4.8 4.8" strokeWidth="2.2" />
-          <path d="M17.6 17.6 20 20M6.4 17.6 4 20" strokeWidth="2.6" />
+        <g fill={trim}>
+          <rect x="-31" y="-1.4" width="46" height="2.8" rx="1.4" opacity=".92" />
+          <circle cx="-31" cy="0" r="2.3" />
+          <rect x="12.5" y="-3.4" width="3.2" height="6.8" rx="1.2" />
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((a) => (
+            <polygon key={a} points="26.5,-2 32,0 26.5,2" transform={`rotate(${a} 21 0)`} />
+          ))}
+          <circle cx="21" cy="0" r="6.2" />
+          <circle cx="21" cy="0" r="2.6" fill={field} stroke="none" opacity=".55" />
         </g>
       );
-    case "tower":
+    case "bow":
       return (
-        <g>
-          <path
-            fill={trim}
-            d="M5 21.5V9h2V5.5h2.6V9h1.2V5.5h2.4V9h1.2V5.5H17V9h2v12.5Z"
-          />
-          <path fill={field} d="M10.2 21.5v-3.8a1.8 1.8 0 0 1 3.6 0v3.8Z" />
-          <rect x="11.1" y="11.5" width="1.8" height="3" rx=".9" fill={field} />
+        <g fill={trim}>
+          <path d="M-3 -10Q11 0 -3 10" stroke={trim} strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M-3 -10V10" stroke={trim} strokeWidth=".8" opacity=".7" />
+          <rect x="-22" y="-.9" width="50" height="1.8" rx=".9" />
+          <polygon points="27,-3 34,0 27,3" />
+          <path d="M-22 0 -17 -3.8H-14L-17 0 -14 3.8H-17Z" opacity=".85" />
+          <rect x="3" y="-2.8" width="3" height="5.6" rx="1.2" fill={field} stroke="none" opacity=".5" />
         </g>
       );
-    case "star":
+    case "spear":
       return (
-        <g>
-          <polygon points={STAR} fill={trim} />
-          <circle cx="12" cy="12" r="2.2" fill={field} />
+        <g fill={trim}>
+          <rect x="-32" y="-1.2" width="52" height="2.4" rx="1.2" opacity=".92" />
+          <path d="M-32 -2.3V2.3L-35.5 0Z" />
+          <rect x="16.8" y="-2.8" width="2.8" height="5.6" rx="1" />
+          <path d="M19 0 23.5 -4.8 33.5 0 23.5 4.8Z" />
+          <path d="M21.5 0H31" stroke={field} strokeWidth=".8" opacity=".5" />
+          <path d="M15 0Q12.5 6.5 7 7.5 10.5 3.5 10 0Z" opacity=".75" />
         </g>
       );
-    case "mountain":
+    case "scimitar":
       return (
-        <g>
-          <path fill={trim} d="M1.5 20.5 9 7.5l4.2 7.1L16 10l6.5 10.5Z" />
-          <path fill={field} opacity=".55" d="M9 7.5 11.1 11 9.9 10.4 8.7 11.6 7.3 10.6Z" />
+        <g fill={trim} transform="translate(0 3)">
+          <path d="M-11 -1.2Q12 -3.5 31 -10 26 5 -11 3.4Z" />
+          <path d="M-8 .4Q12 -.3 27 -7.2" stroke={field} strokeWidth=".8" fill="none" opacity=".45" />
+          <rect x="-14.5" y="-5.5" width="3.6" height="12.5" rx="1.8" />
+          <rect x="-25.5" y="-1.2" width="11" height="3.4" rx="1.2" opacity=".85" />
+          <circle cx="-27.5" cy=".5" r="2.7" />
         </g>
       );
-    case "flame":
+    case "trident":
       return (
-        <g>
-          <path
-            fill={trim}
-            d="M12 1.8c1 4.2 6.5 6.2 6.5 12.4a6.5 6.5 0 0 1-13 0c0-3.9 3-5.2 3.2-8.6 1.6 1.4 2.3 3.2 2.3 4.6 1.6-2.2 1.7-5.3 1-8.4Z"
-          />
-          <path fill={field} d="M12 12.6c1 1.9 3.1 2.6 3.1 4.9a3.1 3.1 0 0 1-6.2 0c0-1.8 1.6-2.8 3.1-4.9Z" />
+        <g fill={trim}>
+          <rect x="-32" y="-1.2" width="48" height="2.4" rx="1.2" opacity=".92" />
+          <circle cx="-32" cy="0" r="2.2" />
+          <path d="M23 -8H18Q13.5 -8 13.5 0T18 8H23" stroke={trim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M14 0H28" stroke={trim} strokeWidth="2.2" />
+          <polygon points="27,-3.2 34,0 27,3.2" />
+          <polygon points="22,-5.6 29,-8 22,-10.4" />
+          <polygon points="22,5.6 29,8 22,10.4" />
         </g>
       );
-    case "bolt":
-      return <path fill={trim} d="M13.6 1.5 4.8 13.6h6.4l-1.4 8.9 9.4-12.9h-6.5Z" />;
     case "none":
-      return <circle cx="12" cy="12" r="3" fill={trim} opacity=".6" />;
+      return <circle cx="0" cy="0" r="3" fill={trim} opacity=".6" />;
   }
 }
 
+/** The weapon with an outline of its own colour, which thickens the thin shafts so they stay readable. */
+function WeaponArt({ bold, ...props }: { weapon: Weapon; trim: string; field: string; bold: number }) {
+  return (
+    <g stroke={props.trim} strokeWidth={bold} strokeLinejoin="round" strokeLinecap="round">
+      <WeaponShape {...props} />
+    </g>
+  );
+}
+
 function BannerArt({ alliance, showTag }: { alliance: Alliance; showTag: boolean }) {
-  const { field, trim, charge, tag } = alliance;
+  const { field, trim, weapon, tag } = alliance;
   return (
     <>
       {/* Cloth */}
@@ -84,24 +109,27 @@ function BannerArt({ alliance, showTag }: { alliance: Alliance; showTag: boolean
       {/* Hem under the pole */}
       <rect x="12" y="11" width="76" height="6" fill="#000" opacity=".25" />
       {/* Inner border */}
-      <path d="M18.5 20.5h63v80.5L50 124.5 18.5 101Z" fill="none" stroke={trim} strokeWidth="1.6" opacity=".75" />
-      {/* Emblem */}
-      <g transform={showTag ? "translate(31 33) scale(1.6)" : "translate(28 40) scale(1.85)"}>
-        <ChargeArt charge={charge} trim={trim} field={field} />
+      {showTag && <path d="M18.5 20.5h63v80.5L50 124.5 18.5 101Z" fill="none" stroke={trim} strokeWidth="1.6" opacity=".75" />}
+      {/* Weapon lying across the cloth, above the tag; centred when there is no room for a tag. */}
+      <g transform={showTag ? "translate(50 54) scale(.92)" : "translate(50 62) scale(1.14)"}>
+        <WeaponArt weapon={weapon} trim={trim} field={field} bold={showTag ? 1.3 : 2.2} />
       </g>
       {showTag && tag && (
-        <text
-          x="50"
-          y="97"
-          textAnchor="middle"
-          fill={trim}
-          fontFamily="var(--font-display), serif"
-          fontSize="17"
-          fontWeight="700"
-          letterSpacing="2"
-        >
-          {tag}
-        </text>
+        <>
+          <path d="M33 76.5h34" stroke={trim} strokeWidth="1" strokeLinecap="round" opacity=".5" />
+          <text
+            x="50"
+            y="97"
+            textAnchor="middle"
+            fill={trim}
+            fontFamily="var(--font-display), serif"
+            fontSize="17"
+            fontWeight="700"
+            letterSpacing="2"
+          >
+            {tag}
+          </text>
+        </>
       )}
       {/* Pole with finials */}
       <rect x="4" y="6" width="92" height="5" rx="2.5" fill={trim} />

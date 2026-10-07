@@ -4,6 +4,8 @@ import { MotionConfig, motion, useMotionValue, useReducedMotion, useSpring, useT
 import type { ReactNode } from "react";
 import { site } from "@/lib/site";
 import { Crest } from "@/components/crest";
+import { useI18n } from "@/components/i18n-provider";
+import { fmt } from "@/lib/i18n/format";
 
 // Deterministic ember field (no Math.random, so server and client markup match).
 const EMBERS = Array.from({ length: 22 }, (_, i) => ({
@@ -24,6 +26,7 @@ export function Hero({
   /** Right-hand column (below the text on mobile). */
   visual: ReactNode;
 }) {
+  const { t } = useI18n();
   const reduce = useReducedMotion();
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -82,11 +85,11 @@ export function Hero({
             className="mb-6 inline-flex items-center gap-2 rounded-full bg-card/80 px-3 py-1.5 text-xs text-muted shadow-[inset_0_0_0_1px_var(--border-strong)] backdrop-blur"
           >
             <Crest className="size-4" />
-            Kingshot · Official community portal
+            {t.home.badge}
           </motion.div>
 
           <h1 id="hero-title" className="sr-only">
-            {site.name}
+            {fmt(t.common.kingdomName, { n: site.kingdom })}
           </h1>
           <motion.div aria-hidden style={{ x: numeralX, y: numeralY }}>
             <motion.p
@@ -104,8 +107,8 @@ export function Hero({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease, delay: 0.35 }}
           >
-            <p className="mt-4 font-display text-xl tracking-wide text-gold-soft sm:text-2xl">{site.motto}</p>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg">{site.intro}</p>
+            <p className="mt-4 font-display text-xl tracking-wide text-gold-soft sm:text-2xl">{t.home.motto}</p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg">{t.home.intro}</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">{actions}</div>
           </motion.div>
         </div>

@@ -1,6 +1,5 @@
 import "server-only";
 import { cache } from "react";
-import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/supabase/config";
@@ -25,20 +24,8 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   return (data as Profile | null) ?? null;
 });
 
-export async function requireProfile(next = "/account") {
-  const profile = await getProfile();
-  if (!profile) redirect(`/login?next=${encodeURIComponent(next)}`);
-  return profile;
-}
-
 export function isLeader(profile: Profile | null) {
   return Boolean(
     profile && profile.status === "approved" && (profile.role === "leader" || profile.role === "admin"),
   );
-}
-
-export async function requireLeader() {
-  const profile = await requireProfile("/admin");
-  if (!isLeader(profile)) redirect("/account");
-  return profile;
 }

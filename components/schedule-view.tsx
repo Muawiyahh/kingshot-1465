@@ -7,7 +7,9 @@ import { Badge, Card, LiveDot, inputClass } from "@/components/ui";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { useNow } from "@/components/use-now";
 import { useRealtimeRefresh } from "@/components/use-realtime-refresh";
-import { formatDay, isSlotLive, slotLabel } from "@/lib/kvk";
+import { useI18n } from "@/components/i18n-provider";
+import { fmt } from "@/lib/i18n/format";
+import { formatDay, isSlotLive, positionLabel, slotLabel } from "@/lib/kvk";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import type { PublicScheduleRow } from "@/lib/types";
 
@@ -20,6 +22,7 @@ type DayGroup = {
 };
 
 export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
+  const { t, tag } = useI18n();
   const connected = useRealtimeRefresh(["slots", "kvk_events"], "public-schedule");
   const now = useNow();
   const [query, setQuery] = useState("");
@@ -49,10 +52,8 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
   if (days.length === 0) {
     return (
       <Card className="px-6 py-16 text-center">
-        <p className="font-display text-xl">No schedule published yet</p>
-        <p className="mt-2 text-muted">
-          When leaders publish the KvK position schedule it will appear here automatically.
-        </p>
+        <p className="font-display text-xl">{t.schedule.emptyTitle}</p>
+        <p className="mt-2 text-muted">{t.schedule.emptyBody}</p>
       </Card>
     );
   }
@@ -69,14 +70,14 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
         <p className="font-display text-lg">{days[0].rows[0].event_title}</p>
         {connected ? (
           <Badge tone="green">
-            <LiveDot /> Live updates on
+            <LiveDot /> {t.schedule.liveOn}
           </Badge>
         ) : (
-          supabaseConfigured && <Badge>Connecting…</Badge>
+          supabaseConfigured && <Badge>{t.schedule.connecting}</Badge>
         )}
       </div>
 
-      <div role="tablist" aria-label="Day and position" className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2">
+      <div role="tablist" aria-label={t.schedule.tabsLabel} className="-mx-4 mb-6 flex gap-2 overflow-x-auto px-4 pb-2">
         {days.map((d) => {
           const selected = d.dayId === activeId;
           return (
@@ -93,9 +94,9 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
               )}
             >
               <span className="block text-xs opacity-80">
-                Day {d.dayNumber} · {formatDay(d.date)}
+                {fmt(t.common.day, { n: d.dayNumber })} · {formatDay(d.date, tag)}
               </span>
-              <span className="block text-sm font-semibold">{d.position}</span>
+              <span className="block text-sm font-semibold">{positionLabel(d.position, t)}</span>
             </button>
           );
         })}
@@ -106,19 +107,19 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
           <div className="flex flex-wrap items-center gap-4 border-b border-border p-4 sm:p-5">
             <div>
               <p className="font-semibold">
-                Day {active.dayNumber} · {active.position}
+                {fmt(t.common.day, { n: active.dayNumber })} · {positionLabel(active.position, t)}
               </p>
               <p className="text-sm text-muted">
-                {filled} of {active.rows.length} slots assigned
+                {fmt(t.schedule.slotsAssigned, { filled, total: active.rows.length })}
               </p>
             </div>
             <label className="relative ml-auto w-full sm:w-64">
-              <span className="sr-only">Find a player</span>
+              <span className="sr-only">{t.schedule.findPlayer}</span>
               <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted" aria-hidden />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Find player or alliance"
+                placeholder={t.schedule.searchPlaceholder}
                 className={clsx(inputClass, "pl-10")}
               />
             </label>
@@ -142,27 +143,29 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
                   </span>
                   {r.ingame_name ? (
                     <span className="flex min-w-0 items-center gap-2.5">
-                      <AllianceAvatar tag={r.alliance_tag} size={28} />
+                      <AllianceAvatar tag={r.alliance_tag} size={34} />
                       <span className="truncate">
                         {r.alliance_tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.alliance_tag}]</span>}
                         {r.ingame_name}
                       </span>
                     </span>
                   ) : (
-                    <span className="text-sm italic text-muted/60">Not assigned</span>
+                    <span className="text-sm italic text-muted/60">{t.common.notAssigned}</span>
                   )}
                   <span className="ml-auto flex items-center gap-2">
-                    {r.locked && <Lock className="size-3.5 text-muted/60" aria-label="Locked" />}
+                    {r.locked && <Lock className="size-3.5 text-muted/60" aria-label={t.common.locked} />}
                     {live && (
                       <Badge tone="red">
-                        <LiveDot /> Now
+                        <LiveDot /> {t.common.now}
                       </Badge>
                     )}
                   </span>
                 </li>
               );
             })}
-            {visible?.length === 0 && <li className="px-5 py-10 text-center text-muted">No match for “{query}”.</li>}
+            {visible?.length === 0 && (
+              <li className="px-5 py-10 text-center text-muted">{fmt(t.schedule.noMatch, { query })}</li>
+            )}
           </ul>
         </Card>
       )}

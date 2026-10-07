@@ -11,6 +11,8 @@ export type Profile = {
   avatar_url: string | null;
   role: UserRole;
   status: AccountStatus;
+  /** Preferred site language (a Locale). Missing until 0003_profile_language.sql has been run. */
+  language?: string | null;
   created_at: string;
 };
 

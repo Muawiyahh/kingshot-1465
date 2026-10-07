@@ -1,18 +1,37 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
+import { LOCALE_COOKIE, isLocale, localePath, matchAcceptLanguage, splitLocale } from "@/lib/i18n/config";
 
 const PROTECTED = ["/account", "/apply", "/admin"];
 
 /**
- * Refreshes the Supabase session cookie on every navigation and does an
- * optimistic redirect for signed-out visitors. Real authorization happens in
- * the data layer and RLS, not here.
+ * 1. Adds a language prefix to URLs that lack one (saved choice, else browser language).
+ * 2. Keeps the language cookie in sync with the page being viewed (Server Actions read it).
+ * 3. Refreshes the Supabase session and does an optimistic sign-in redirect. Real
+ *    authorization happens in the data layer and RLS, not here.
  */
 export async function proxy(request: NextRequest) {
-  if (!supabaseConfigured) return NextResponse.next();
+  const { pathname } = request.nextUrl;
+  const { locale, rest } = splitLocale(pathname);
+
+  if (!locale) {
+    const saved = request.cookies.get(LOCALE_COOKIE)?.value;
+    const preferred = isLocale(saved) ? saved : matchAcceptLanguage(request.headers.get("accept-language"));
+    const url = request.nextUrl.clone();
+    url.pathname = localePath(preferred, pathname);
+    return NextResponse.redirect(url);
+  }
+
+  const rememberLocale = (res: NextResponse) => {
+    if (request.cookies.get(LOCALE_COOKIE)?.value !== locale) {
+      res.cookies.set(LOCALE_COOKIE, locale, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    }
+    return res;
+  };
 
   let response = NextResponse.next({ request });
+  if (!supabaseConfigured) return rememberLocale(response);
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
@@ -31,18 +50,17 @@ export async function proxy(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
-  const path = request.nextUrl.pathname;
 
-  if (!signedIn && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) {
+  if (!signedIn && PROTECTED.some((p) => rest === p || rest.startsWith(`${p}/`))) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(path)}`;
-    return NextResponse.redirect(url);
+    url.pathname = localePath(locale, "/login");
+    url.search = `?next=${encodeURIComponent(pathname)}`;
+    return rememberLocale(NextResponse.redirect(url));
   }
 
-  return response;
+  return rememberLocale(response);
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|txt|xml)$).*)"],
 };

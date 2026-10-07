@@ -15,6 +15,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 3. **Create the database:** open *SQL Editor* and run each file in `supabase/migrations/` once, in order:
    - `0001_init.sql`
    - `0002_kingdom_settings.sql`
+   - `0003_profile_language.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -33,6 +34,14 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 - **Kingdom text, stats and council contacts:** `lib/site.ts`
 - **Discord link:** `discordUrl` in `lib/site.ts`
 - **Colours and fonts:** `app/globals.css`, documented in `design-system/MASTER.md`
+
+## Languages
+
+The site is in English, German, Simplified and Traditional Chinese, French, Spanish, Indonesian, Tagalog, Brazilian Portuguese and Korean. Each language has its own address, for example `/de/positions` or `/zh-tw/apply`.
+
+- **Choosing a language:** visitors get their browser's language automatically and can switch with the globe menu in the header. Players also pick a language when they sign up, and the site opens in it when they sign in.
+- **Editing translations:** each language is one file in `lib/i18n/messages/`, and `en.ts` is the source. Keep every `{placeholder}` exactly as written, but move it wherever the sentence needs it. TypeScript reports any key that's missing or added by mistake.
+- **What stays untranslated:** text that leaders or players type (event titles, custom position names, names, notes) is shown as entered. The five standard positions (Construction, Research, Training, Chief Minister, Noble Advisor) are translated automatically when stored in English.
 
 ## How the KvK position flow works
 

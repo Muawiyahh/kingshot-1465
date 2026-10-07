@@ -1,14 +1,14 @@
 import { Badge } from "@/components/ui";
+import type { Messages } from "@/lib/i18n/messages/en";
 import type { EventStatus } from "@/lib/types";
 
-const map: Record<EventStatus, { label: string; tone: "neutral" | "gold" | "red" | "green" | "amber" }> = {
-  draft: { label: "Draft", tone: "neutral" },
-  open: { label: "Applications open", tone: "amber" },
-  closed: { label: "Applications closed", tone: "gold" },
-  published: { label: "Published", tone: "green" },
+const tones: Record<EventStatus, "neutral" | "gold" | "red" | "green" | "amber"> = {
+  draft: "neutral",
+  open: "amber",
+  closed: "gold",
+  published: "green",
 };
 
-export function EventStatusBadge({ status }: { status: EventStatus }) {
-  const s = map[status];
-  return <Badge tone={s.tone}>{s.label}</Badge>;
+export function EventStatusBadge({ status, t }: { status: EventStatus; t: Messages }) {
+  return <Badge tone={tones[status]}>{t.status.event[status]}</Badge>;
 }
