@@ -48,7 +48,7 @@ Scale: hero numeral `clamp(5.5rem, 24vw, 15rem)` · H1 `text-3xl/4xl` · H2 `tex
 
 ## Signature elements
 
-- **Hero:** gold-to-crimson gradient numerals, Amadeus portrait in a gold-ringed halo (`site.heroImage`), drifting ember particles, slow ambient light blobs, pointer parallax (mouse only).
+- **Hero:** gold-to-crimson gradient numerals, drifting ember particles, slow ambient light blobs, pointer parallax (mouse only). Right column reserved for a hero visual.
 - **Window frame:** macOS traffic-light header (`WindowFrame`) for schedule previews.
 - **Live:** pulsing green dot + "Now" badge on the current slot; the positions page subscribes to Supabase Realtime.
 - **Crest:** shield-and-crown SVG (`components/crest.tsx`) as the logo mark.

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
-import { Badge, ButtonLink, Card, Container, Notice, PageHeader } from "@/components/ui";
+import { AllianceBanner } from "@/components/alliance-banner";
+import { Badge, ButtonLink, Card, Container, Eyebrow, Notice } from "@/components/ui";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatDay, slotLabel } from "@/lib/kvk";
@@ -58,10 +59,23 @@ async function AccountContent({ searchParams }: { searchParams: PageProps<"/acco
 
   return (
     <>
-      <PageHeader eyebrow="Your account" title={profile.ingame_name}>
-        <span className="font-mono">Game ID {profile.game_id}</span>
-        {profile.alliance_tag && <span className="ml-3 font-mono text-gold">[{profile.alliance_tag}]</span>}
-      </PageHeader>
+      <div className="mb-10 flex items-center gap-6">
+        <AllianceBanner
+          tag={profile.alliance_tag}
+          className="w-20 shrink-0 sm:w-24"
+          title={profile.alliance_tag ? `${profile.alliance_tag} banner` : "No alliance banner"}
+        />
+        <div className="min-w-0">
+          <Eyebrow className="mb-3">Your account</Eyebrow>
+          <h1 className="truncate font-display text-3xl font-bold tracking-tight text-fg sm:text-4xl">
+            {profile.ingame_name}
+          </h1>
+          <p className="mt-2 text-muted">
+            <span className="font-mono">Game ID {profile.game_id}</span>
+            {profile.alliance_tag && <span className="ml-3 font-mono text-gold">[{profile.alliance_tag}]</span>}
+          </p>
+        </div>
+      </div>
 
       {welcome && profile.status === "pending" && (
         <div className="mb-6">

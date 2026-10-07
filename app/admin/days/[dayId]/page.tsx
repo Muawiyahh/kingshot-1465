@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import clsx from "clsx";
 import { Sparkles } from "lucide-react";
 import { Badge, Button, Card, PageHeader } from "@/components/ui";
+import { AllianceAvatar } from "@/components/alliance-banner";
 import { EventStatusBadge } from "@/components/admin/event-status";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { requireLeader } from "@/lib/auth";
@@ -136,6 +137,7 @@ async function DayContent({ params }: { params: PageProps<"/admin/days/[dayId]">
                 {sortedApps.map((a) => (
                   <li key={a.id} className={clsx("p-4 sm:p-5", a.status === "rejected" && "opacity-60")}>
                     <div className="flex flex-wrap items-start gap-3">
+                      <AllianceAvatar tag={a.profile.alliance_tag} size={36} />
                       <div className="min-w-0 flex-1">
                         <p className="font-medium">
                           {a.profile.alliance_tag && (

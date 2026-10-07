@@ -69,5 +69,13 @@ export type PublicScheduleRow = {
   avatar_url: string | null;
 };
 
+export type KingdomSettings = {
+  id: number;
+  king_name: string | null;
+  king_alliance: string | null;
+  server_opened_on: string | null;
+  updated_at: string;
+};
+
 /** Result shape returned by Server Actions to useActionState forms. */
 export type ActionState = { ok?: boolean; error?: string; message?: string } | undefined;

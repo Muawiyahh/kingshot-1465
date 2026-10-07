@@ -5,6 +5,7 @@ const nav = [
   { href: "/admin", label: "Overview" },
   { href: "/admin/accounts", label: "Accounts" },
   { href: "/admin/events", label: "KvK events" },
+  { href: "/admin/settings", label: "Kingdom settings" },
 ];
 
 export default function AdminLayout({ children }: LayoutProps<"/admin">) {

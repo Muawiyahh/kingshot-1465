@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import clsx from "clsx";
 import { Lock, Search } from "lucide-react";
 import { Badge, Card, LiveDot, inputClass } from "@/components/ui";
+import { AllianceAvatar } from "@/components/alliance-banner";
 import { useNow } from "@/components/use-now";
 import { useRealtimeRefresh } from "@/components/use-realtime-refresh";
 import { formatDay, isSlotLive, slotLabel } from "@/lib/kvk";
@@ -140,9 +141,12 @@ export function ScheduleView({ rows }: { rows: PublicScheduleRow[] }) {
                     {slotLabel(r.slot_index, r.slot_minutes)}
                   </span>
                   {r.ingame_name ? (
-                    <span className="min-w-0 truncate">
-                      {r.alliance_tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.alliance_tag}]</span>}
-                      {r.ingame_name}
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <AllianceAvatar tag={r.alliance_tag} size={28} />
+                      <span className="truncate">
+                        {r.alliance_tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.alliance_tag}]</span>}
+                        {r.ingame_name}
+                      </span>
                     </span>
                   ) : (
                     <span className="text-sm italic text-muted/60">Not assigned</span>

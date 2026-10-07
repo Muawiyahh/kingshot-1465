@@ -12,7 +12,11 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 
 1. **Install:** `npm install`
 2. **Create a Supabase project** (the free tier is fine) at <https://supabase.com>.
-3. **Create the database:** open *SQL Editor*, paste the contents of `supabase/migrations/0001_init.sql`, then run it.
+3. **Create the database:** open *SQL Editor* and run each file in `supabase/migrations/` once, in order:
+   - `0001_init.sql`
+   - `0002_kingdom_settings.sql`
+
+   Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon or publishable key)
@@ -27,7 +31,6 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 ## Customise
 
 - **Kingdom text, stats and council contacts:** `lib/site.ts`
-- **Amadeus portrait:** put a transparent PNG/WebP in `public/` (for example `public/amadeus.webp`), then set `heroImage: "/amadeus.webp"` in `lib/site.ts`. Until then a placeholder silhouette is shown.
 - **Discord link:** `discordUrl` in `lib/site.ts`
 - **Colours and fonts:** `app/globals.css`, documented in `design-system/MASTER.md`
 

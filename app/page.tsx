@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRight, CalendarClock, Crown, Flame, Scale, ShieldCheck, Users } from "lucide-react";
 import { Hero } from "@/components/hero";
-import { Countdown } from "@/components/countdown";
 import { Badge, ButtonLink, Card, Container, Eyebrow, LiveDot, WindowFrame } from "@/components/ui";
-import { getLatestPublishedSchedule, getUpcomingEvent } from "@/lib/data";
+import { AllianceAvatar } from "@/components/alliance-banner";
+import { KingdomCards } from "@/components/kingdom-cards";
+import { getHomeStats, getLatestPublishedSchedule } from "@/lib/data";
 import { formatDay, isSlotLive, slotLabel } from "@/lib/kvk";
 import { site } from "@/lib/site";
 
@@ -25,27 +26,15 @@ export default function HomePage() {
             </ButtonLink>
           </>
         }
-        countdown={
-          <Suspense fallback={null}>
-            <NextKvkCountdown />
+        visual={
+          <Suspense fallback={<KingdomCards stats={null} />}>
+            <HomeCards />
           </Suspense>
         }
       />
 
-      {/* Stats strip */}
-      <section aria-label="Kingdom at a glance" className="border-y border-border bg-bg-elevated/60">
-        <Container className="grid grid-cols-2 divide-border sm:grid-cols-4 sm:divide-x">
-          {site.stats.map((s) => (
-            <div key={s.label} className="px-4 py-8 text-center">
-              <p className="font-display text-3xl font-bold text-fg">{s.value}</p>
-              <p className="mt-1 font-mono text-xs uppercase tracking-[0.2em] text-muted">{s.label}</p>
-            </div>
-          ))}
-        </Container>
-      </section>
-
       {/* About */}
-      <section className="py-24 sm:py-32" aria-labelledby="about-title">
+      <section className="border-t border-border py-24 sm:py-32" aria-labelledby="about-title">
         <Container>
           <Eyebrow>The kingdom</Eyebrow>
           <h2 id="about-title" className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-5xl">
@@ -145,10 +134,9 @@ export default function HomePage() {
   );
 }
 
-async function NextKvkCountdown() {
-  const event = await getUpcomingEvent();
-  if (!event) return null;
-  return <Countdown target={`${event.starts_on}T00:00:00Z`} label={`${event.title} begins in`} />;
+async function HomeCards() {
+  const stats = await getHomeStats();
+  return <KingdomCards stats={stats} />;
 }
 
 async function SchedulePreview() {
@@ -162,11 +150,11 @@ function SchedulePreviewFrame({ rows }: { rows: Awaited<ReturnType<typeof getLat
   const sample = !first;
   const preview = sample
     ? [
-        { i: 0, name: "Warrior One", tag: "ABC" },
-        { i: 1, name: "Iron Duchess", tag: "ABC" },
+        { i: 0, name: "Warrior One", tag: "GGG" },
+        { i: 1, name: "Iron Duchess", tag: "ERA" },
         { i: 2, name: null, tag: null },
-        { i: 3, name: "Northwind", tag: "XYZ" },
-        { i: 4, name: "Ember Knight", tag: "ABC" },
+        { i: 3, name: "Northwind", tag: "GBC" },
+        { i: 4, name: "Ember Knight", tag: "KOR" },
       ].map((r) => ({ ...r, minutes: 30 }))
     : rows!
         .filter((r) => r.day_id === first.day_id)
@@ -186,9 +174,12 @@ function SchedulePreviewFrame({ rows }: { rows: Awaited<ReturnType<typeof getLat
             <li key={r.i} className="flex items-center gap-4 rounded-xl px-3 py-3">
               <span className="w-28 shrink-0 font-mono text-xs text-muted tabular-nums">{slotLabel(r.i, r.minutes)}</span>
               {r.name ? (
-                <span className="min-w-0 truncate text-sm">
-                  {r.tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.tag}]</span>}
-                  {r.name}
+                <span className="flex min-w-0 items-center gap-2.5 text-sm">
+                  <AllianceAvatar tag={r.tag} size={26} />
+                  <span className="truncate">
+                    {r.tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.tag}]</span>}
+                    {r.name}
+                  </span>
                 </span>
               ) : (
                 <span className="text-sm italic text-muted/70">Open</span>

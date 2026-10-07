@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import clsx from "clsx";
 import { Badge, Card, PageHeader } from "@/components/ui";
+import { AllianceAvatar } from "@/components/alliance-banner";
 import { requireLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { AccountStatus, Profile } from "@/lib/types";
@@ -66,6 +67,7 @@ async function AccountsList({ searchParams }: { searchParams: PageProps<"/admin/
           <ul className="divide-y divide-border">
             {profiles.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
+                <AllianceAvatar tag={p.alliance_tag} size={40} />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
                     {p.alliance_tag && <span className="mr-1.5 font-mono text-xs text-gold">[{p.alliance_tag}]</span>}

@@ -8,15 +8,7 @@ export const site = {
   motto: "Forged in fire. Bound by oath.",
   intro:
     "One kingdom, many banners. 1465 is a home for players across every time zone — organised for KvK, generous with help, and relentless when it counts.",
-  /** Path to the Amadeus artwork in /public, e.g. "/amadeus.webp". Empty shows a placeholder silhouette. */
-  heroImage: "" as string,
   discordUrl: "", // e.g. "https://discord.gg/xxxx" — leave empty to hide the button
-  stats: [
-    { label: "Server", value: "#1465" },
-    { label: "Alliances", value: "—" },
-    { label: "KvK seasons", value: "—" },
-    { label: "Time zones", value: "24/7" },
-  ],
   pillars: [
     {
       title: "War-ready",

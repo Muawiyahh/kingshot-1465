@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import { gameIdToEmail } from "@/lib/auth";
+import { ALLIANCE_TAGS } from "@/lib/alliances";
 import type { ActionState } from "@/lib/types";
 
 const NOT_CONFIGURED: ActionState = {
@@ -21,12 +22,7 @@ const signupSchema = z
   .object({
     gameId,
     name: z.string().trim().min(1, "Enter your in-game name.").max(30, "Names are at most 30 characters."),
-    alliance: z
-      .string()
-      .trim()
-      .max(8, "Alliance tags are at most 8 characters.")
-      .regex(/^[A-Za-z0-9]*$/, "Use letters and numbers only.")
-      .optional(),
+    alliance: z.enum(ALLIANCE_TAGS, { message: "Pick your alliance from the list." }).optional(),
     password: z.string().min(8, "Use at least 8 characters."),
     confirm: z.string(),
   })
@@ -72,7 +68,7 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
     id: created.user.id,
     game_id: v.gameId,
     ingame_name: v.name,
-    alliance_tag: v.alliance ? v.alliance.toUpperCase() : null,
+    alliance_tag: v.alliance ?? null,
   });
   if (profileError) {
     await admin.auth.admin.deleteUser(created.user.id);

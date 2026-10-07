@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, slotCount } from "@/lib/kvk";
+import { ALLIANCE_TAGS } from "@/lib/alliances";
 import type { ActionState, EventStatus, Profile } from "@/lib/types";
 
 /** Every admin action re-checks the caller; RLS enforces the same rules in the database. */
@@ -43,6 +44,41 @@ export async function setAccountRole(formData: FormData) {
   await supabase.from("profiles").update({ role }).eq("id", id);
   await audit("account.role", id, { role });
   refresh();
+}
+
+// ---------------------------------------------------------------------------
+// Kingdom settings
+// ---------------------------------------------------------------------------
+
+const settingsSchema = z.object({
+  kingName: z.string().trim().max(40, "Names are at most 40 characters."),
+  kingAlliance: z.union([z.enum(ALLIANCE_TAGS), z.literal("")]),
+  serverOpenedOn: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
+});
+
+export async function updateSettings(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { profile, supabase, audit } = await leaderContext();
+  const parsed = settingsSchema.safeParse({
+    kingName: formData.get("kingName") ?? "",
+    kingAlliance: formData.get("kingAlliance") ?? "",
+    serverOpenedOn: formData.get("serverOpenedOn") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const v = parsed.data;
+
+  const fields = {
+    king_name: v.kingName || null,
+    king_alliance: v.kingAlliance || null,
+    server_opened_on: v.serverOpenedOn || null,
+    updated_by: profile.id,
+  };
+  const { data, error } = await supabase.from("kingdom_settings").update(fields).eq("id", 1).select("id");
+  if (error || !data?.length) {
+    return { error: "Couldn't save. Make sure 0002_kingdom_settings.sql has been run in Supabase." };
+  }
+  await audit("settings.update", "kingdom", fields);
+  refresh();
+  return { ok: true, message: "Saved. The homepage shows the new values now." };
 }
 
 // ---------------------------------------------------------------------------
