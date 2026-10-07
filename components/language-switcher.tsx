@@ -17,7 +17,7 @@ export function LanguageSwitcher() {
       <span className="sr-only">{t.nav.language}</span>
       <Globe className="pointer-events-none absolute left-2.5 size-4" aria-hidden />
       {/* Globe only on phones to leave room for the sign-in buttons; code from sm up. */}
-      <span aria-hidden className="pointer-events-none hidden pl-8 pr-2.5 font-mono text-xs sm:inline">
+      <span aria-hidden className="pointer-events-none hidden pl-8 pr-2 font-mono text-xs sm:inline">
         {LOCALE_INFO[locale].short}
       </span>
       <select
@@ -33,7 +33,7 @@ export function LanguageSwitcher() {
             router.push(switchLocale(window.location.pathname, next) + window.location.search);
           });
         }}
-        className="absolute inset-0 cursor-pointer opacity-0"
+        className="absolute inset-0 cursor-pointer appearance-none bg-transparent text-transparent"
       >
         {LOCALES.map((l) => (
           <option key={l} value={l} lang={LOCALE_INFO[l].tag}>

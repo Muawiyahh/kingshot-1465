@@ -32,10 +32,13 @@ export function SettingsForm({ settings }: { settings: KingdomSettings }) {
               />
             </Field>
             <Field label={s.kingAlliance} htmlFor="kingAlliance">
+              {/* Uncontrolled and keyed by the saved value: React resets the form after a save, which would put
+                  a controlled select back on its first option while the avatar kept the old state. */}
               <select
+                key={settings.king_alliance ?? ""}
                 id="kingAlliance"
                 name="kingAlliance"
-                value={alliance}
+                defaultValue={settings.king_alliance ?? ""}
                 onChange={(e) => setAlliance(e.target.value)}
                 className={inputClass}
               >

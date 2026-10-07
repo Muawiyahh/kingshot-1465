@@ -164,11 +164,11 @@ function SchedulePreviewFrame({
   const sample = !first;
   const preview = sample
     ? [
-        { i: 0, name: "Warrior One", tag: "GGG" },
-        { i: 1, name: "Iron Duchess", tag: "ERA" },
+        { i: 0, name: "Caketie", tag: "KNG" },
+        { i: 1, name: "Orange Cowboy", tag: "ERA" },
         { i: 2, name: null, tag: null },
-        { i: 3, name: "Northwind", tag: "GBC" },
-        { i: 4, name: "Ember Knight", tag: "KOR" },
+        { i: 3, name: "ShowMeYourToes", tag: "GGG" },
+        { i: 4, name: "SugaMami", tag: "ALT" },
       ].map((r) => ({ ...r, minutes: 30 }))
     : rows!
         .filter((r) => r.day_id === first.day_id)

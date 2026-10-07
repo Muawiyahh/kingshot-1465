@@ -31,7 +31,7 @@ export async function SiteHeader() {
             {site.kingdom}
           </span>
         </Link>
-        <nav aria-label={t.nav.main} className="hidden items-center gap-1 sm:flex">
+        <nav aria-label={t.nav.main} className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <Link
               key={l.href}
@@ -42,7 +42,7 @@ export async function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 md:gap-3 lg:gap-4">
           <LanguageSwitcher />
           <Suspense
             fallback={
@@ -56,7 +56,7 @@ export async function SiteHeader() {
         </div>
       </div>
       {/* Mobile nav */}
-      <nav aria-label={t.nav.main} className="flex items-center justify-around border-t border-border sm:hidden">
+      <nav aria-label={t.nav.main} className="flex items-center justify-around border-t border-border md:hidden">
         {links.map((l) => (
           <Link key={l.href} href={l.href} className="flex-1 py-3 text-center text-sm text-muted hover:text-fg">
             {l.label}

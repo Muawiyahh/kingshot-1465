@@ -143,3 +143,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .tile-glow::before { animation: none !important; opacity: 0.7; }
 }
+
+/* Dropdown lists: explicit colours so every option is readable, including in hidden-select menus. */
+select option {
+  background: #1a1416;
+  color: #f5eeee;
+}
