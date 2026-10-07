@@ -1,26 +1,120 @@
 @import "tailwindcss";
 
+/* Imperial Crimson — see design-system/MASTER.md */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0d0a0b;
+  --bg-elevated: #140f11;
+  --card: #1a1416;
+  --card-hover: #221a1d;
+  --fg: #f5eeee;
+  --muted: #9a8e90;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  /* #d63a44 rather than #e0404a so white button text clears WCAG AA (4.6:1). */
+  --primary: #d63a44;
+  --primary-hover: #c42f39;
+  --on-primary: #ffffff;
+  --gold: #d9a441;
+  --gold-soft: #f1d08a;
+  --success: #4ade80;
+  --warning: #fbbf24;
+  --danger: #f87171;
+  --glow: rgba(224, 64, 74, 0.3);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: var(--font-cinzel), "Times New Roman", serif;
+
+  --shadow-hairline: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --shadow-lift: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 45px -12px var(--glow);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--bg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(224, 64, 74, 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Gold-edged crimson numerals for the hero "1465". */
+.numeral {
+  font-family: var(--font-display);
+  background: linear-gradient(180deg, #ffd9a0 0%, #e0404a 42%, #7a1219 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 40px rgba(224, 64, 74, 0.35));
+}
+
+/* Faint grain so large dark areas don't band. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(4%, -3%, 0) scale(1.08); }
+}
+.ember-blob {
+  animation: drift 18s ease-in-out infinite;
+}
+
+@keyframes rise {
+  0% { transform: translateY(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(-110vh); opacity: 0; }
+}
+.ember {
+  animation: rise linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ember { display: none; }
 }

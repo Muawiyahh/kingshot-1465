@@ -1,0 +1,52 @@
+/** Slot/time helpers. All KvK times are UTC, matching in-game server time. */
+
+export const POSITION_PRESETS = [
+  "Construction",
+  "Research",
+  "Training",
+  "Chief Minister",
+  "Noble Advisor",
+] as const;
+
+export function slotCount(slotMinutes: number) {
+  return Math.floor((24 * 60) / slotMinutes);
+}
+
+function hhmm(totalMinutes: number) {
+  const m = ((totalMinutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+}
+
+export function slotStartLabel(index: number, slotMinutes: number) {
+  return hhmm(index * slotMinutes);
+}
+
+export function slotLabel(index: number, slotMinutes: number) {
+  return `${hhmm(index * slotMinutes)} – ${hhmm((index + 1) * slotMinutes)}`;
+}
+
+/** Start of a slot as a UTC Date. `date` is an ISO day like "2026-10-12". */
+export function slotStart(date: string, index: number, slotMinutes: number) {
+  return new Date(Date.parse(`${date}T00:00:00Z`) + index * slotMinutes * 60_000);
+}
+
+export function isSlotLive(date: string, index: number, slotMinutes: number, now = Date.now()) {
+  const start = slotStart(date, index, slotMinutes).getTime();
+  return now >= start && now < start + slotMinutes * 60_000;
+}
+
+export function formatDay(date: string) {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
+/** Adds `days` to an ISO date string and returns an ISO date string. */
+export function addDays(date: string, days: number) {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
