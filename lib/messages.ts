@@ -44,7 +44,7 @@ export async function getThread(me: string, partner: string): Promise<ChatMessag
   const supabase = await createClient();
   const { data } = await supabase
     .from("messages")
-    .select("id, sender_id, recipient_id, body, created_at, read_at")
+    .select("id, sender_id, recipient_id, body, created_at, read_at, translations")
     .or(`and(sender_id.eq.${me},recipient_id.eq.${partner}),and(sender_id.eq.${partner},recipient_id.eq.${me})`)
     .order("created_at", { ascending: false })
     .limit(THREAD_LIMIT);

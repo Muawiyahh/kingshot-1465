@@ -281,6 +281,9 @@ const zhCN: Messages = {
       back: "所有对话",
       unread: "未读：{n}",
       notSetUp: "消息功能尚未开启。管理员需要在 Supabase SQL Editor 中运行 {file}。",
+      translate: "翻译",
+      showOriginal: "显示原文",
+      translating: "翻译中…",
     },
   },
   apply: {
@@ -354,6 +357,7 @@ const zhCN: Messages = {
     messageFailed: "消息未发送，请重试。",
     rateLimited: "你发送得太快了，请等一分钟再试。",
     cantMessage: "你无法给此人发消息。",
+    translateFailed: "无法翻译这条消息。",
   },
   success: {
     applicationUpdated: "申请已更新。",

@@ -283,6 +283,9 @@ const es: Messages = {
       back: "Todas las conversaciones",
       unread: "Sin leer: {n}",
       notSetUp: "La mensajería aún no está activada. Un admin debe ejecutar {file} en el editor SQL de Supabase.",
+      translate: "Traducir",
+      showOriginal: "Mostrar original",
+      translating: "Traduciendo…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const es: Messages = {
     messageFailed: "El mensaje no se envió. Inténtalo de nuevo.",
     rateLimited: "Estás enviando mensajes demasiado rápido. Espera un minuto y vuelve a intentarlo.",
     cantMessage: "No puedes escribir a esta persona.",
+    translateFailed: "No se pudo traducir este mensaje.",
   },
   success: {
     applicationUpdated: "Solicitud actualizada.",

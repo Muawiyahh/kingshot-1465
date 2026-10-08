@@ -11,7 +11,7 @@ import { clockTime, dayLabel, differentDay } from "@/lib/chat-time";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import type { ChatMessage, Contact } from "@/lib/types";
-import { markRead, sendMessage } from "./actions";
+import { markRead, sendMessage, translateMessage } from "./actions";
 import { useMessages } from "./messages-context";
 
 type Shown = ChatMessage & { pending?: boolean };
@@ -19,7 +19,18 @@ type Shown = ChatMessage & { pending?: boolean };
 const MAX_LENGTH = 1000;
 
 /** One conversation: header, bubbles grouped by day, and the composer. */
-export function ChatPanel({ me, partner, messages }: { me: string; partner: Contact; messages: ChatMessage[] }) {
+export function ChatPanel({
+  me,
+  partner,
+  messages,
+  canTranslate,
+}: {
+  me: string;
+  partner: Contact;
+  messages: ChatMessage[];
+  /** Whether Azure Translator is configured; hides the Translate action otherwise. */
+  canTranslate: boolean;
+}) {
   const { t, tag } = useI18n();
   const m = t.account.messages;
   const now = useNow(60_000);
@@ -59,6 +70,7 @@ export function ChatPanel({ me, partner, messages }: { me: string; partner: Cont
         body,
         created_at: new Date().toISOString(),
         read_at: null,
+        translations: null,
         pending: true,
       });
       const result = await sendMessage(partner.partner_id, body);
@@ -97,33 +109,7 @@ export function ChatPanel({ me, partner, messages }: { me: string; partner: Cont
                     </li>
                   )}
                   <li className={clsx("flex", mine ? "justify-end" : "justify-start", !grouped && "pt-1.5")}>
-                    <div
-                      className={clsx(
-                        "max-w-[80%] rounded-2xl px-3 py-1.5 text-[15px] leading-snug whitespace-pre-wrap break-words shadow-[0_1px_0_rgba(0,0,0,0.25)]",
-                        mine
-                          ? "rounded-br-md bg-primary text-on-primary"
-                          : "rounded-bl-md bg-card-hover text-fg shadow-[inset_0_0_0_1px_var(--border)]",
-                        msg.pending && "opacity-70",
-                      )}
-                    >
-                      {msg.body}
-                      <span
-                        className={clsx(
-                          "float-right mt-1.5 ml-3 flex items-center gap-1 text-[10px] tabular-nums",
-                          mine ? "text-white/75" : "text-muted",
-                        )}
-                      >
-                        {now !== null && clockTime(msg.created_at)}
-                        {mine &&
-                          (msg.pending ? (
-                            <Clock className="size-3" aria-hidden />
-                          ) : msg.read_at ? (
-                            <CheckCheck className="size-3.5 text-gold-soft" aria-hidden />
-                          ) : (
-                            <Check className="size-3.5" aria-hidden />
-                          ))}
-                      </span>
-                    </div>
+                    <Bubble msg={msg} mine={mine} now={now} canTranslate={canTranslate} />
                   </li>
                 </Fragment>
               );
@@ -175,6 +161,94 @@ export function ChatPanel({ me, partner, messages }: { me: string; partner: Cont
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/**
+ * One message. Incoming messages (not mine) get a Translate action: the first tap calls Azure
+ * Translator and caches the result on the message for next time (including for the other person);
+ * a second tap just toggles the view, with no further request.
+ */
+function Bubble({
+  msg,
+  mine,
+  now,
+  canTranslate,
+}: {
+  msg: Shown;
+  mine: boolean;
+  now: number | null;
+  canTranslate: boolean;
+}) {
+  const { t, locale } = useI18n();
+  const m = t.account.messages;
+  const cached = msg.translations?.[locale];
+  // Every message opens showing the original; a tap reveals the translation (instantly if cached).
+  const [shownText, setShownText] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [, startTransition] = useTransition();
+
+  function toggle() {
+    if (shownText) {
+      setShownText(null);
+      return;
+    }
+    if (cached) {
+      setShownText(cached);
+      return;
+    }
+    setFailed(false);
+    setLoading(true);
+    startTransition(async () => {
+      const result = await translateMessage(msg.id, locale);
+      setLoading(false);
+      if (result.text) setShownText(result.text);
+      else setFailed(true);
+    });
+  }
+
+  return (
+    <div
+      className={clsx(
+        "max-w-[80%] rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-[0_1px_0_rgba(0,0,0,0.25)]",
+        mine
+          ? "rounded-br-md bg-primary text-on-primary"
+          : "rounded-bl-md bg-card-hover text-fg shadow-[inset_0_0_0_1px_var(--border)]",
+        msg.pending && "opacity-70",
+      )}
+    >
+      <span className="whitespace-pre-wrap break-words">{shownText ?? msg.body}</span>
+      <span
+        className={clsx(
+          "float-right mt-1.5 ml-3 flex items-center gap-1 text-[10px] tabular-nums",
+          mine ? "text-white/75" : "text-muted",
+        )}
+      >
+        {now !== null && clockTime(msg.created_at)}
+        {mine &&
+          (msg.pending ? (
+            <Clock className="size-3" aria-hidden />
+          ) : msg.read_at ? (
+            <CheckCheck className="size-3.5 text-gold-soft" aria-hidden />
+          ) : (
+            <Check className="size-3.5" aria-hidden />
+          ))}
+      </span>
+      {canTranslate && !mine && !msg.pending && (
+        <div className="clear-both pt-1">
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={loading}
+            className="cursor-pointer text-[11px] text-gold-soft underline-offset-2 hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-70"
+          >
+            {loading ? m.translating : shownText ? m.showOriginal : m.translate}
+          </button>
+          {failed && <p className="mt-0.5 text-[11px] text-danger">{t.errors.translateFailed}</p>}
+        </div>
+      )}
     </div>
   );
 }

@@ -286,6 +286,9 @@ const en = {
       back: "All conversations",
       unread: "Unread: {n}",
       notSetUp: "Messaging isn't switched on yet. An admin needs to run {file} in the Supabase SQL Editor.",
+      translate: "Translate",
+      showOriginal: "Show original",
+      translating: "Translating…",
     },
   },
   apply: {
@@ -360,6 +363,7 @@ const en = {
     messageFailed: "Message not sent. Try again.",
     rateLimited: "You're sending messages too quickly. Wait a minute and try again.",
     cantMessage: "You can't message this person.",
+    translateFailed: "Couldn't translate this message.",
   },
   success: {
     applicationUpdated: "Application updated.",

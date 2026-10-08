@@ -17,12 +17,14 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0002_kingdom_settings.sql`
    - `0003_profile_language.sql`
    - `0004_messages.sql`
+   - `0005_message_translations.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY` (the anon or publishable key)
    - `SUPABASE_SERVICE_ROLE_KEY` (secret, server-only; used to create player accounts)
+   - `AZURE_TRANSLATOR_KEY` and `AZURE_TRANSLATOR_REGION` (optional; adds a Translate button to messages — see **Message translation** below)
 5. **Run it:** `npm run dev`, open <http://localhost:3000>, then sign up with your own game ID.
 6. **Make yourself admin** by running this in the SQL Editor:
    ```sql
@@ -73,6 +75,12 @@ Leaders and admins answer players from the same **Messages** page, also linked f
 - only the two people in a conversation can read it, and leaders can't read other people's chats;
 - players can write only to approved leaders and admins, and rejected accounts can't write at all;
 - messages can't be edited or deleted, and each sender is limited to 20 messages a minute.
+
+### Message translation
+
+If `AZURE_TRANSLATOR_KEY` is set, every incoming message gets a **Translate** link under it. The first tap calls [Azure AI Translator](https://azure.microsoft.com/products/ai-services/ai-translator) and saves the result on the message (`0005_message_translations.sql`), so it's translated only once no matter how many times either side opens the chat; a second tap just switches back to the original. Without the key, the link doesn't appear and nothing changes.
+
+A **Free F0** Translator resource covers 2 million characters a month at no cost — far more than a kingdom's chat is likely to use. Regional resources (anything other than "Global") also need `AZURE_TRANSLATOR_REGION` set to the resource's region, lowercased with no spaces (e.g. "Central India" → `centralindia`); a Global resource can leave it empty.
 
 ## Security
 

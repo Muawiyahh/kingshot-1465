@@ -283,6 +283,9 @@ const id: Messages = {
       back: "Semua percakapan",
       unread: "Belum dibaca: {n}",
       notSetUp: "Fitur pesan belum aktif. Admin perlu menjalankan {file} di Supabase SQL Editor.",
+      translate: "Terjemahkan",
+      showOriginal: "Tampilkan asli",
+      translating: "Menerjemahkan…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const id: Messages = {
     messageFailed: "Pesan tidak terkirim. Coba lagi.",
     rateLimited: "Kamu mengirim pesan terlalu cepat. Tunggu satu menit lalu coba lagi.",
     cantMessage: "Kamu tidak bisa mengirim pesan ke orang ini.",
+    translateFailed: "Pesan ini tidak dapat diterjemahkan.",
   },
   success: {
     applicationUpdated: "Pendaftaran diperbarui.",

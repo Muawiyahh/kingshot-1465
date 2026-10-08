@@ -101,4 +101,6 @@ export type ChatMessage = {
   body: string;
   created_at: string;
   read_at: string | null;
+  /** Cached Azure translations, keyed by locale (0005_message_translations.sql). */
+  translations: Record<string, string> | null;
 };

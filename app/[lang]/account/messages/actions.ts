@@ -3,8 +3,10 @@
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { getProfile } from "@/lib/auth";
+import { isLocale } from "@/lib/i18n/config";
 import { getActionI18n } from "@/lib/i18n/action";
 import { createClient } from "@/lib/supabase/server";
+import { translateText } from "@/lib/translate";
 
 const MAX_LENGTH = 1000;
 const uuid = z.string().uuid();
@@ -46,4 +48,37 @@ export async function markRead(partnerId: string) {
     .eq("sender_id", from.data)
     .is("read_at", null);
   refresh();
+}
+
+/**
+ * Translates one message into the viewer's site language. Each message is sent to Azure at most
+ * once per language — the result is cached on the row (RLS: only the sender or recipient can read
+ * or write it) and reused for every later request, including from the other participant.
+ */
+export async function translateMessage(messageId: string, to: string): Promise<{ text?: string; error?: string }> {
+  const { t } = await getActionI18n();
+  const profile = await getProfile();
+  if (!profile) return { error: t.errors.signInFirst };
+
+  const id = uuid.safeParse(messageId);
+  if (!id.success || !isLocale(to)) return { error: t.errors.translateFailed };
+
+  const supabase = await createClient();
+  // RLS already limits this to the sender or recipient's own messages.
+  const { data: message, error: readError } = await supabase
+    .from("messages")
+    .select("body, translations")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (readError || !message) return { error: t.errors.translateFailed };
+
+  const cached = (message.translations as Record<string, string> | null)?.[to];
+  if (cached) return { text: cached };
+
+  const translated = await translateText(message.body, to);
+  if (!translated) return { error: t.errors.translateFailed };
+
+  // Best-effort cache write: if it fails, the translation still displays, just not cached for next time.
+  await supabase.rpc("save_message_translation", { p_message_id: id.data, p_lang: to, p_text: translated });
+  return { text: translated };
 }

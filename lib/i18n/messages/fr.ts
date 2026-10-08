@@ -283,6 +283,9 @@ const fr: Messages = {
       back: "Toutes les conversations",
       unread: "Non lus : {n}",
       notSetUp: "La messagerie n'est pas encore activée. Un admin doit exécuter {file} dans l'éditeur SQL de Supabase.",
+      translate: "Traduire",
+      showOriginal: "Afficher l'original",
+      translating: "Traduction en cours…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const fr: Messages = {
     messageFailed: "Message non envoyé. Réessayez.",
     rateLimited: "Vous envoyez des messages trop vite. Attendez une minute puis réessayez.",
     cantMessage: "Vous ne pouvez pas écrire à cette personne.",
+    translateFailed: "Impossible de traduire ce message.",
   },
   success: {
     applicationUpdated: "Candidature mise à jour.",

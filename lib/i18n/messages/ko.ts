@@ -282,6 +282,9 @@ const ko: Messages = {
       back: "모든 대화",
       unread: "읽지 않음: {n}",
       notSetUp: "메시지 기능이 아직 켜지지 않았습니다. 관리자가 Supabase SQL Editor에서 {file}을(를) 실행해야 합니다.",
+      translate: "번역",
+      showOriginal: "원문 보기",
+      translating: "번역 중…",
     },
   },
   apply: {
@@ -355,6 +358,7 @@ const ko: Messages = {
     messageFailed: "메시지를 보내지 못했습니다. 다시 시도하세요.",
     rateLimited: "메시지를 너무 빨리 보내고 있습니다. 1분 뒤에 다시 시도하세요.",
     cantMessage: "이 사람에게는 메시지를 보낼 수 없습니다.",
+    translateFailed: "이 메시지를 번역할 수 없습니다.",
   },
   success: {
     applicationUpdated: "신청이 수정되었습니다.",

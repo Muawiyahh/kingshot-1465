@@ -283,6 +283,9 @@ const de: Messages = {
       back: "Alle Gespräche",
       unread: "Ungelesen: {n}",
       notSetUp: "Nachrichten sind noch nicht eingeschaltet. Ein Admin muss {file} im Supabase SQL Editor ausführen.",
+      translate: "Übersetzen",
+      showOriginal: "Original anzeigen",
+      translating: "Wird übersetzt…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const de: Messages = {
     messageFailed: "Nachricht nicht gesendet. Versuch es noch einmal.",
     rateLimited: "Du sendest zu schnell. Warte eine Minute und versuch es dann noch einmal.",
     cantMessage: "Dieser Person kannst du nicht schreiben.",
+    translateFailed: "Diese Nachricht konnte nicht übersetzt werden.",
   },
   success: {
     applicationUpdated: "Bewerbung aktualisiert.",

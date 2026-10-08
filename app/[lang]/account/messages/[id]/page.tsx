@@ -5,6 +5,7 @@ import { getUserId } from "@/lib/auth";
 import { requireProfile } from "@/lib/auth-guards";
 import { getI18n } from "@/lib/i18n/server";
 import { getConversations, getThread, isUuid } from "@/lib/messages";
+import { translateConfigured } from "@/lib/translate";
 import { ChatLoading, ChatPanel } from "../chat-panel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -33,5 +34,7 @@ async function Conversation({ params }: { params: PageProps<"/[lang]/account/mes
   const partner = contacts.find((c) => c.partner_id === id);
   if (!partner) notFound();
 
-  return <ChatPanel key={partner.partner_id} me={me} partner={partner} messages={messages} />;
+  return (
+    <ChatPanel key={partner.partner_id} me={me} partner={partner} messages={messages} canTranslate={translateConfigured} />
+  );
 }

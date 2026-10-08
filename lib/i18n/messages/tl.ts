@@ -283,6 +283,9 @@ const tl: Messages = {
       back: "Lahat ng usapan",
       unread: "Hindi pa nababasa: {n}",
       notSetUp: "Hindi pa naka-on ang messaging. Kailangang patakbuhin ng isang admin ang {file} sa Supabase SQL Editor.",
+      translate: "Isalin",
+      showOriginal: "Ipakita ang orihinal",
+      translating: "Isinasalin…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const tl: Messages = {
     messageFailed: "Hindi naipadala ang mensahe. Subukan ulit.",
     rateLimited: "Masyadong mabilis ang pagpapadala mo. Maghintay ng isang minuto bago subukan ulit.",
     cantMessage: "Hindi mo puwedeng i-message ang taong ito.",
+    translateFailed: "Hindi maisalin ang mensaheng ito.",
   },
   success: {
     applicationUpdated: "Na-update ang aplikasyon.",

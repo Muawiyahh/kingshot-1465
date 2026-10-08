@@ -281,6 +281,9 @@ const zhTW: Messages = {
       back: "所有對話",
       unread: "未讀：{n}",
       notSetUp: "訊息功能尚未開啟。管理員需要在 Supabase SQL Editor 中執行 {file}。",
+      translate: "翻譯",
+      showOriginal: "顯示原文",
+      translating: "翻譯中…",
     },
   },
   apply: {
@@ -354,6 +357,7 @@ const zhTW: Messages = {
     messageFailed: "訊息未送出，請再試一次。",
     rateLimited: "你傳得太快了，請等一分鐘再試。",
     cantMessage: "你無法傳訊息給這個人。",
+    translateFailed: "無法翻譯這則訊息。",
   },
   success: {
     applicationUpdated: "申請已更新。",

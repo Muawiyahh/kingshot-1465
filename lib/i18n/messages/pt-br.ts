@@ -283,6 +283,9 @@ const ptBR: Messages = {
       back: "Todas as conversas",
       unread: "Não lidas: {n}",
       notSetUp: "As mensagens ainda não estão ativadas. Um admin precisa executar {file} no SQL Editor do Supabase.",
+      translate: "Traduzir",
+      showOriginal: "Mostrar original",
+      translating: "Traduzindo…",
     },
   },
   apply: {
@@ -357,6 +360,7 @@ const ptBR: Messages = {
     messageFailed: "Mensagem não enviada. Tente de novo.",
     rateLimited: "Você está enviando mensagens rápido demais. Espere um minuto e tente de novo.",
     cantMessage: "Você não pode mandar mensagem para essa pessoa.",
+    translateFailed: "Não foi possível traduzir esta mensagem.",
   },
   success: {
     applicationUpdated: "Candidatura atualizada.",
