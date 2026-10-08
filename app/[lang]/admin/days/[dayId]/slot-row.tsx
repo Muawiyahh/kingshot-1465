@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import clsx from "clsx";
 import { Loader2, Lock, LockOpen } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
+import { PendingButton } from "@/components/pending-button";
 import { fmt } from "@/lib/i18n/format";
 import { slotLabel } from "@/lib/kvk";
 import { assignSlot, toggleSlotLock } from "../../actions";
@@ -102,17 +103,17 @@ export function SlotRow({
       <form action={toggleSlotLock} className="flex items-center gap-1">
         {pending && <Loader2 className="size-4 animate-spin text-muted" aria-hidden />}
         <input type="hidden" name="slotId" value={slotId} />
-        <button
-          type="submit"
+        <PendingButton
+          plain
           aria-label={locked ? d.unlock : d.lock}
           aria-pressed={locked}
           className={clsx(
-            "flex size-10 cursor-pointer items-center justify-center rounded-xl transition-colors hover:bg-white/5",
+            "flex size-10 cursor-pointer items-center justify-center rounded-xl transition-colors hover:bg-white/5 aria-busy:animate-pulse",
             locked ? "text-gold" : "text-muted/60 hover:text-fg",
           )}
         >
           {locked ? <Lock className="size-4" aria-hidden /> : <LockOpen className="size-4" aria-hidden />}
-        </button>
+        </PendingButton>
       </form>
     </li>
   );

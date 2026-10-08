@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { FormSkeleton } from "@/components/skeleton";
 import { Card, PageHeader } from "@/components/ui";
 import { requireProfile } from "@/lib/auth-guards";
 import { getI18n } from "@/lib/i18n/server";
@@ -17,7 +18,7 @@ export default async function ProfilePage() {
       <PageHeader eyebrow={t.account.eyebrow} title={t.account.profile.title}>
         {t.account.profile.intro}
       </PageHeader>
-      <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-card" />}>
+      <Suspense fallback={<FormSkeleton fields={3} />}>
         <ProfileContent />
       </Suspense>
     </>

@@ -8,10 +8,11 @@ import { useNow } from "@/components/use-now";
 import { listTime } from "@/lib/chat-time";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
-import type { Contact } from "@/lib/types";
+import { useMessages } from "./messages-context";
 
 /** WhatsApp-style list: banner avatar, name and role, last message, time and unread count. */
-export function ConversationList({ contacts, activeId }: { contacts: Contact[]; activeId: string | null }) {
+export function ConversationList() {
+  const { contacts, activeId, open } = useMessages();
   const { locale, t, tag } = useI18n();
   const m = t.account.messages;
   const now = useNow(60_000);
@@ -30,6 +31,7 @@ export function ConversationList({ contacts, activeId }: { contacts: Contact[]; 
             <Link
               href={localePath(locale, `/account/messages/${c.partner_id}`)}
               aria-current={active ? "page" : undefined}
+              onClick={() => open(c.partner_id)}
               className={clsx(
                 "flex items-center gap-3 border-b border-border px-4 py-3 transition-colors",
                 active ? "bg-primary/10" : "hover:bg-white/[0.04]",

@@ -2,22 +2,27 @@ import Link from "next/link";
 import { Crest } from "@/components/crest";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
+import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
 
+/** Kingdom name on the left, the site's credit in the middle, quick links on the right. */
 export async function SiteFooter() {
   const { locale, t } = await getI18n();
   return (
     <footer className="border-t border-border">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-6 px-4 py-10 text-center sm:grid-cols-3 sm:px-6 sm:text-left lg:px-8">
+        <Link href={localePath(locale, "/")} className="flex items-center justify-center gap-3 rounded-lg sm:justify-start">
           <Crest className="size-7" />
-          <div>
-            <p className="font-display font-semibold">{fmt(t.common.kingdomName, { n: site.kingdom })}</p>
-            <p className="text-xs text-muted">{t.home.motto}</p>
-          </div>
-        </div>
-        <nav aria-label={t.footer.label} className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
+          <span className="font-display font-semibold">{fmt(t.common.kingdomName, { n: site.kingdom })}</span>
+        </Link>
+        <p className="text-sm text-muted sm:text-center">
+          {rich(t.footer.credit, { name: <span className="font-medium text-gold-soft">{site.creator}</span> })}
+        </p>
+        <nav
+          aria-label={t.footer.label}
+          className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted sm:justify-end"
+        >
           <Link href={localePath(locale, "/positions")} className="hover:text-fg">
             {t.nav.positions}
           </Link>
@@ -30,7 +35,6 @@ export async function SiteFooter() {
             </a>
           )}
         </nav>
-        <p className="text-xs text-muted">{t.footer.disclaimer}</p>
       </div>
     </footer>
   );

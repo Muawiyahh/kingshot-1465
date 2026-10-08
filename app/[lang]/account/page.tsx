@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Suspense } from "react";
-import { ArrowRight, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { cache, Suspense } from "react";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
 import { accountGroups } from "@/components/account-sidebar";
 import { AllianceBanner } from "@/components/alliance-banner";
-import { SECTION_ICONS } from "@/components/section-icons";
+import { SectionCards } from "@/components/section-cards";
+import { Bone } from "@/components/skeleton";
 import { ButtonLink, Card, Eyebrow, Notice } from "@/components/ui";
+import { getUserId } from "@/lib/auth";
 import { requireProfile } from "@/lib/auth-guards";
-import { localePath } from "@/lib/i18n/config";
+import { localePath, type Locale } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
+import type { Messages } from "@/lib/i18n/messages";
 import { getI18n } from "@/lib/i18n/server";
 import { getUnreadCount } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
@@ -18,41 +20,75 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.meta.account };
 }
 
-export default function AccountPage({ searchParams }: PageProps<"/[lang]/account">) {
+/**
+ * The profile and the counts load together: the user's ID comes from their session token, so the
+ * counts don't wait for the profile lookup.
+ */
+const loadAccount = cache(async () => {
+  const [me, supabase] = await Promise.all([getUserId(), createClient()]);
+  const [profile, applications, unread] = await Promise.all([
+    requireProfile("/account"),
+    me
+      ? supabase.from("applications").select("id", { count: "exact", head: true }).eq("profile_id", me)
+      : Promise.resolve({ count: 0 }),
+    me ? getUnreadCount(me) : 0,
+  ]);
+  return { profile, applications: applications.count ?? 0, unread };
+});
+
+/**
+ * One loading boundary, so the page appears in a single step. The placeholder already shows the
+ * section cards and the banner's outline.
+ */
+export default async function AccountPage({ searchParams }: PageProps<"/[lang]/account">) {
+  const { locale, t } = await getI18n();
   return (
-    <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
-      <Overview searchParams={searchParams} />
+    <Suspense
+      fallback={
+        <>
+          <IdentitySkeleton />
+          <h2 className="mt-12 mb-4 font-display text-xl font-semibold">{t.account.manage}</h2>
+          <SectionCards cards={sectionCards(locale, t)} />
+        </>
+      }
+    >
+      <Identity searchParams={searchParams} />
+      <h2 className="mt-12 mb-4 font-display text-xl font-semibold">{t.account.manage}</h2>
+      <Sections />
     </Suspense>
   );
 }
 
-async function Overview({ searchParams }: { searchParams: PageProps<"/[lang]/account">["searchParams"] }) {
-  const [profile, { welcome }, { locale, t }] = await Promise.all([
-    requireProfile("/account"),
-    searchParams,
-    getI18n(),
-  ]);
-  const supabase = await createClient();
-  const [applications, unread] = await Promise.all([
-    supabase.from("applications").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
-    getUnreadCount(profile.id),
-  ]);
+function IdentitySkeleton() {
+  return (
+    <div aria-hidden>
+      <div className="mb-10 flex items-center gap-6">
+        <Bone className="h-32 w-24 shrink-0 rounded-xl sm:h-36 sm:w-28" />
+        <div className="flex-1 space-y-3">
+          <Bone className="h-3 w-24" />
+          <Bone className="h-9 w-56 max-w-full" />
+          <Bone className="h-4 w-44" />
+        </div>
+      </div>
+      <Card className="flex items-center gap-4 p-6">
+        <Bone className="size-6 rounded-full" />
+        <span className="flex-1 space-y-2">
+          <Bone className="h-4 w-32" />
+          <Bone className="h-3 w-64 max-w-full" />
+        </span>
+      </Card>
+    </div>
+  );
+}
 
+/** Banner, name, game ID and account status. */
+async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/account">["searchParams"] }) {
+  const [{ profile }, { welcome }, { locale, t }] = await Promise.all([loadAccount(), searchParams, getI18n()]);
   const statusBody = {
     approved: t.account.approvedBody,
     pending: t.account.pendingBody,
     rejected: t.account.rejectedBody,
   }[profile.status];
-
-  // What each section holds right now, shown on its card.
-  const current: Partial<Record<string, string>> = {
-    appointments: fmt(t.account.applicationsChip, { n: applications.count ?? 0 }),
-    messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
-    profile: `${profile.ingame_name}${profile.alliance_tag ? ` [${profile.alliance_tag}]` : ""}`,
-  };
-  const sections = accountGroups(t)
-    .flatMap((g) => g.items)
-    .filter((item) => item.key !== "overview");
 
   return (
     <>
@@ -92,34 +128,33 @@ async function Overview({ searchParams }: { searchParams: PageProps<"/[lang]/acc
           <ButtonLink href={localePath(locale, "/account/appointments")}>{t.account.applyCta}</ButtonLink>
         )}
       </Card>
-
-      <h2 className="mt-12 mb-4 font-display text-xl font-semibold">{t.account.manage}</h2>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {sections.map((item) => {
-          const Icon = SECTION_ICONS[item.key];
-          return (
-            <Link key={item.key} href={localePath(locale, item.href)} className="group rounded-3xl">
-              <Card className="flex h-full items-start gap-4 p-5 transition-colors group-hover:bg-card-hover">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(214,58,68,0.3)]">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-medium">{item.label}</span>
-                  <span className="mt-1 block text-sm text-muted">
-                    {t.account.cards[item.key as keyof typeof t.account.cards]}
-                  </span>
-                  {current[item.key] && (
-                    <span className="mt-3 inline-block max-w-full truncate rounded-full bg-white/5 px-2.5 py-1 font-mono text-xs text-fg">
-                      {current[item.key]}
-                    </span>
-                  )}
-                </span>
-                <ArrowRight className="mt-1 size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </Card>
-            </Link>
-          );
-        })}
-      </div>
     </>
+  );
+}
+
+/** One card per account section, with what it currently holds when known. */
+function sectionCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}) {
+  return accountGroups(t)
+    .flatMap((g) => g.items)
+    .filter((item) => item.key !== "overview")
+    .map((item) => ({
+      key: item.key,
+      href: localePath(locale, item.href),
+      label: item.label,
+      description: t.account.cards[item.key as keyof typeof t.account.cards],
+      current: current[item.key],
+    }));
+}
+
+async function Sections() {
+  const [{ profile, applications, unread }, { locale, t }] = await Promise.all([loadAccount(), getI18n()]);
+  return (
+    <SectionCards
+      cards={sectionCards(locale, t, {
+        appointments: fmt(t.account.applicationsChip, { n: applications }),
+        messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
+        profile: `${profile.ingame_name}${profile.alliance_tag ? ` [${profile.alliance_tag}]` : ""}`,
+      })}
+    />
   );
 }

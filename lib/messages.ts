@@ -5,6 +5,12 @@ import type { ChatMessage, Contact } from "@/lib/types";
 /** Error codes meaning 0004_messages.sql hasn't been run yet (missing function or table). */
 const NOT_SET_UP = new Set(["PGRST202", "PGRST205", "42883", "42P01"]);
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: string) {
+  return UUID.test(value);
+}
+
 /** Number of messages the user can show in one conversation. */
 const THREAD_LIMIT = 200;
 
@@ -33,6 +39,8 @@ export async function getUnreadCount(userId: string): Promise<number> {
 
 /** The latest messages between the user and one partner, oldest first. RLS limits it to their own. */
 export async function getThread(me: string, partner: string): Promise<ChatMessage[]> {
+  // Both IDs go into a filter string, so only ever accept real UUIDs.
+  if (!isUuid(me) || !isUuid(partner)) return [];
   const supabase = await createClient();
   const { data } = await supabase
     .from("messages")

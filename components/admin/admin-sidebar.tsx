@@ -1,6 +1,5 @@
-import { connection } from "next/server";
-import { SectionNav, type SectionNavGroup } from "@/components/section-nav";
-import { getProfile } from "@/lib/auth";
+import { SectionNav, SectionNavView, type SectionNavGroup } from "@/components/section-nav";
+import { getUserId } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { getUnreadCount } from "@/lib/messages";
@@ -32,14 +31,14 @@ export function adminGroups(t: Messages): SectionNavGroup[] {
 
 /** Admin menu with a count of what's waiting next to Accounts, KvK events and Messages. */
 export async function AdminSidebar({ locale, t }: { locale: Locale; t: Messages }) {
-  // Counts change per request, so never prerender them (same rule as getProfile).
-  await connection();
+  // getUserId reads the session token locally and marks this request-time, so all three counts
+  // start together instead of waiting for a profile lookup first.
+  const me = await getUserId();
   const supabase = await createClient();
-  const profile = await getProfile();
   const [accounts, applications, unread] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    profile ? getUnreadCount(profile.id) : 0,
+    me ? getUnreadCount(me) : 0,
   ]);
   return (
     <SectionNav
@@ -49,4 +48,9 @@ export async function AdminSidebar({ locale, t }: { locale: Locale; t: Messages 
       badges={{ accounts: accounts.count ?? 0, events: applications.count ?? 0, messages: unread }}
     />
   );
+}
+
+/** The same menu without highlight or counts, shown instantly while the live one loads. */
+export function AdminSidebarFallback({ locale, t }: { locale: Locale; t: Messages }) {
+  return <SectionNavView locale={locale} label={t.admin.navLabel} groups={adminGroups(t)} />;
 }

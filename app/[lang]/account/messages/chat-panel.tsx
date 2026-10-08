@@ -12,6 +12,7 @@ import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import type { ChatMessage, Contact } from "@/lib/types";
 import { markRead, sendMessage } from "./actions";
+import { useMessages } from "./messages-context";
 
 type Shown = ChatMessage & { pending?: boolean };
 
@@ -19,7 +20,7 @@ const MAX_LENGTH = 1000;
 
 /** One conversation: header, bubbles grouped by day, and the composer. */
 export function ChatPanel({ me, partner, messages }: { me: string; partner: Contact; messages: ChatMessage[] }) {
-  const { locale, t, tag } = useI18n();
+  const { t, tag } = useI18n();
   const m = t.account.messages;
   const now = useNow(60_000);
   const [draft, setDraft] = useState("");
@@ -71,23 +72,7 @@ export function ChatPanel({ me, partner, messages }: { me: string; partner: Cont
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <Link
-          href={localePath(locale, "/account/messages")}
-          className="-ml-1 flex size-9 items-center justify-center rounded-full text-muted hover:bg-white/5 hover:text-fg lg:hidden"
-          aria-label={m.back}
-        >
-          <ArrowLeft className="size-5" aria-hidden />
-        </Link>
-        <AllianceAvatar tag={partner.alliance_tag} size={40} />
-        <div className="min-w-0">
-          <p className="truncate font-medium">{partner.ingame_name}</p>
-          <p className="font-mono text-[11px] uppercase tracking-wider text-gold-soft">
-            {t.admin.accounts.roles[partner.role]}
-            {partner.alliance_tag && <span className="text-muted"> · [{partner.alliance_tag}]</span>}
-          </p>
-        </div>
-      </div>
+      <ChatHeader partner={partner} />
 
       <div
         ref={scroller}
@@ -190,6 +175,71 @@ export function ChatPanel({ me, partner, messages }: { me: string; partner: Cont
           </button>
         </div>
       </form>
+    </div>
+  );
+}
+
+/** Name, banner and role of the person you're talking to, with a back arrow on phones. */
+function ChatHeader({ partner }: { partner: Contact | undefined }) {
+  const { locale, t } = useI18n();
+  const { open } = useMessages();
+  return (
+    <div className="flex items-center gap-3 border-b border-border px-4 py-3">
+      <Link
+        href={localePath(locale, "/account/messages")}
+        onClick={() => open(null)}
+        className="-ml-1 flex size-9 items-center justify-center rounded-full text-muted hover:bg-white/5 hover:text-fg lg:hidden"
+        aria-label={t.account.messages.back}
+      >
+        <ArrowLeft className="size-5" aria-hidden />
+      </Link>
+      {partner ? (
+        <>
+          <AllianceAvatar tag={partner.alliance_tag} size={40} />
+          <div className="min-w-0">
+            <p className="truncate font-medium">{partner.ingame_name}</p>
+            <p className="font-mono text-[11px] uppercase tracking-wider text-gold-soft">
+              {t.admin.accounts.roles[partner.role]}
+              {partner.alliance_tag && <span className="text-muted"> · [{partner.alliance_tag}]</span>}
+            </p>
+          </div>
+        </>
+      ) : (
+        <>
+          <span className="size-10 animate-pulse rounded-full bg-white/5" />
+          <span className="h-4 w-32 animate-pulse rounded bg-white/5" />
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Shown the moment a conversation is clicked, while its messages load: the real header (from the
+ * list, already on screen) over an empty chat, so the pane never goes blank.
+ */
+export function ChatLoading() {
+  const { contacts, activeId } = useMessages();
+  const { t } = useI18n();
+  const partner = contacts.find((c) => c.partner_id === activeId);
+  return (
+    <div className="flex h-full min-h-0 flex-col" aria-busy>
+      <ChatHeader partner={partner} />
+      <div className="flex min-h-0 flex-1 flex-col justify-end gap-2 bg-[radial-gradient(ellipse_at_top,rgba(214,58,68,0.06),transparent_60%)] px-3 py-4 sm:px-5">
+        <span className="h-9 w-2/5 animate-pulse self-start rounded-2xl rounded-bl-md bg-white/[0.04]" />
+        <span className="h-9 w-1/3 animate-pulse self-end rounded-2xl rounded-br-md bg-primary/10" />
+        <span className="h-9 w-1/2 animate-pulse self-start rounded-2xl rounded-bl-md bg-white/[0.04]" />
+      </div>
+      <div className="border-t border-border p-3">
+        <div className="flex items-end gap-2">
+          <div className="flex h-11 flex-1 items-center rounded-2xl bg-bg-elevated px-4 text-[16px] text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)]">
+            {t.account.messages.placeholder}
+          </div>
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary opacity-40">
+            <SendHorizontal className="size-5" aria-hidden />
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

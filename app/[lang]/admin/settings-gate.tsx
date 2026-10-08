@@ -8,9 +8,12 @@ import type { KingdomSettings } from "@/lib/types";
 
 /** Loads the kingdom settings row for the King and Server pages, or explains how to create it. */
 export async function SettingsGate({ children }: { children: (settings: KingdomSettings) => ReactNode }) {
-  const [, { t }] = await Promise.all([requireLeader(), getI18n()]);
-  const supabase = await createClient();
-  const { data, error } = await supabase.from("kingdom_settings").select("*").eq("id", 1).maybeSingle();
+  const [{ t }, supabase] = await Promise.all([getI18n(), createClient()]);
+  // The leader check and the lookup run together; only leaders can save anyway (RLS).
+  const [, { data, error }] = await Promise.all([
+    requireLeader(),
+    supabase.from("kingdom_settings").select("*").eq("id", 1).maybeSingle(),
+  ]);
 
   if (error || !data) {
     return (

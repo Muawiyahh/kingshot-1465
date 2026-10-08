@@ -1,5 +1,5 @@
-import { SectionNav, type SectionNavGroup } from "@/components/section-nav";
-import { getProfile } from "@/lib/auth";
+import { SectionNav, SectionNavView, type SectionNavGroup } from "@/components/section-nav";
+import { getUserId } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/en";
 import { getUnreadCount } from "@/lib/messages";
@@ -22,8 +22,13 @@ export function accountGroups(t: Messages): SectionNavGroup[] {
 
 /** Account menu with the number of unread messages. */
 export async function AccountSidebar({ locale, t }: { locale: Locale; t: Messages }) {
-  // getProfile marks this request-time, so the unread count is never prerendered.
-  const profile = await getProfile();
-  const unread = profile ? await getUnreadCount(profile.id) : 0;
+  // getUserId reads the session token locally (and marks this request-time), so the count starts at once.
+  const me = await getUserId();
+  const unread = me ? await getUnreadCount(me) : 0;
   return <SectionNav locale={locale} label={t.account.nav.label} groups={accountGroups(t)} badges={{ messages: unread }} />;
+}
+
+/** The same menu without highlight or counts, shown instantly while the live one loads. */
+export function AccountSidebarFallback({ locale, t }: { locale: Locale; t: Messages }) {
+  return <SectionNavView locale={locale} label={t.account.nav.label} groups={accountGroups(t)} />;
 }

@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import clsx from "clsx";
 import { ArrowRight, Check } from "lucide-react";
+import { PendingButton } from "@/components/pending-button";
+import { Bone, HeaderSkeleton, RowsSkeleton, TitleSkeleton } from "@/components/skeleton";
 import { Card, PageHeader } from "@/components/ui";
 import { EventStatusBadge } from "@/components/admin/event-status";
 import { ConfirmButton } from "@/components/admin/confirm-button";
@@ -23,36 +25,69 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const STEPS: EventStatus[] = ["draft", "open", "closed", "published"];
 
-export default function EventPage({ params }: PageProps<"/[lang]/admin/events/[id]">) {
+export default async function EventPage({ params }: PageProps<"/[lang]/admin/events/[id]">) {
+  const { locale, t } = await getI18n();
   return (
-    <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
-      <EventContent params={params} />
-    </Suspense>
+    <>
+      <p className="mb-2 text-sm">
+        <Link href={localePath(locale, "/admin/events")} className="text-muted hover:text-fg">
+          {t.admin.event.allEvents}
+        </Link>
+      </p>
+      <Suspense fallback={<EventSkeleton />}>
+        <EventContent params={params} />
+      </Suspense>
+    </>
   );
 }
 
+/** Shaped like the event page: header, the four stage buttons, then the day rows. */
+function EventSkeleton() {
+  return (
+    <>
+      <HeaderSkeleton />
+      <Card className="mb-10 p-5" aria-hidden>
+        <Bone className="mb-4 h-4 w-24" />
+        <div className="grid gap-2 sm:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Bone key={i} className="h-16 rounded-2xl" />
+          ))}
+        </div>
+      </Card>
+      <TitleSkeleton />
+      <RowsSkeleton rows={3} avatar={false} />
+    </>
+  );
+}
+
+type EventData = KvkEvent & {
+  event_days: (EventDay & { applications: { status: string }[]; slots: { profile_id: string | null }[] })[];
+};
+
 async function EventContent({ params }: { params: PageProps<"/[lang]/admin/events/[id]">["params"] }) {
-  const [, { id }, { locale, t, tag }] = await Promise.all([requireLeader(), params, getI18n()]);
-  const supabase = await createClient();
+  const [{ id }, { locale, t, tag }, supabase] = await Promise.all([params, getI18n(), createClient()]);
 
-  const { data } = await supabase.from("kvk_events").select("*, event_days(*)").eq("id", id).maybeSingle();
-  if (!data) notFound();
-  const event = data as KvkEvent & { event_days: EventDay[] };
-  const dayIds = event.event_days.map((d) => d.id);
-
-  const [{ data: apps }, { data: filled }] = await Promise.all([
-    supabase.from("applications").select("day_id, status").in("day_id", dayIds),
-    supabase.from("slots").select("day_id").in("day_id", dayIds).not("profile_id", "is", null),
+  // One request for the event, its days, and each day's applications and slots, alongside the
+  // leader check. (RLS limits drafts and applications to leaders.)
+  const [, { data }] = await Promise.all([
+    requireLeader(),
+    supabase
+      .from("kvk_events")
+      .select("*, event_days(*, applications(status), slots(profile_id))")
+      .eq("id", id)
+      .maybeSingle(),
   ]);
+  if (!data) notFound();
+  const event = data as EventData;
 
   const counts = new Map<string, { pending: number; accepted: number; filled: number }>();
-  for (const d of dayIds) counts.set(d, { pending: 0, accepted: 0, filled: 0 });
-  for (const a of apps ?? []) {
-    const c = counts.get(a.day_id)!;
-    if (a.status === "pending") c.pending++;
-    if (a.status === "accepted") c.accepted++;
+  for (const d of event.event_days) {
+    counts.set(d.id, {
+      pending: d.applications.filter((a) => a.status === "pending").length,
+      accepted: d.applications.filter((a) => a.status === "accepted").length,
+      filled: d.slots.filter((s) => s.profile_id !== null).length,
+    });
   }
-  for (const s of filled ?? []) counts.get(s.day_id)!.filled++;
 
   const days = [...event.event_days].sort((a, b) => a.day_number - b.day_number || a.position.localeCompare(b.position));
   const currentStep = STEPS.indexOf(event.status);
@@ -60,11 +95,6 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
 
   return (
     <>
-      <p className="mb-2 text-sm">
-        <Link href={localePath(locale, "/admin/events")} className="text-muted hover:text-fg">
-          {e.allEvents}
-        </Link>
-      </p>
       <PageHeader eyebrow={t.admin.nav.groups.kvk} title={event.title}>
         <span className="mr-3">{fmt(e.day1Is, { date: formatDay(event.starts_on, tag) })}</span>
         <EventStatusBadge status={event.status} t={t} />
@@ -80,12 +110,12 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
                 <form action={setEventStatus}>
                   <input type="hidden" name="eventId" value={event.id} />
                   <input type="hidden" name="status" value={status} />
-                  <button
-                    type="submit"
+                  <PendingButton
+                    plain
                     disabled={active}
                     aria-current={active ? "step" : undefined}
                     className={clsx(
-                      "flex h-full w-full cursor-pointer flex-col items-start gap-1 rounded-2xl p-4 text-left transition-colors disabled:cursor-default",
+                      "flex h-full w-full cursor-pointer flex-col items-start gap-1 rounded-2xl p-4 text-left transition-colors disabled:cursor-default aria-busy:animate-pulse",
                       active
                         ? "bg-primary/15 shadow-[inset_0_0_0_1px_var(--primary)]"
                         : "bg-bg-elevated shadow-[inset_0_0_0_1px_var(--border)] hover:bg-card-hover",
@@ -100,7 +130,7 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
                       {e.steps[status].label}
                     </span>
                     <span className="text-xs text-muted">{e.steps[status].help}</span>
-                  </button>
+                  </PendingButton>
                 </form>
               </li>
             );

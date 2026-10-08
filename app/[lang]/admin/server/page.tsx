@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { FormSkeleton } from "@/components/skeleton";
 import { Card, PageHeader } from "@/components/ui";
 import { getI18n } from "@/lib/i18n/server";
 import { SettingsGate } from "../settings-gate";
@@ -17,7 +18,7 @@ export default async function ServerPage() {
       <PageHeader eyebrow={t.admin.nav.groups.kingdom} title={t.admin.settings.server.title}>
         {t.admin.settings.server.intro}
       </PageHeader>
-      <Suspense fallback={<div className="h-40 animate-pulse rounded-3xl bg-card" />}>
+      <Suspense fallback={<FormSkeleton fields={1} />}>
         <SettingsGate>
           {(settings) => (
             <Card className="max-w-2xl p-6 sm:p-8">

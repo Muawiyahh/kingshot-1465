@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import clsx from "clsx";
 import { SECTION_ICONS, type SectionKey } from "@/components/section-icons";
 import { localePath, splitLocale, type Locale } from "@/lib/i18n/config";
@@ -22,28 +23,20 @@ export type SectionNavGroup = {
   items: SectionNavItem[];
 };
 
-/**
- * Side menu for the admin and account areas: vertical on desktop, one wrapped row per group on
- * phones. The current section is highlighted and can carry a count of things waiting.
- */
-export function SectionNav({
-  locale,
-  label,
-  groups,
-  badges = {},
-}: {
+type ViewProps = {
   locale: Locale;
   label: string;
   groups: SectionNavGroup[];
   badges?: Partial<Record<SectionKey, number>>;
-}) {
-  const { rest } = splitLocale(usePathname());
+  isActive?: (item: SectionNavItem) => boolean;
+  onNavigate?: (item: SectionNavItem) => void;
+};
 
-  const isActive = (item: SectionNavItem) => {
-    if (item.exact) return rest === item.href;
-    return [item.href, ...(item.also ?? [])].some((p) => rest === p || rest.startsWith(`${p}/`));
-  };
-
+/**
+ * The menu's markup. Used on its own (no highlight, no counts) as the instant placeholder while the
+ * live menu loads, so the menu never disappears.
+ */
+export function SectionNavView({ locale, label, groups, badges = {}, isActive = () => false, onNavigate }: ViewProps) {
   return (
     <nav aria-label={label}>
       <div className="flex flex-col gap-2 lg:gap-6">
@@ -63,6 +56,7 @@ export function SectionNav({
                   key={item.key}
                   href={localePath(locale, item.href)}
                   aria-current={active ? "page" : undefined}
+                  onClick={() => onNavigate?.(item)}
                   className={clsx(
                     "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm whitespace-nowrap transition-colors",
                     active
@@ -85,4 +79,23 @@ export function SectionNav({
       </div>
     </nav>
   );
+}
+
+/**
+ * Side menu for the admin and account areas: vertical on desktop, one wrapped row per group on
+ * phones. The clicked section lights up immediately, before its page has loaded.
+ */
+export function SectionNav(props: Omit<ViewProps, "isActive" | "onNavigate">) {
+  const { rest } = splitLocale(usePathname());
+  // A click, remembered with the page it happened on. Once the URL moves on, the URL wins again.
+  const [clicked, setClicked] = useState<{ key: SectionKey; from: string } | null>(null);
+  const pendingKey = clicked && clicked.from === rest ? clicked.key : null;
+
+  const matches = (item: SectionNavItem) => {
+    if (item.exact) return rest === item.href;
+    return [item.href, ...(item.also ?? [])].some((p) => rest === p || rest.startsWith(`${p}/`));
+  };
+  const isActive = (item: SectionNavItem) => (pendingKey ? item.key === pendingKey : matches(item));
+
+  return <SectionNavView {...props} isActive={isActive} onNavigate={(item) => setClicked({ key: item.key, from: rest })} />;
 }

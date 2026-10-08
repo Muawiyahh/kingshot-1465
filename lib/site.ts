@@ -5,6 +5,8 @@
 export const site = {
   kingdom: "1465",
   name: "Kingdom 1465",
+  /** In-game name credited in the footer. */
+  creator: "ShowMeYourToes",
   discordUrl: "", // e.g. "https://discord.gg/xxxx" — leave empty to hide the link
   // In-game contacts for migration and questions. Replace with real leaders.
   // `role` is "king" or "coordinator" and is shown translated.

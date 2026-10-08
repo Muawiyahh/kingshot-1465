@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { requireProfile } from "@/lib/auth-guards";
+import { MessagesSquare } from "lucide-react";
 import { getI18n } from "@/lib/i18n/server";
-import { getConversations } from "@/lib/messages";
-import { MessagesShell } from "./messages-shell";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.meta.messages };
 }
 
-export default function MessagesPage() {
+/** Right-hand pane before a conversation is picked (desktop; phones show only the list). */
+export default async function MessagesPage() {
+  const { t } = await getI18n();
   return (
-    <Suspense fallback={<div className="h-[32rem] animate-pulse rounded-3xl bg-card" />}>
-      <Inbox />
-    </Suspense>
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-muted">
+      <MessagesSquare className="size-10 text-primary/60" aria-hidden />
+      <p className="max-w-xs text-sm">{t.account.messages.choose}</p>
+    </div>
   );
-}
-
-async function Inbox() {
-  const profile = await requireProfile("/account/messages");
-  const { ready, contacts } = await getConversations();
-  return <MessagesShell me={profile.id} ready={ready} contacts={contacts} activeId={null} />;
 }

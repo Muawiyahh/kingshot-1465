@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import clsx from "clsx";
 import { Sparkles } from "lucide-react";
-import { Badge, Button, Card, PageHeader } from "@/components/ui";
+import { PendingButton } from "@/components/pending-button";
+import { Bone, HeaderSkeleton, RowsSkeleton, TitleSkeleton } from "@/components/skeleton";
+import { Badge, Card, PageHeader, buttonClass } from "@/components/ui";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { EventStatusBadge } from "@/components/admin/event-status";
 import { ConfirmButton } from "@/components/admin/confirm-button";
@@ -51,9 +53,29 @@ type AppRow = {
 
 export default function DayPage({ params }: PageProps<"/[lang]/admin/days/[dayId]">) {
   return (
-    <Suspense fallback={<div className="h-96 animate-pulse rounded-3xl bg-card" />}>
+    <Suspense fallback={<DaySkeleton />}>
       <DayContent params={params} />
     </Suspense>
+  );
+}
+
+/** Shaped like the page: back link, header, then applications beside the slot list. */
+function DaySkeleton() {
+  return (
+    <>
+      <Bone className="mb-3 h-4 w-40" />
+      <HeaderSkeleton />
+      <div className="grid gap-8 xl:grid-cols-[1fr_1.15fr]">
+        <div>
+          <TitleSkeleton />
+          <RowsSkeleton rows={3} />
+        </div>
+        <div>
+          <TitleSkeleton />
+          <RowsSkeleton rows={6} avatar={false} />
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -70,11 +92,12 @@ function ranges(indexes: number[], minutes: number) {
 }
 
 async function DayContent({ params }: { params: PageProps<"/[lang]/admin/days/[dayId]">["params"] }) {
-  const [, { dayId }, { locale, t, tag }] = await Promise.all([requireLeader(), params, getI18n()]);
+  const [{ dayId }, { locale, t, tag }, supabase] = await Promise.all([params, getI18n(), createClient()]);
   const dt = t.admin.day;
-  const supabase = await createClient();
 
-  const [{ data: dayData }, { data: slotData }, { data: appData }] = await Promise.all([
+  // The leader check runs alongside the three queries (RLS protects the data either way).
+  const [, { data: dayData }, { data: slotData }, { data: appData }] = await Promise.all([
+    requireLeader(),
     supabase
       .from("event_days")
       .select("id, day_number, date, position, slot_minutes, event:kvk_events(id, title, status)")
@@ -144,7 +167,13 @@ async function DayContent({ params }: { params: PageProps<"/[lang]/admin/days/[d
             <Card className="overflow-hidden">
               <ul className="divide-y divide-border">
                 {sortedApps.map((a) => (
-                  <li key={a.id} className={clsx("p-4 sm:p-5", a.status === "rejected" && "opacity-60")}>
+                  <li
+                    key={a.id}
+                    className={clsx(
+                      "p-4 transition-opacity sm:p-5 has-[[aria-busy=true]]:opacity-60",
+                      a.status === "rejected" && "opacity-60",
+                    )}
+                  >
                     <div className="flex flex-wrap items-start gap-3">
                       <AllianceAvatar tag={a.profile.alliance_tag} size={44} />
                       <div className="min-w-0 flex-1">
@@ -198,9 +227,9 @@ async function DayContent({ params }: { params: PageProps<"/[lang]/admin/days/[d
             <div className="ml-auto flex items-center gap-2">
               <form action={autoFillDay}>
                 <input type="hidden" name="dayId" value={day.id} />
-                <Button type="submit" size="sm" disabled={candidates.length === 0}>
+                <PendingButton className={buttonClass("primary", "sm")} disabled={candidates.length === 0}>
                   <Sparkles className="size-4" aria-hidden /> {dt.autofill}
-                </Button>
+                </PendingButton>
               </form>
               <form action={clearDay}>
                 <input type="hidden" name="dayId" value={day.id} />
@@ -247,15 +276,14 @@ function ReviewButton({
     <form action={reviewApplication}>
       <input type="hidden" name="applicationId" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
+      <PendingButton
         className={clsx(
           "h-9 cursor-pointer rounded-full px-3.5 text-sm font-medium transition-colors",
           primary ? "bg-primary text-on-primary hover:bg-primary-hover" : "text-muted hover:bg-white/5 hover:text-fg",
         )}
       >
         {label}
-      </button>
+      </PendingButton>
     </form>
   );
 }

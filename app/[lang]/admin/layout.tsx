@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Container, Eyebrow } from "@/components/ui";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminSidebar, AdminSidebarFallback } from "@/components/admin/admin-sidebar";
 import { getI18n } from "@/lib/i18n/server";
 
 export default async function AdminLayout({ children }: LayoutProps<"/[lang]/admin">) {
@@ -12,7 +12,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/[lang]/adm
         <aside className="mb-8 lg:mb-0">
           <Eyebrow className="mb-4 hidden lg:block">{t.admin.eyebrow}</Eyebrow>
           <div className="lg:sticky lg:top-24">
-            <Suspense fallback={<div className="h-44 animate-pulse rounded-xl bg-card lg:h-80" />}>
+            <Suspense fallback={<AdminSidebarFallback locale={locale} t={t} />}>
               <AdminSidebar locale={locale} t={t} />
             </Suspense>
           </div>

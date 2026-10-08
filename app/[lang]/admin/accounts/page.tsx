@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Suspense } from "react";
 import clsx from "clsx";
-import { Badge, Card, PageHeader } from "@/components/ui";
 import { AllianceAvatar } from "@/components/alliance-banner";
+import { PendingButton } from "@/components/pending-button";
+import { QueryTabs, TabList } from "@/components/query-tabs";
+import { RowsSkeleton } from "@/components/skeleton";
+import { Badge, Card, PageHeader } from "@/components/ui";
 import { requireLeader } from "@/lib/auth-guards";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
@@ -20,59 +22,95 @@ export async function generateMetadata(): Promise<Metadata> {
 const STATUSES: AccountStatus[] = ["pending", "approved", "rejected"];
 const ROLES: UserRole[] = ["player", "leader", "admin"];
 
-export default async function AccountsPage({ searchParams }: PageProps<"/[lang]/admin/accounts">) {
-  const { t } = await getI18n();
+export default async function AccountsPage({
+  searchParams,
+}: PageProps<"/[lang]/admin/accounts">) {
+  const { locale, t } = await getI18n();
+  const a = t.admin.accounts;
+  const tabs = STATUSES.map((s) => ({ value: s, label: a.tabs[s] }));
+  const href = localePath(locale, "/admin/accounts");
   return (
     <>
-      <PageHeader eyebrow={t.admin.nav.groups.players} title={t.admin.accounts.title}>{t.admin.accounts.intro}</PageHeader>
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
-        <AccountsList searchParams={searchParams} />
+      <PageHeader eyebrow={t.admin.nav.groups.players} title={a.title}>
+        {a.intro}
+      </PageHeader>
+      {/* One loading boundary for tabs and list; the tab row shows (unhighlighted) at once. */}
+      <Suspense
+        fallback={
+          <>
+            <TabList
+              tabs={tabs}
+              active={null}
+              href={href}
+              param="status"
+              label={a.tabsLabel}
+            />
+            <RowsSkeleton rows={3} />
+          </>
+        }
+      >
+        <AccountsList searchParams={searchParams} tabs={tabs} href={href} />
       </Suspense>
     </>
   );
 }
 
-async function AccountsList({ searchParams }: { searchParams: PageProps<"/[lang]/admin/accounts">["searchParams"] }) {
-  const [leader, params, { locale, t, tag }] = await Promise.all([requireLeader(), searchParams, getI18n()]);
+async function AccountsList({
+  searchParams,
+  tabs,
+  href,
+}: {
+  searchParams: PageProps<"/[lang]/admin/accounts">["searchParams"];
+  tabs: { value: string; label: string }[];
+  href: string;
+}) {
+  const [params, { t, tag }, supabase] = await Promise.all([
+    searchParams,
+    getI18n(),
+    createClient(),
+  ]);
   const status = STATUSES.find((s) => s === params.status) ?? "pending";
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("status", status)
-    .order("created_at", { ascending: status === "pending" });
+  // The leader check and the list load together; RLS already limits the list to leaders.
+  const [leader, { data }] = await Promise.all([
+    requireLeader(),
+    supabase
+      .from("profiles")
+      .select("*")
+      .eq("status", status)
+      .order("created_at", { ascending: status === "pending" }),
+  ]);
   const profiles = (data ?? []) as Profile[];
 
   return (
-    <>
-      <div className="mb-6 flex gap-2" role="tablist" aria-label={t.admin.accounts.tabsLabel}>
-        {STATUSES.map((s) => (
-          <Link
-            key={s}
-            href={`${localePath(locale, "/admin/accounts")}?status=${s}`}
-            role="tab"
-            aria-selected={s === status}
-            className={clsx(
-              "rounded-full px-4 py-2 text-sm transition-colors",
-              s === status ? "bg-primary text-on-primary" : "bg-card text-muted hover:text-fg",
-            )}
-          >
-            {t.admin.accounts.tabs[s]}
-          </Link>
-        ))}
-      </div>
-
+    <QueryTabs
+      param="status"
+      tabs={tabs}
+      current={status}
+      href={href}
+      label={t.admin.accounts.tabsLabel}
+      loading={<RowsSkeleton rows={3} />}
+    >
       {profiles.length === 0 ? (
-        <Card className="p-10 text-center text-muted">{t.admin.accounts.empty}</Card>
+        <Card className="p-10 text-center text-muted">
+          {t.admin.accounts.empty}
+        </Card>
       ) : (
         <Card className="overflow-hidden">
           <ul className="divide-y divide-border">
             {profiles.map((p) => (
-              <li key={p.id} className="flex flex-wrap items-center gap-4 p-4 sm:p-5">
+              // Rows dim while one of their buttons is working.
+              <li
+                key={p.id}
+                className="flex flex-wrap items-center gap-4 p-4 transition-opacity sm:p-5 has-[[aria-busy=true]]:opacity-60"
+              >
                 <AllianceAvatar tag={p.alliance_tag} size={48} />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
-                    {p.alliance_tag && <span className="mr-1.5 font-mono text-xs text-gold">[{p.alliance_tag}]</span>}
+                    {p.alliance_tag && (
+                      <span className="mr-1.5 font-mono text-xs text-gold">
+                        [{p.alliance_tag}]
+                      </span>
+                    )}
                     {p.ingame_name}
                     {p.role !== "player" && (
                       <Badge tone="gold" className="ml-2 align-middle">
@@ -83,50 +121,74 @@ async function AccountsList({ searchParams }: { searchParams: PageProps<"/[lang]
                   <p className="font-mono text-sm text-muted">
                     {fmt(t.common.id, { id: p.game_id })} ·{" "}
                     {fmt(t.admin.accounts.joined, {
-                      date: new Date(p.created_at).toLocaleDateString(tag, { timeZone: "UTC" }),
+                      date: new Date(p.created_at).toLocaleDateString(tag, {
+                        timeZone: "UTC",
+                      }),
                     })}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {status !== "approved" && (
-                    <StatusButton id={p.id} status="approved" label={t.admin.accounts.approve} tone="primary" />
+                    <StatusButton
+                      id={p.id}
+                      status="approved"
+                      label={t.admin.accounts.approve}
+                      tone="primary"
+                    />
                   )}
                   {status !== "rejected" && p.id !== leader.id && (
-                    <StatusButton id={p.id} status="rejected" label={t.admin.accounts.reject} tone="ghost" />
+                    <StatusButton
+                      id={p.id}
+                      status="rejected"
+                      label={t.admin.accounts.reject}
+                      tone="ghost"
+                    />
                   )}
                   {status === "rejected" && (
-                    <StatusButton id={p.id} status="pending" label={t.admin.accounts.moveToWaiting} tone="ghost" />
+                    <StatusButton
+                      id={p.id}
+                      status="pending"
+                      label={t.admin.accounts.moveToWaiting}
+                      tone="ghost"
+                    />
                   )}
-                  {leader.role === "admin" && status === "approved" && p.id !== leader.id && (
-                    <form action={setAccountRole} className="flex items-center gap-2">
-                      <input type="hidden" name="profileId" value={p.id} />
-                      <label className="sr-only" htmlFor={`role-${p.id}`}>
-                        {fmt(t.admin.accounts.roleFor, { name: p.ingame_name })}
-                      </label>
-                      <select
-                        id={`role-${p.id}`}
-                        name="role"
-                        defaultValue={p.role}
-                        className="h-9 rounded-full bg-bg-elevated px-3 text-sm shadow-[inset_0_0_0_1px_var(--border-strong)]"
+                  {leader.role === "admin" &&
+                    status === "approved" &&
+                    p.id !== leader.id && (
+                      <form
+                        action={setAccountRole}
+                        className="flex items-center gap-2"
                       >
-                        {ROLES.map((r) => (
-                          <option key={r} value={r}>
-                            {t.admin.accounts.roles[r]}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" className="h-9 cursor-pointer rounded-full px-3 text-sm text-gold-soft hover:bg-white/5">
-                        {t.admin.accounts.saveRole}
-                      </button>
-                    </form>
-                  )}
+                        <input type="hidden" name="profileId" value={p.id} />
+                        <label className="sr-only" htmlFor={`role-${p.id}`}>
+                          {fmt(t.admin.accounts.roleFor, {
+                            name: p.ingame_name,
+                          })}
+                        </label>
+                        <select
+                          id={`role-${p.id}`}
+                          name="role"
+                          defaultValue={p.role}
+                          className="h-9 rounded-full bg-bg-elevated px-3 text-sm shadow-[inset_0_0_0_1px_var(--border-strong)]"
+                        >
+                          {ROLES.map((r) => (
+                            <option key={r} value={r}>
+                              {t.admin.accounts.roles[r]}
+                            </option>
+                          ))}
+                        </select>
+                        <PendingButton className="h-9 cursor-pointer rounded-full px-3 text-sm text-gold-soft hover:bg-white/5">
+                          {t.admin.accounts.saveRole}
+                        </PendingButton>
+                      </form>
+                    )}
                 </div>
               </li>
             ))}
           </ul>
         </Card>
       )}
-    </>
+    </QueryTabs>
   );
 }
 
@@ -145,15 +207,16 @@ function StatusButton({
     <form action={setAccountStatus}>
       <input type="hidden" name="profileId" value={id} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
+      <PendingButton
         className={clsx(
           "h-9 cursor-pointer rounded-full px-4 text-sm font-medium transition-colors",
-          tone === "primary" ? "bg-primary text-on-primary hover:bg-primary-hover" : "text-muted hover:bg-white/5 hover:text-fg",
+          tone === "primary"
+            ? "bg-primary text-on-primary hover:bg-primary-hover"
+            : "text-muted hover:bg-white/5 hover:text-fg",
         )}
       >
         {label}
-      </button>
+      </PendingButton>
     </form>
   );
 }
