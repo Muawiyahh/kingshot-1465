@@ -24,7 +24,7 @@ export default async function AccountsPage({ searchParams }: PageProps<"/[lang]/
   const { t } = await getI18n();
   return (
     <>
-      <PageHeader title={t.admin.accounts.title}>{t.admin.accounts.intro}</PageHeader>
+      <PageHeader eyebrow={t.admin.nav.groups.players} title={t.admin.accounts.title}>{t.admin.accounts.intro}</PageHeader>
       <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
         <AccountsList searchParams={searchParams} />
       </Suspense>

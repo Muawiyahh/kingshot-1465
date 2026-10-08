@@ -65,7 +65,7 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
           {e.allEvents}
         </Link>
       </p>
-      <PageHeader title={event.title}>
+      <PageHeader eyebrow={t.admin.nav.groups.kvk} title={event.title}>
         <span className="mr-3">{fmt(e.day1Is, { date: formatDay(event.starts_on, tag) })}</span>
         <EventStatusBadge status={event.status} t={t} />
       </PageHeader>

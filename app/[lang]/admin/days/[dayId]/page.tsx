@@ -125,7 +125,7 @@ async function DayContent({ params }: { params: PageProps<"/[lang]/admin/days/[d
           ← {day.event.title}
         </Link>
       </p>
-      <PageHeader title={`${fmt(t.common.day, { n: day.day_number })} · ${positionLabel(day.position, t)}`}>
+      <PageHeader eyebrow={t.admin.nav.groups.kvk} title={`${fmt(t.common.day, { n: day.day_number })} · ${positionLabel(day.position, t)}`}>
         <span className="mr-3">
           {formatDay(day.date, tag)} · {dt.allTimesUtc}
         </span>

@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
 import { LOCALE_COOKIE, isLocale, localePath, matchAcceptLanguage, splitLocale } from "@/lib/i18n/config";
 
-const PROTECTED = ["/account", "/apply", "/admin"];
+const PROTECTED = ["/account", "/admin"];
 
 /**
  * 1. Adds a language prefix to URLs that lack one (saved choice, else browser language).
@@ -29,6 +29,13 @@ export async function proxy(request: NextRequest) {
     }
     return res;
   };
+
+  // Applying moved into the account area; keep old links and bookmarks working.
+  if (rest === "/apply") {
+    const url = request.nextUrl.clone();
+    url.pathname = localePath(locale, "/account/appointments");
+    return rememberLocale(NextResponse.redirect(url));
+  }
 
   let response = NextResponse.next({ request });
   if (!supabaseConfigured) return rememberLocale(response);

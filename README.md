@@ -16,6 +16,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0001_init.sql`
    - `0002_kingdom_settings.sql`
    - `0003_profile_language.sql`
+   - `0004_messages.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -32,6 +33,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 ## Customise
 
 - **Kingdom text, stats and council contacts:** `lib/site.ts`
+- **King and server open date:** **Admin → Kingdom → Current King** and **Server**
 - **Discord link:** `discordUrl` in `lib/site.ts`
 - **Colours and fonts:** `app/globals.css`, documented in `design-system/MASTER.md`
 
@@ -48,14 +50,29 @@ The site is in English, German, Simplified and Traditional Chinese, French, Span
 1. **Players sign up** with their game ID, in-game name and a password. New accounts are *pending*.
 2. **Leaders approve accounts** in **Admin → Accounts**, after checking the game ID in-game.
 3. **Leaders create an event** in **Admin → KvK events**: the Day 1 date, slot length, and one row per day and position (e.g. Day 1 · Construction). The site generates the time slots, which are UTC.
-4. **Leaders open applications.** Approved players then use **Apply** to pick positions, preferred UTC slots (or "any time") and their speedups.
+4. **Leaders open applications.** Approved players then use **Account → Castle appointments** to pick positions, preferred UTC slots (or "any time") and their speedups.
 5. **Leaders review and assign** on each day's page:
    - accept or reject applications;
    - assign slots from the dropdowns (★ marks players who asked for that time), or press **Auto-fill**, which gives the highest speedups their earliest free preferred slot;
    - lock slots to protect them from auto-fill and changes.
-6. **Leaders publish.** The schedule appears on **/positions** and updates live for everyone viewing it. Players also see their slot on **Account**.
+6. **Leaders publish.** The schedule appears on **/positions** and updates live for everyone viewing it. Players also see their slot under **Account → Castle appointments**.
 
 Each event moves through four stages: Draft → Applications open → Applications closed → Published. Leaders can move it back to an earlier stage at any time.
+
+## Player account
+
+Signed-in players have four sections under **Account**:
+
+- **Overview:** account status and a card for each section.
+- **Castle appointments:** apply for open KvK positions and follow every application and assigned slot.
+- **Messages:** a WhatsApp-style chat with the kingdom's leaders and admins. Every approved leader and admin is listed; new messages arrive live, and the header shows a red dot when something is unread.
+- **Profile:** change in-game name and alliance. The game ID can't be changed.
+
+Leaders and admins answer players from the same **Messages** page, also linked from **Admin → Players → Messages**. Messaging rules live in the database (`0004_messages.sql`):
+
+- only the two people in a conversation can read it, and leaders can't read other people's chats;
+- players can write only to approved leaders and admins, and rejected accounts can't write at all;
+- messages can't be edited or deleted, and each sender is limited to 20 messages a minute.
 
 ## Security
 

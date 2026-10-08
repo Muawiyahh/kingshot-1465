@@ -21,7 +21,7 @@ export async function SiteFooter() {
           <Link href={localePath(locale, "/positions")} className="hover:text-fg">
             {t.nav.positions}
           </Link>
-          <Link href={localePath(locale, "/apply")} className="hover:text-fg">
+          <Link href={localePath(locale, "/account/appointments")} className="hover:text-fg">
             {t.nav.apply}
           </Link>
           {site.discordUrl && (

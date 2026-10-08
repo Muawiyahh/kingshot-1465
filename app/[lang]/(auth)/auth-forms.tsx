@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
-import clsx from "clsx";
-import { AllianceAvatar } from "@/components/alliance-banner";
+import { useActionState } from "react";
+import { AlliancePicker } from "@/components/alliance-picker";
 import { useI18n } from "@/components/i18n-provider";
 import { Field, Notice, inputClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
-import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { LOCALES, LOCALE_INFO, localePath } from "@/lib/i18n/config";
 import { signIn, signUp } from "./actions";
 
@@ -42,49 +40,6 @@ export function LoginForm({ next }: { next?: string }) {
         </Link>
       </p>
     </form>
-  );
-}
-
-/** Banner tiles as radio buttons; the chosen banner becomes the player's profile picture. */
-function AlliancePicker() {
-  const { t } = useI18n();
-  const [selected, setSelected] = useState<string | null>(null);
-  const options = [...ALLIANCE_TAGS, ""];
-  return (
-    <fieldset>
-      <legend className="mb-1 text-sm font-medium text-fg">{t.auth.alliance}</legend>
-      <p className="mb-3 text-xs text-muted">{t.auth.allianceHint}</p>
-      <div className="grid grid-cols-4 gap-2">
-        {options.map((tag) => {
-          const on = selected === tag;
-          return (
-            <label
-              key={tag || "none"}
-              className={clsx(
-                "flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl px-1 py-2.5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-gold",
-                on
-                  ? "bg-gold/10 shadow-[inset_0_0_0_1.5px_var(--gold)]"
-                  : "bg-bg-elevated shadow-[inset_0_0_0_1px_var(--border)] hover:bg-card-hover",
-              )}
-            >
-              <input
-                type="radio"
-                name="alliance"
-                value={tag}
-                checked={on}
-                onChange={() => setSelected(tag)}
-                required
-                className="sr-only"
-              />
-              <AllianceAvatar tag={tag} size={56} />
-              <span className={clsx("font-mono text-[11px]", on ? "text-gold-soft" : "text-muted")}>
-                {tag || t.common.none}
-              </span>
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
   );
 }
 

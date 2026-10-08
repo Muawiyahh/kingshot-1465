@@ -14,7 +14,7 @@ export async function SiteHeader() {
   const links = [
     { href: localePath(locale, "/"), label: t.nav.home },
     { href: localePath(locale, "/positions"), label: t.nav.positions },
-    { href: localePath(locale, "/apply"), label: t.nav.apply },
+    { href: localePath(locale, "/account/appointments"), label: t.nav.apply },
   ];
 
   return (

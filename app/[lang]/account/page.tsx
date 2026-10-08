@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { accountGroups } from "@/components/account-sidebar";
 import { AllianceBanner } from "@/components/alliance-banner";
-import { Badge, ButtonLink, Card, Container, Eyebrow, Notice } from "@/components/ui";
+import { SECTION_ICONS } from "@/components/section-icons";
+import { ButtonLink, Card, Eyebrow, Notice } from "@/components/ui";
 import { requireProfile } from "@/lib/auth-guards";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
-import type { Messages } from "@/lib/i18n/messages";
-import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
+import { getUnreadCount } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
-import { formatDay, positionLabel, slotLabel } from "@/lib/kvk";
-import type { ApplicationStatus } from "@/lib/types";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -21,59 +20,39 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function AccountPage({ searchParams }: PageProps<"/[lang]/account">) {
   return (
-    <Container className="max-w-3xl py-14 sm:py-20">
-      <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
-        <AccountContent searchParams={searchParams} />
-      </Suspense>
-    </Container>
+    <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
+      <Overview searchParams={searchParams} />
+    </Suspense>
   );
 }
 
-type AppRow = {
-  id: string;
-  status: ApplicationStatus;
-  speedup_days: number;
-  preferred_slots: number[];
-  anytime: boolean;
-  day: {
-    id: string;
-    day_number: number;
-    date: string;
-    position: string;
-    slot_minutes: number;
-    event: { title: string; status: string };
-  };
-};
-
-async function AccountContent({ searchParams }: { searchParams: PageProps<"/[lang]/account">["searchParams"] }) {
-  const [profile, { welcome }, { locale, t, tag }] = await Promise.all([
+async function Overview({ searchParams }: { searchParams: PageProps<"/[lang]/account">["searchParams"] }) {
+  const [profile, { welcome }, { locale, t }] = await Promise.all([
     requireProfile("/account"),
     searchParams,
     getI18n(),
   ]);
   const supabase = await createClient();
-
-  const [{ data: apps }, { data: mySlots }] = await Promise.all([
-    supabase
-      .from("applications")
-      .select(
-        "id, status, speedup_days, preferred_slots, anytime, day:event_days(id, day_number, date, position, slot_minutes, event:kvk_events(title, status))",
-      )
-      .eq("profile_id", profile.id)
-      .order("created_at", { ascending: false }),
-    // RLS only returns slots of published events, so drafts stay private until leaders publish.
-    supabase.from("slots").select("day_id, slot_index").eq("profile_id", profile.id),
+  const [applications, unread] = await Promise.all([
+    supabase.from("applications").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
+    getUnreadCount(profile.id),
   ]);
-  const applications = (apps ?? []) as unknown as AppRow[];
-  const assigned = new Map(
-    ((mySlots ?? []) as { day_id: string; slot_index: number }[]).map((s) => [s.day_id, s.slot_index]),
-  );
 
   const statusBody = {
     approved: t.account.approvedBody,
     pending: t.account.pendingBody,
     rejected: t.account.rejectedBody,
   }[profile.status];
+
+  // What each section holds right now, shown on its card.
+  const current: Partial<Record<string, string>> = {
+    appointments: fmt(t.account.applicationsChip, { n: applications.count ?? 0 }),
+    messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
+    profile: `${profile.ingame_name}${profile.alliance_tag ? ` [${profile.alliance_tag}]` : ""}`,
+  };
+  const sections = accountGroups(t)
+    .flatMap((g) => g.items)
+    .filter((item) => item.key !== "overview");
 
   return (
     <>
@@ -101,7 +80,7 @@ async function AccountContent({ searchParams }: { searchParams: PageProps<"/[lan
         </div>
       )}
 
-      <Card className="mb-8 flex flex-wrap items-center gap-4 p-6">
+      <Card className="flex flex-wrap items-center gap-4 p-6">
         {profile.status === "approved" && <CheckCircle2 className="size-6 text-success" aria-hidden />}
         {profile.status === "pending" && <Clock className="size-6 text-warning" aria-hidden />}
         {profile.status === "rejected" && <XCircle className="size-6 text-danger" aria-hidden />}
@@ -109,55 +88,38 @@ async function AccountContent({ searchParams }: { searchParams: PageProps<"/[lan
           <p className="font-semibold">{t.status.account[profile.status]}</p>
           <p className="text-sm text-muted">{statusBody}</p>
         </div>
-        {profile.status === "approved" && <ButtonLink href={localePath(locale, "/apply")}>{t.account.applyCta}</ButtonLink>}
+        {profile.status === "approved" && (
+          <ButtonLink href={localePath(locale, "/account/appointments")}>{t.account.applyCta}</ButtonLink>
+        )}
       </Card>
 
-      <h2 className="mb-4 font-display text-xl font-semibold">{t.account.applicationsTitle}</h2>
-      {applications.length === 0 ? (
-        <Card className="p-8 text-center text-muted">{t.account.none}</Card>
-      ) : (
-        <ul className="space-y-3">
-          {applications.map((a) => {
-            const slotIndex = assigned.get(a.day.id);
-            return (
-              <li key={a.id}>
-                <Card className="flex flex-wrap items-center gap-4 p-5">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {fmt(t.common.day, { n: a.day.day_number })} · {positionLabel(a.day.position, t)}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {a.day.event.title} · {formatDay(a.day.date, tag)} ·{" "}
-                      {fmt(t.account.speedups, { n: Number(a.speedup_days).toLocaleString(tag) })}
-                    </p>
-                    {slotIndex !== undefined && (
-                      <p className="mt-1 font-mono text-sm text-gold-soft">
-                        {fmt(t.account.yourSlot, { slot: slotLabel(slotIndex, a.day.slot_minutes) })}
-                      </p>
-                    )}
-                  </div>
-                  <StatusBadge status={a.status} t={t} />
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <p className="mt-8 text-sm text-muted">
-        {rich(t.account.seeSchedule, {
-          link: (
-            <Link href={localePath(locale, "/positions")} className="text-gold-soft hover:underline">
-              {t.account.positionsLink}
+      <h2 className="mt-12 mb-4 font-display text-xl font-semibold">{t.account.manage}</h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {sections.map((item) => {
+          const Icon = SECTION_ICONS[item.key];
+          return (
+            <Link key={item.key} href={localePath(locale, item.href)} className="group rounded-3xl">
+              <Card className="flex h-full items-start gap-4 p-5 transition-colors group-hover:bg-card-hover">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-[inset_0_0_0_1px_rgba(214,58,68,0.3)]">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-medium">{item.label}</span>
+                  <span className="mt-1 block text-sm text-muted">
+                    {t.account.cards[item.key as keyof typeof t.account.cards]}
+                  </span>
+                  {current[item.key] && (
+                    <span className="mt-3 inline-block max-w-full truncate rounded-full bg-white/5 px-2.5 py-1 font-mono text-xs text-fg">
+                      {current[item.key]}
+                    </span>
+                  )}
+                </span>
+                <ArrowRight className="mt-1 size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </Card>
             </Link>
-          ),
+          );
         })}
-      </p>
+      </div>
     </>
   );
-}
-
-function StatusBadge({ status, t }: { status: ApplicationStatus; t: Messages }) {
-  if (status === "accepted") return <Badge tone="green">{t.status.application.accepted}</Badge>;
-  if (status === "rejected") return <Badge tone="red">{t.status.application.rejected}</Badge>;
-  return <Badge tone="amber">{t.status.application.pending}</Badge>;
 }

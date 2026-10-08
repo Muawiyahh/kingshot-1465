@@ -22,7 +22,7 @@ export default async function EventsPage() {
   const { t } = await getI18n();
   return (
     <>
-      <PageHeader title={t.admin.events.title}>{t.admin.events.intro}</PageHeader>
+      <PageHeader eyebrow={t.admin.nav.groups.kvk} title={t.admin.events.title}>{t.admin.events.intro}</PageHeader>
       <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-card" />}>
         <EventsContent />
       </Suspense>

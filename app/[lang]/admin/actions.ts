@@ -57,41 +57,48 @@ export async function setAccountRole(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Kingdom settings
+// Kingdom: King and server
 // ---------------------------------------------------------------------------
 
-const settingsSchema = z.object({
+const kingSchema = z.object({
   kingName: z
     .string()
     .trim()
     .max(40, "kingNameTooLong" satisfies ErrorKey),
   kingAlliance: z.union([z.enum(ALLIANCE_TAGS), z.literal("")]),
+});
+
+const serverSchema = z.object({
   serverOpenedOn: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
 });
 
-export async function updateSettings(_prev: ActionState, formData: FormData): Promise<ActionState> {
+/** Saves some of the kingdom_settings columns and refreshes the homepage cards. */
+async function saveSettings(fields: Record<string, string | null>, auditAction: string): Promise<ActionState> {
   const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
-  const parsed = settingsSchema.safeParse({
+  const values = { ...fields, updated_by: profile.id };
+  const { data, error } = await supabase.from("kingdom_settings").update(values).eq("id", 1).select("id");
+  if (error || !data?.length) return { error: t.errors.settingsFailed };
+  await audit(auditAction, "kingdom", values);
+  refresh();
+  return { ok: true, message: t.success.settingsSaved };
+}
+
+export async function updateKing(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getActionI18n();
+  const parsed = kingSchema.safeParse({
     kingName: formData.get("kingName") ?? "",
     kingAlliance: formData.get("kingAlliance") ?? "",
-    serverOpenedOn: formData.get("serverOpenedOn") ?? "",
   });
   if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
   const v = parsed.data;
+  return saveSettings({ king_name: v.kingName || null, king_alliance: v.kingAlliance || null }, "king.update");
+}
 
-  const fields = {
-    king_name: v.kingName || null,
-    king_alliance: v.kingAlliance || null,
-    server_opened_on: v.serverOpenedOn || null,
-    updated_by: profile.id,
-  };
-  const { data, error } = await supabase.from("kingdom_settings").update(fields).eq("id", 1).select("id");
-  if (error || !data?.length) {
-    return { error: t.errors.settingsFailed };
-  }
-  await audit("settings.update", "kingdom", fields);
-  refresh();
-  return { ok: true, message: t.success.settingsSaved };
+export async function updateServer(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getActionI18n();
+  const parsed = serverSchema.safeParse({ serverOpenedOn: formData.get("serverOpenedOn") ?? "" });
+  if (!parsed.success) return { error: t.errors.generic };
+  return saveSettings({ server_opened_on: parsed.data.serverOpenedOn || null }, "server.update");
 }
 
 // ---------------------------------------------------------------------------

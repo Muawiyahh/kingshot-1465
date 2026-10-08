@@ -25,7 +25,7 @@ export default async function HomePage() {
       <Hero
         actions={
           <>
-            <ButtonLink href={href("/apply")} size="lg">
+            <ButtonLink href={href("/account/appointments")} size="lg">
               {t.home.applyCta}
               <ArrowRight className="size-4" aria-hidden />
             </ButtonLink>

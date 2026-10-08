@@ -81,3 +81,24 @@ export type KingdomSettings = {
 
 /** Result shape returned by Server Actions to useActionState forms. */
 export type ActionState = { ok?: boolean; error?: string; message?: string } | undefined;
+
+/** Someone the signed-in user can message, with the latest message between them (0004_messages.sql). */
+export type Contact = {
+  partner_id: string;
+  ingame_name: string;
+  alliance_tag: string | null;
+  role: UserRole;
+  last_body: string | null;
+  last_at: string | null;
+  last_from_me: boolean | null;
+  unread: number;
+};
+
+export type ChatMessage = {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
+};
