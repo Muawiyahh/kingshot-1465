@@ -149,3 +149,32 @@ select option {
   background: #1a1416;
   color: #f5eeee;
 }
+
+/* Height of the sticky site header, so other sticky bars can sit right under it. */
+:root {
+  --site-header-h: 110px; /* bar + the phone's tab row */
+}
+@media (width >= 48rem) {
+  :root {
+    --site-header-h: 65px;
+  }
+}
+
+/* KvK drawer: slides in from the right (tablets and up) or up from the bottom (phones). */
+@keyframes drawer-in-side {
+  from { transform: translateX(2rem); opacity: 0; }
+}
+@keyframes drawer-in-up {
+  from { transform: translateY(2rem); opacity: 0; }
+}
+.kvk-drawer[open] {
+  animation: drawer-in-up 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (width >= 48rem) {
+  .kvk-drawer[open] {
+    animation-name: drawer-in-side;
+  }
+}
+html[data-drawer-open] {
+  overflow: hidden;
+}

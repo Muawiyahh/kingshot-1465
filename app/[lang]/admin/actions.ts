@@ -5,13 +5,14 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { addDays, slotCount } from "@/lib/kvk";
+import { planAutofill, type FillSlot } from "@/lib/autofill";
+import { addDays, positionLabel, slotCount } from "@/lib/kvk";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { getActionI18n } from "@/lib/i18n/action";
 import type { Messages } from "@/lib/i18n/messages";
-import type { ActionState, EventStatus, Profile } from "@/lib/types";
+import type { ActionState, ApplicationStatus, EventStatus, FillReport, FillState, Profile } from "@/lib/types";
 
 type ErrorKey = keyof Messages["errors"];
 
@@ -196,28 +197,49 @@ export async function deleteEvent(formData: FormData) {
   redirect(localePath(locale, "/admin/events"));
 }
 
+
 // ---------------------------------------------------------------------------
 // Applications
 // ---------------------------------------------------------------------------
 
-export async function reviewApplication(formData: FormData) {
-  const { profile, supabase, audit } = await leaderContext();
-  const id = uuid.parse(formData.get("applicationId"));
-  const status = z.enum(["pending", "accepted", "rejected"]).parse(formData.get("status"));
+const reviewStatus = z.enum(["pending", "accepted", "rejected"]);
 
-  const { data: app } = await supabase
-    .from("applications")
-    .update({ status, reviewed_by: profile.id })
-    .eq("id", id)
-    .select("profile_id, day_id")
-    .single();
+/**
+ * Accepts, rejects, or undoes a review (back to pending). Anyone who stops being accepted loses
+ * their slot that day, unless it's locked: then nothing changes and the leader is told to unlock it.
+ * Undo clears the reviewer so the player can edit their application again.
+ */
+export async function reviewApplication(applicationId: string, nextStatus: ApplicationStatus): Promise<ActionState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(applicationId);
+  const status = reviewStatus.safeParse(nextStatus);
+  if (!id.success || !status.success) return { error: t.errors.reviewFailed };
 
-  // Someone who is no longer accepted shouldn't keep a slot.
-  if (app && status !== "accepted") {
-    await supabase.from("slots").update({ profile_id: null }).eq("day_id", app.day_id).eq("profile_id", app.profile_id);
+  const { data: app } = await supabase.from("applications").select("profile_id, day_id").eq("id", id.data).maybeSingle();
+  if (!app) return { error: t.errors.reviewFailed };
+
+  let heldSlot: { id: string; locked: boolean } | null = null;
+  if (status.data !== "accepted") {
+    const { data } = await supabase
+      .from("slots")
+      .select("id, locked")
+      .eq("day_id", app.day_id)
+      .eq("profile_id", app.profile_id)
+      .maybeSingle();
+    heldSlot = data;
+    if (heldSlot?.locked) return { error: t.errors.unlockToReject };
   }
-  await audit("application.review", id, { status });
+
+  const { error } = await supabase
+    .from("applications")
+    .update({ status: status.data, reviewed_by: status.data === "pending" ? null : profile.id })
+    .eq("id", id.data);
+  if (error) return { error: t.errors.reviewFailed };
+  if (heldSlot) await supabase.from("slots").update({ profile_id: null }).eq("id", heldSlot.id).eq("locked", false);
+
+  await audit("application.review", id.data, { status: status.data });
   refresh();
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
@@ -254,61 +276,118 @@ export async function assignSlot(slotId: string, profileId: string | null): Prom
   return { ok: true };
 }
 
-export async function toggleSlotLock(formData: FormData) {
-  const { supabase, audit } = await leaderContext();
-  const id = uuid.parse(formData.get("slotId"));
-  const { data: slot } = await supabase.from("slots").select("locked").eq("id", id).single();
-  if (!slot) return;
-  await supabase.from("slots").update({ locked: !slot.locked }).eq("id", id);
-  await audit("slot.lock", id, { locked: !slot.locked });
+export async function toggleSlotLock(slotId: string): Promise<ActionState> {
+  const [{ supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(slotId);
+  if (!id.success) return { error: t.errors.slotNotFound };
+  const { data: slot } = await supabase.from("slots").select("locked").eq("id", id.data).maybeSingle();
+  if (!slot) return { error: t.errors.slotNotFound };
+  const { error } = await supabase.from("slots").update({ locked: !slot.locked }).eq("id", id.data);
+  if (error) return { error: t.errors.slotFailed };
+  await audit("slot.lock", id.data, { locked: !slot.locked });
   refresh();
+  return { ok: true };
 }
+
+type DayForFill = {
+  id: string;
+  day_number: number;
+  position: string;
+  slots: FillSlot[];
+  applications: {
+    profile_id: string;
+    preferred_slots: number[];
+    anytime: boolean;
+    speedup_days: number;
+    created_at: string;
+    status: string;
+    profile: { ingame_name: string } | null;
+  }[];
+};
+
+const FILL_SELECT =
+  "id, day_number, position, slots(id, slot_index, profile_id, locked), applications(profile_id, preferred_slots, anytime, speedup_days, created_at, status, profile:profiles!applications_profile_id_fkey(ingame_name))";
 
 /**
- * Fills empty, unlocked slots with accepted applicants who don't have a slot yet.
- * Highest speedups go first and get their earliest preferred free slot.
+ * Plans and saves auto-fill for some days. Each write only fills a slot that is still empty and
+ * unlocked, so if another leader changes something at the same moment the report stays truthful.
  */
-export async function autoFillDay(formData: FormData) {
-  const { supabase, audit } = await leaderContext();
-  const dayId = uuid.parse(formData.get("dayId"));
-
-  const [{ data: slots }, { data: apps }] = await Promise.all([
-    supabase.from("slots").select("id, slot_index, profile_id, locked").eq("day_id", dayId).order("slot_index"),
-    supabase
-      .from("applications")
-      .select("profile_id, preferred_slots, anytime, speedup_days, created_at")
-      .eq("day_id", dayId)
-      .eq("status", "accepted")
-      .order("speedup_days", { ascending: false })
-      .order("created_at", { ascending: true }),
-  ]);
-  if (!slots || !apps) return;
-
-  const assigned = new Set(slots.filter((s) => s.profile_id).map((s) => s.profile_id as string));
-  const free = new Map(slots.filter((s) => !s.profile_id && !s.locked).map((s) => [s.slot_index as number, s.id as string]));
-  const updates: { id: string; profile_id: string }[] = [];
-
-  for (const a of apps) {
-    if (assigned.has(a.profile_id)) continue;
-    const wanted: number[] = a.anytime ? [...free.keys()].sort((x, y) => x - y) : (a.preferred_slots as number[]);
-    const pick = wanted.find((i) => free.has(i));
-    if (pick === undefined) continue;
-    updates.push({ id: free.get(pick)!, profile_id: a.profile_id });
-    free.delete(pick);
-    assigned.add(a.profile_id);
+async function fill(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  days: DayForFill[],
+  label: (d: DayForFill) => string | null,
+) {
+  const report: FillReport = { placed: 0, skipped: [] };
+  const writes: Promise<void>[] = [];
+  for (const day of days) {
+    const plan = planAutofill(
+      day.slots,
+      day.applications
+        .filter((a) => a.status === "accepted")
+        .map((a) => ({ ...a, name: a.profile?.ingame_name ?? "?" })),
+    );
+    const where = label(day);
+    const tag = (name: string) => (where ? `${name} (${where})` : name);
+    report.skipped.push(...plan.skipped.map(tag));
+    for (const u of plan.updates) {
+      writes.push(
+        (async () => {
+          const { data } = await supabase
+            .from("slots")
+            .update({ profile_id: u.profileId })
+            .eq("id", u.slotId)
+            .is("profile_id", null)
+            .eq("locked", false)
+            .select("id");
+          if (data?.length) report.placed++;
+          else report.skipped.push(tag(u.name));
+        })(),
+      );
+    }
   }
-
-  for (const u of updates) {
-    await supabase.from("slots").update({ profile_id: u.profile_id }).eq("id", u.id);
-  }
-  await audit("day.autofill", dayId, { assigned: updates.length });
-  refresh();
+  await Promise.all(writes);
+  return report;
 }
 
-export async function clearDay(formData: FormData) {
-  const { supabase, audit } = await leaderContext();
-  const dayId = uuid.parse(formData.get("dayId"));
-  await supabase.from("slots").update({ profile_id: null }).eq("day_id", dayId).eq("locked", false);
-  await audit("day.clear", dayId);
+function fillMessage(t: Messages, report: FillReport) {
+  if (report.placed === 0 && report.skipped.length === 0) return t.kvk.leader.fillNone;
+  return fmt(t.kvk.leader.fillPlaced, { n: report.placed });
+}
+
+export async function autoFillDay(dayId: string): Promise<FillState> {
+  const [{ supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(dayId);
+  if (!id.success) return { error: t.errors.generic };
+  const { data } = await supabase.from("event_days").select(FILL_SELECT).eq("id", id.data).maybeSingle();
+  if (!data) return { error: t.errors.generic };
+  const report = await fill(supabase, [data as unknown as DayForFill], () => null);
+  await audit("day.autofill", id.data, report);
   refresh();
+  return { ok: true, message: fillMessage(t, report), report };
+}
+
+/** Auto-fills every day and position of an event in one go. */
+export async function autoFillEvent(eventId: string): Promise<FillState> {
+  const [{ supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(eventId);
+  if (!id.success) return { error: t.errors.generic };
+  const { data } = await supabase.from("event_days").select(FILL_SELECT).eq("event_id", id.data).order("day_number");
+  if (!data) return { error: t.errors.generic };
+  const days = data as unknown as DayForFill[];
+  const report = await fill(supabase, days, (d) => `${fmt(t.common.day, { n: d.day_number })} · ${positionLabel(d.position, t)}`);
+  await audit("event.autofill", id.data, report);
+  refresh();
+  return { ok: true, message: fillMessage(t, report), report };
+}
+
+/** Empties every unlocked slot of a day. */
+export async function clearDay(dayId: string): Promise<ActionState> {
+  const [{ supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(dayId);
+  if (!id.success) return { error: t.errors.generic };
+  const { error } = await supabase.from("slots").update({ profile_id: null }).eq("day_id", id.data).eq("locked", false);
+  if (error) return { error: t.errors.slotFailed };
+  await audit("day.clear", id.data);
+  refresh();
+  return { ok: true };
 }

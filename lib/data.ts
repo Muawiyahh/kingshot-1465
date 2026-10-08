@@ -27,14 +27,24 @@ export async function getLatestPublishedSchedule(): Promise<PublicScheduleRow[]>
     .maybeSingle();
   if (!latest) return [];
 
-  const { data } = await supabase
-    .from("public_schedule")
-    .select("*")
-    .eq("event_id", latest.id)
-    .order("day_number")
-    .order("position")
-    .order("slot_index");
-  return (data as PublicScheduleRow[] | null) ?? [];
+  // Supabase returns at most 1000 rows per request; a big event (7 days × 2 positions × 96 slots)
+  // has more, so read it in pages.
+  const PAGE = 1000;
+  const rows: PublicScheduleRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data } = await supabase
+      .from("public_schedule")
+      .select("*")
+      .eq("event_id", latest.id)
+      .order("day_number")
+      .order("position")
+      .order("slot_index")
+      .range(from, from + PAGE - 1);
+    const page = (data as PublicScheduleRow[] | null) ?? [];
+    rows.push(...page);
+    if (page.length < PAGE) break;
+  }
+  return rows;
 }
 
 /** Public kingdom settings (King, server open date). Null until 0002_kingdom_settings.sql has been run. */

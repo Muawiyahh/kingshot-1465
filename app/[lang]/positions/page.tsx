@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { GridSkeleton } from "@/components/kvk/grid-skeleton";
+import { PublicGrid } from "@/components/kvk/public-grid";
 import { Container, PageHeader, Notice } from "@/components/ui";
-import { ScheduleView } from "@/components/schedule-view";
+import { getUserId } from "@/lib/auth";
 import { getLatestPublishedSchedule } from "@/lib/data";
 import { getI18n } from "@/lib/i18n/server";
+import { createClient } from "@/lib/supabase/server";
 import { supabaseConfigured } from "@/lib/supabase/config";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -23,29 +26,22 @@ export default async function PositionsPage() {
           <Notice tone="warning">{t.positionsPage.notConnected}</Notice>
         </div>
       )}
-      <Suspense fallback={<ScheduleSkeleton />}>
+      <Suspense fallback={<GridSkeleton />}>
         <ScheduleData />
       </Suspense>
     </Container>
   );
 }
 
+/** The published schedule, plus which of its slots belong to the signed-in player (to ring them). */
 async function ScheduleData() {
-  const rows = await getLatestPublishedSchedule();
-  return <ScheduleView rows={rows} />;
-}
-
-function ScheduleSkeleton() {
-  return (
-    <div className="animate-pulse space-y-3" aria-hidden>
-      <div className="flex gap-2">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="h-10 w-36 rounded-full bg-card" />
-        ))}
-      </div>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="h-14 rounded-2xl bg-card" />
-      ))}
-    </div>
-  );
+  const [rows, me] = await Promise.all([getLatestPublishedSchedule(), getUserId()]);
+  let ownSlotIds: string[] = [];
+  if (me && rows.length) {
+    const supabase = await createClient();
+    // RLS lets anyone read slots of published events, so this only needs the player's ID.
+    const { data } = await supabase.from("slots").select("id").eq("profile_id", me).in("day_id", [...new Set(rows.map((r) => r.day_id))]);
+    ownSlotIds = (data ?? []).map((s) => s.id as string);
+  }
+  return <PublicGrid rows={rows} ownSlotIds={ownSlotIds} />;
 }

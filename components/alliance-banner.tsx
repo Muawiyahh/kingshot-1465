@@ -166,6 +166,18 @@ export function AllianceBanner({
   );
 }
 
+/** A small disc in the alliance's colours, light enough to repeat in hundreds of grid cells. */
+export function AllianceDot({ tag, className }: { tag: string | null | undefined; className?: string }) {
+  const alliance = getAlliance(tag);
+  return (
+    <span
+      aria-hidden
+      className={clsx("inline-block size-2.5 shrink-0 rounded-full", className)}
+      style={{ background: alliance.field, boxShadow: `0 0 0 1.5px ${alliance.trim}` }}
+    />
+  );
+}
+
 /**
  * Round profile picture: the member's alliance banner on a disc of the alliance colour.
  * Tags are only drawn at 64px and up, where they stay legible.

@@ -26,6 +26,10 @@ const schema = z.object({
     .max(500, "noteTooLong" satisfies ErrorKey),
 });
 
+/**
+ * Applies for one day/position, updates a pending application, or re-applies after a rejection
+ * (back to pending, ready for leaders to review again). Accepted applications are frozen.
+ */
 export async function saveApplication(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { t } = await getActionI18n();
   const profile = await getProfile();
@@ -47,54 +51,60 @@ export async function saveApplication(_prev: ActionState, formData: FormData): P
   if (!v.anytime && v.slots.length === 0) return { error: t.errors.pickSlot };
 
   const supabase = await createClient();
-  const { data: day } = await supabase
-    .from("event_days")
-    .select("id, slot_minutes, event:kvk_events(status)")
-    .eq("id", v.dayId)
-    .maybeSingle();
+  const [{ data: day }, { data: existing }] = await Promise.all([
+    supabase.from("event_days").select("id, slot_minutes, event:kvk_events(status)").eq("id", v.dayId).maybeSingle(),
+    supabase.from("applications").select("id, status").eq("profile_id", profile.id).eq("day_id", v.dayId).maybeSingle(),
+  ]);
   const event = day?.event as unknown as { status: string } | null;
   if (!day || event?.status !== "open") return { error: t.errors.applicationsClosed };
 
   const max = slotCount(day.slot_minutes as number);
+  // Picked times are kept even with "any time" on, so switching it off later brings them back.
+  // (Auto-fill tries them first, then any free time.)
   const slots = [...new Set(v.slots)].filter((s) => s < max).sort((a, b) => a - b);
-
-  const { data: existing } = await supabase
-    .from("applications")
-    .select("id, status")
-    .eq("profile_id", profile.id)
-    .eq("day_id", v.dayId)
-    .maybeSingle();
-
-  const fields = {
-    preferred_slots: v.anytime ? [] : slots,
-    anytime: v.anytime,
-    speedup_days: v.speedupDays,
-    note: v.note || null,
-  };
+  const fields = { preferred_slots: slots, anytime: v.anytime, speedup_days: v.speedupDays, note: v.note || null };
 
   if (existing) {
-    if (existing.status !== "pending") return { error: t.errors.alreadyReviewed };
-    const { error } = await supabase.from("applications").update(fields).eq("id", existing.id);
-    if (error) return { error: t.errors.updateFailed };
-  } else {
-    const { error } = await supabase
+    if (existing.status === "accepted") return { error: t.errors.alreadyReviewed };
+    // Always back to pending with no reviewer: this is also how a rejected player re-applies.
+    // .select() so a write that RLS silently skipped (0 rows) is reported, not treated as saved.
+    const { data: saved, error } = await supabase
       .from("applications")
-      .insert({ ...fields, profile_id: profile.id, day_id: v.dayId });
+      .update({ ...fields, status: "pending", reviewed_by: null })
+      .eq("id", existing.id)
+      .select("id");
+    if (error || !saved?.length) return { error: t.errors.updateFailed };
+  } else {
+    const { error } = await supabase.from("applications").insert({ ...fields, profile_id: profile.id, day_id: v.dayId });
     if (error) return { error: t.errors.submitFailed };
   }
 
   refresh();
-  return { ok: true, message: existing ? t.success.applicationUpdated : t.success.applicationSubmitted };
+  const message = !existing
+    ? t.success.applicationSubmitted
+    : existing.status === "rejected"
+      ? t.success.applicationResubmitted
+      : t.success.applicationUpdated;
+  return { ok: true, message };
 }
 
-export async function withdrawApplication(formData: FormData) {
+/** Withdraws a pending or rejected application (RLS refuses accepted ones). */
+export async function withdrawApplication(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getActionI18n();
   const profile = await getProfile();
-  if (!profile) return;
+  if (!profile) return { error: t.errors.signInFirst };
   const dayId = z.string().uuid().safeParse(formData.get("dayId"));
-  if (!dayId.success) return;
+  if (!dayId.success) return { error: t.errors.cantWithdraw };
 
   const supabase = await createClient();
-  // RLS only lets players delete their own pending applications.
-  await supabase.from("applications").delete().eq("profile_id", profile.id).eq("day_id", dayId.data);
+  const { data, error } = await supabase
+    .from("applications")
+    .delete()
+    .eq("profile_id", profile.id)
+    .eq("day_id", dayId.data)
+    .select("id");
+  if (error || !data?.length) return { error: t.errors.cantWithdraw };
+
   refresh();
+  return { ok: true, message: t.success.withdrawn };
 }

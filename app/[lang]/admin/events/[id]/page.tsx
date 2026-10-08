@@ -3,20 +3,22 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import clsx from "clsx";
-import { ArrowRight, Check } from "lucide-react";
-import { PendingButton } from "@/components/pending-button";
-import { Bone, HeaderSkeleton, RowsSkeleton, TitleSkeleton } from "@/components/skeleton";
-import { Card, PageHeader } from "@/components/ui";
-import { EventStatusBadge } from "@/components/admin/event-status";
+import { Check } from "lucide-react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
+import { EventStatusBadge } from "@/components/admin/event-status";
+import { GridSkeleton } from "@/components/kvk/grid-skeleton";
+import { PendingButton } from "@/components/pending-button";
+import { Bone, HeaderSkeleton } from "@/components/skeleton";
+import { Card, PageHeader } from "@/components/ui";
 import { requireLeader } from "@/lib/auth-guards";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { getI18n } from "@/lib/i18n/server";
+import { formatDay } from "@/lib/kvk";
 import { createClient } from "@/lib/supabase/server";
-import { formatDay, positionLabel, slotCount } from "@/lib/kvk";
-import type { EventDay, EventStatus, KvkEvent } from "@/lib/types";
+import type { EventStatus, WorkspaceEvent } from "@/lib/types";
 import { deleteEvent, setEventStatus } from "../../actions";
+import { Workspace } from "./workspace";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -24,6 +26,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const STEPS: EventStatus[] = ["draft", "open", "closed", "published"];
+
+/** Everything the workspace shows, in one request: days, every slot and its holder, every application. */
+const WORKSPACE_SELECT =
+  "*, event_days(id, event_id, day_number, date, position, slot_minutes, " +
+  "slots(id, slot_index, locked, profile_id, profile:profiles(ingame_name, alliance_tag)), " +
+  "applications(id, profile_id, preferred_slots, anytime, speedup_days, note, status, created_at, " +
+  "profile:profiles!applications_profile_id_fkey(ingame_name, alliance_tag, game_id)))";
 
 export default async function EventPage({ params }: PageProps<"/[lang]/admin/events/[id]">) {
   const { locale, t } = await getI18n();
@@ -41,55 +50,32 @@ export default async function EventPage({ params }: PageProps<"/[lang]/admin/eve
   );
 }
 
-/** Shaped like the event page: header, the four stage buttons, then the day rows. */
+/** Shaped like the page: header, the four stage buttons, then the grid. */
 function EventSkeleton() {
   return (
     <>
       <HeaderSkeleton />
-      <Card className="mb-10 p-5" aria-hidden>
-        <Bone className="mb-4 h-4 w-24" />
+      <Card className="mb-8 p-4" aria-hidden>
         <div className="grid gap-2 sm:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
-            <Bone key={i} className="h-16 rounded-2xl" />
+            <Bone key={i} className="h-14 rounded-2xl" />
           ))}
         </div>
       </Card>
-      <TitleSkeleton />
-      <RowsSkeleton rows={3} avatar={false} />
+      <GridSkeleton columns={5} />
     </>
   );
 }
 
-type EventData = KvkEvent & {
-  event_days: (EventDay & { applications: { status: string }[]; slots: { profile_id: string | null }[] })[];
-};
-
 async function EventContent({ params }: { params: PageProps<"/[lang]/admin/events/[id]">["params"] }) {
-  const [{ id }, { locale, t, tag }, supabase] = await Promise.all([params, getI18n(), createClient()]);
-
-  // One request for the event, its days, and each day's applications and slots, alongside the
-  // leader check. (RLS limits drafts and applications to leaders.)
+  const [{ id }, { t, tag }, supabase] = await Promise.all([params, getI18n(), createClient()]);
+  // The leader check runs alongside the query; RLS limits drafts and applications to leaders anyway.
   const [, { data }] = await Promise.all([
     requireLeader(),
-    supabase
-      .from("kvk_events")
-      .select("*, event_days(*, applications(status), slots(profile_id))")
-      .eq("id", id)
-      .maybeSingle(),
+    supabase.from("kvk_events").select(WORKSPACE_SELECT).eq("id", id).maybeSingle(),
   ]);
   if (!data) notFound();
-  const event = data as EventData;
-
-  const counts = new Map<string, { pending: number; accepted: number; filled: number }>();
-  for (const d of event.event_days) {
-    counts.set(d.id, {
-      pending: d.applications.filter((a) => a.status === "pending").length,
-      accepted: d.applications.filter((a) => a.status === "accepted").length,
-      filled: d.slots.filter((s) => s.profile_id !== null).length,
-    });
-  }
-
-  const days = [...event.event_days].sort((a, b) => a.day_number - b.day_number || a.position.localeCompare(b.position));
+  const event = data as unknown as WorkspaceEvent;
   const currentStep = STEPS.indexOf(event.status);
   const e = t.admin.event;
 
@@ -100,9 +86,9 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
         <EventStatusBadge status={event.status} t={t} />
       </PageHeader>
 
-      <Card className="mb-10 p-5">
-        <p className="mb-4 text-sm font-medium">{e.stage}</p>
-        <ol className="grid gap-2 sm:grid-cols-4">
+      <Card className="mb-8 p-4">
+        <p className="mb-3 text-sm font-medium">{e.stage}</p>
+        <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {STEPS.map((status, i) => {
             const active = status === event.status;
             return (
@@ -115,7 +101,7 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
                     disabled={active}
                     aria-current={active ? "step" : undefined}
                     className={clsx(
-                      "flex h-full w-full cursor-pointer flex-col items-start gap-1 rounded-2xl p-4 text-left transition-colors disabled:cursor-default aria-busy:animate-pulse",
+                      "flex h-full w-full cursor-pointer flex-col items-start gap-0.5 rounded-2xl px-3.5 py-3 text-left transition-colors disabled:cursor-default aria-busy:animate-pulse",
                       active
                         ? "bg-primary/15 shadow-[inset_0_0_0_1px_var(--primary)]"
                         : "bg-bg-elevated shadow-[inset_0_0_0_1px_var(--border)] hover:bg-card-hover",
@@ -129,7 +115,7 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
                       )}
                       {e.steps[status].label}
                     </span>
-                    <span className="text-xs text-muted">{e.steps[status].help}</span>
+                    <span className="text-xs text-muted max-sm:hidden">{e.steps[status].help}</span>
                   </PendingButton>
                 </form>
               </li>
@@ -138,43 +124,7 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
         </ol>
       </Card>
 
-      <h2 className="mb-4 font-display text-lg font-semibold">{e.daysTitle}</h2>
-      <ul className="space-y-2">
-        {days.map((d) => {
-          const c = counts.get(d.id)!;
-          return (
-            <li key={d.id}>
-              <Link href={localePath(locale, `/admin/days/${d.id}`)} className="group block rounded-3xl">
-                <Card className="flex flex-wrap items-center gap-4 p-5 transition-colors group-hover:bg-card-hover">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {fmt(t.common.day, { n: d.day_number })} · {positionLabel(d.position, t)}
-                    </p>
-                    <p className="text-sm text-muted">{formatDay(d.date, tag)}</p>
-                  </div>
-                  <dl className="flex gap-6 text-center text-sm">
-                    <div>
-                      <dt className="text-xs text-muted">{e.toReview}</dt>
-                      <dd className={clsx("font-mono", c.pending > 0 && "text-warning")}>{c.pending}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted">{e.accepted}</dt>
-                      <dd className="font-mono">{c.accepted}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted">{e.slotsFilled}</dt>
-                      <dd className="font-mono">
-                        {c.filled}/{slotCount(d.slot_minutes)}
-                      </dd>
-                    </div>
-                  </dl>
-                  <ArrowRight className="size-4 text-muted" aria-hidden />
-                </Card>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <Workspace event={event} />
 
       <div className="mt-14 border-t border-border pt-6">
         <form action={deleteEvent}>

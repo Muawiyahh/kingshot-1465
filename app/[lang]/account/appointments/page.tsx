@@ -1,19 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { RowsSkeleton } from "@/components/skeleton";
-import { Badge, ButtonLink, Card, Notice, PageHeader } from "@/components/ui";
+import { GridSkeleton } from "@/components/kvk/grid-skeleton";
+import { ButtonLink, Card, PageHeader } from "@/components/ui";
 import { getUserId } from "@/lib/auth";
 import { requireProfile } from "@/lib/auth-guards";
+import { getLatestPublishedSchedule } from "@/lib/data";
 import { localePath } from "@/lib/i18n/config";
-import { fmt } from "@/lib/i18n/format";
-import type { Messages } from "@/lib/i18n/messages";
-import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
-import { formatDay, positionLabel, slotLabel } from "@/lib/kvk";
 import { createClient } from "@/lib/supabase/server";
-import type { Application, ApplicationStatus, EventDay, KvkEvent } from "@/lib/types";
-import { ApplyDayCard } from "./apply-form";
+import type { PlayerEvent } from "@/lib/types";
+import { PlayerGrid } from "./player-grid";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -28,168 +25,65 @@ export default async function AppointmentsPage() {
       <PageHeader eyebrow={t.account.eyebrow} title={a.title}>
         {a.intro}
       </PageHeader>
-      {/* One loading boundary so both lists appear together; the headings show straight away. */}
-      <Suspense
-        fallback={
-          <div className="space-y-14">
-            <section>
-              <h2 className="mb-4 font-display text-xl font-semibold">{a.applyTitle}</h2>
-              <RowsSkeleton rows={2} avatar={false} />
-            </section>
-            <section>
-              <h2 className="mb-4 font-display text-xl font-semibold">{t.account.applicationsTitle}</h2>
-              <RowsSkeleton rows={2} avatar={false} />
-            </section>
-          </div>
-        }
-      >
-        <div className="space-y-14">
-          <section aria-labelledby="open-applications">
-            <h2 id="open-applications" className="mb-4 font-display text-xl font-semibold">
-              {a.applyTitle}
-            </h2>
-            <OpenApplications />
-          </section>
-          <section aria-labelledby="your-applications">
-            <h2 id="your-applications" className="mb-4 font-display text-xl font-semibold">
-              {t.account.applicationsTitle}
-            </h2>
-            <YourApplications />
-          </section>
-        </div>
+      <Suspense fallback={<GridSkeleton />}>
+        <Appointments />
       </Suspense>
     </>
   );
 }
 
-/** One form per day and position of every event that's open for applications. */
-async function OpenApplications() {
+const NOBODY = "00000000-0000-0000-0000-000000000000";
+const ORDER = { open: 0, closed: 1, published: 2, draft: 3 } as const;
+
+async function Appointments() {
   const [{ locale, t }, me, supabase] = await Promise.all([getI18n(), getUserId(), createClient()]);
-  // Profile, open events and the player's applications load together instead of one after another.
-  const [profile, { data: events }, { data: apps }] = await Promise.all([
+  const id = me ?? NOBODY;
+  // Events with their days, and only this player's application and slot per day. (Leaders can
+  // read everyone's applications, so the filter matters for them too.) Runs alongside the
+  // profile check and the published schedule's names.
+  const [profile, { data }, schedule] = await Promise.all([
     requireProfile("/account/appointments"),
-    supabase.from("kvk_events").select("*, event_days(*)").eq("status", "open").order("starts_on"),
-    me ? supabase.from("applications").select("*").eq("profile_id", me) : Promise.resolve({ data: [] }),
+    supabase
+      .from("kvk_events")
+      .select("*, event_days(*, applications(*), slots(id, slot_index))")
+      .in("status", ["open", "closed", "published"])
+      .eq("event_days.applications.profile_id", id)
+      .eq("event_days.slots.profile_id", id)
+      .order("starts_on", { ascending: false }),
+    getLatestPublishedSchedule(),
   ]);
 
-  if (profile.status !== "approved") {
-    return <Notice tone="warning">{profile.status === "pending" ? t.apply.pending : t.apply.rejected}</Notice>;
-  }
+  // Open and closed events, plus the latest published one; open first.
+  const all = ((data ?? []) as PlayerEvent[]).filter((e) => e.event_days.length > 0);
+  const latestPublished = all.find((e) => e.status === "published");
+  const events = all
+    .filter((e) => e.status !== "published" || e === latestPublished)
+    .sort((a, b) => ORDER[a.status] - ORDER[b.status] || a.starts_on.localeCompare(b.starts_on));
 
-  const open = (events ?? []) as (KvkEvent & { event_days: EventDay[] })[];
-  if (open.length === 0) {
+  if (events.length === 0) {
     return (
-      <Card className="px-6 py-12 text-center">
+      <Card className="px-6 py-14 text-center">
         <p className="font-display text-xl">{t.apply.closedTitle}</p>
         <p className="mt-2 text-muted">{t.apply.closedBody}</p>
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
           <ButtonLink href={localePath(locale, "/positions")} variant="secondary">
             {t.apply.viewCurrent}
           </ButtonLink>
+          <Link href={localePath(locale, "/account/messages")} className="self-center text-sm text-gold-soft hover:underline">
+            {t.kvk.player.askLeader} →
+          </Link>
         </div>
       </Card>
     );
   }
 
-  const byDay = new Map(((apps ?? []) as Application[]).map((a) => [a.day_id, a]));
-
+  const accountNotice = profile.status === "approved" ? null : profile.status === "pending" ? t.apply.pending : t.apply.rejected;
   return (
-    <div className="space-y-10">
-      {open.map((event) => (
-        <div key={event.id}>
-          <h3 className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-gold">{event.title}</h3>
-          <div className="space-y-3">
-            {[...event.event_days]
-              .sort((a, b) => a.day_number - b.day_number || a.position.localeCompare(b.position))
-              .map((day) => (
-                <ApplyDayCard key={day.id} day={day} application={byDay.get(day.id) ?? null} />
-              ))}
-          </div>
-        </div>
-      ))}
-    </div>
+    <PlayerGrid
+      events={events}
+      schedule={latestPublished ? schedule : []}
+      canApply={profile.status === "approved"}
+      accountNotice={accountNotice}
+    />
   );
-}
-
-type AppRow = {
-  id: string;
-  status: ApplicationStatus;
-  speedup_days: number;
-  day: {
-    id: string;
-    day_number: number;
-    date: string;
-    position: string;
-    slot_minutes: number;
-    event: { title: string; status: string };
-  };
-};
-
-/** Every application the player has made, with the slot they were given once it's published. */
-async function YourApplications() {
-  const [{ locale, t, tag }, me, supabase] = await Promise.all([getI18n(), getUserId(), createClient()]);
-  const id = me ?? (await requireProfile("/account/appointments")).id;
-  const [{ data: apps }, { data: mySlots }] = await Promise.all([
-    supabase
-      .from("applications")
-      .select("id, status, speedup_days, day:event_days(id, day_number, date, position, slot_minutes, event:kvk_events(title, status))")
-      .eq("profile_id", id)
-      .order("created_at", { ascending: false }),
-    // RLS only returns slots of published events, so drafts stay private until leaders publish.
-    supabase.from("slots").select("day_id, slot_index").eq("profile_id", id),
-  ]);
-  const applications = (apps ?? []) as unknown as AppRow[];
-  const assigned = new Map(
-    ((mySlots ?? []) as { day_id: string; slot_index: number }[]).map((s) => [s.day_id, s.slot_index]),
-  );
-
-  return (
-    <>
-      {applications.length === 0 ? (
-        <Card className="p-8 text-center text-muted">{t.account.none}</Card>
-      ) : (
-        <ul className="space-y-3">
-          {applications.map((a) => {
-            const slotIndex = assigned.get(a.day.id);
-            return (
-              <li key={a.id}>
-                <Card className="flex flex-wrap items-center gap-4 p-5">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium">
-                      {fmt(t.common.day, { n: a.day.day_number })} · {positionLabel(a.day.position, t)}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {a.day.event.title} · {formatDay(a.day.date, tag)} ·{" "}
-                      {fmt(t.account.speedups, { n: Number(a.speedup_days).toLocaleString(tag) })}
-                    </p>
-                    {slotIndex !== undefined && (
-                      <p className="mt-1 font-mono text-sm text-gold-soft">
-                        {fmt(t.account.yourSlot, { slot: slotLabel(slotIndex, a.day.slot_minutes) })}
-                      </p>
-                    )}
-                  </div>
-                  <StatusBadge status={a.status} t={t} />
-                </Card>
-              </li>
-            );
-          })}
-        </ul>
-      )}
-      <p className="mt-6 text-sm text-muted">
-        {rich(t.account.seeSchedule, {
-          link: (
-            <Link href={localePath(locale, "/positions")} className="text-gold-soft hover:underline">
-              {t.account.positionsLink}
-            </Link>
-          ),
-        })}
-      </p>
-    </>
-  );
-}
-
-function StatusBadge({ status, t }: { status: ApplicationStatus; t: Messages }) {
-  if (status === "accepted") return <Badge tone="green">{t.status.application.accepted}</Badge>;
-  if (status === "rejected") return <Badge tone="red">{t.status.application.rejected}</Badge>;
-  return <Badge tone="amber">{t.status.application.pending}</Badge>;
 }

@@ -82,6 +82,26 @@ export type KingdomSettings = {
 /** Result shape returned by Server Actions to useActionState forms. */
 export type ActionState = { ok?: boolean; error?: string; message?: string } | undefined;
 
+/** What auto-fill did: how many players it placed, and who it couldn't find a free time for. */
+export type FillReport = { placed: number; skipped: string[] };
+export type FillState = { ok?: boolean; error?: string; message?: string; report?: FillReport } | undefined;
+
+/** One day/position of an event as the leaders' workspace loads it (one nested query). */
+export type WorkspaceDay = EventDay & {
+  slots: { id: string; slot_index: number; locked: boolean; profile_id: string | null; profile: { ingame_name: string; alliance_tag: string | null } | null }[];
+  applications: (Pick<Application, "id" | "profile_id" | "preferred_slots" | "anytime" | "speedup_days" | "note" | "status" | "created_at"> & {
+    profile: { ingame_name: string; alliance_tag: string | null; game_id: string } | null;
+  })[];
+};
+export type WorkspaceEvent = KvkEvent & { event_days: WorkspaceDay[] };
+
+/** One day/position of an event as a player's page loads it: their own application and slot only. */
+export type PlayerDay = EventDay & {
+  applications: Application[];
+  slots: { id: string; slot_index: number }[];
+};
+export type PlayerEvent = KvkEvent & { event_days: PlayerDay[] };
+
 /** Someone the signed-in user can message, with the latest message between them (0004_messages.sql). */
 export type Contact = {
   partner_id: string;

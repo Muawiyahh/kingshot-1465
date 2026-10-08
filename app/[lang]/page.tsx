@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ArrowRight, CalendarClock, ChevronDown, Flame, Globe, Scale, ShieldCheck, Users } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { Badge, ButtonLink, Card, Container, Eyebrow, LiveDot, WindowFrame } from "@/components/ui";
-import { AllianceAvatar } from "@/components/alliance-banner";
+import { MiniGrid, type MiniColumn } from "@/components/kvk/mini-grid";
 import { KingdomCards } from "@/components/kingdom-cards";
 import { SECTION_ICONS } from "@/components/section-icons";
 import { getUserId } from "@/lib/auth";
@@ -12,8 +12,9 @@ import { LOCALES, LOCALE_INFO, localePath, type Locale } from "@/lib/i18n/config
 import { fmt } from "@/lib/i18n/format";
 import type { Messages } from "@/lib/i18n/messages";
 import { getI18n } from "@/lib/i18n/server";
-import { formatDay, isSlotLive, positionLabel, slotLabel } from "@/lib/kvk";
+import { slotCount, sortDays, todayUtc } from "@/lib/kvk";
 import { site } from "@/lib/site";
+import type { PublicScheduleRow } from "@/lib/types";
 
 const pillarIcons = [Flame, Scale, Users];
 
@@ -137,7 +138,7 @@ export default async function HomePage() {
 
       {/* Positions preview */}
       <section className="pb-24 sm:pb-32" aria-labelledby="positions-title">
-        <Container className="grid items-center gap-12 lg:grid-cols-[1fr_1.2fr]">
+        <Container className="grid items-center gap-12 lg:grid-cols-[1fr_1.3fr]">
           <div>
             <Eyebrow>{t.home.positionsEyebrow}</Eyebrow>
             <h2 id="positions-title" className="mt-3 font-display text-3xl font-bold tracking-tight sm:text-4xl">
@@ -151,7 +152,7 @@ export default async function HomePage() {
               </ButtonLink>
             </div>
           </div>
-          <Suspense fallback={<SchedulePreviewFrame rows={null} t={t} tag={tag} href={href("/positions")} />}>
+          <Suspense fallback={<SchedulePreviewFrame preview={null} t={t} tag={tag} href={href("/positions")} />}>
             <SchedulePreview t={t} tag={tag} href={href("/positions")} />
           </Suspense>
         </Container>
@@ -349,82 +350,93 @@ async function HomeCards() {
 
 type PreviewProps = { t: Messages; tag: string; href: string };
 
+const PREVIEW_COLS = 4;
+const PREVIEW_ROWS = 6;
+
 async function SchedulePreview(props: PreviewProps) {
   const rows = await getLatestPublishedSchedule();
-  return <SchedulePreviewFrame rows={rows} {...props} />;
+  return <SchedulePreviewFrame preview={rows.length ? livePreview(rows) : null} {...props} />;
 }
 
-function SchedulePreviewFrame({
-  rows,
-  t,
-  tag,
-  href,
-}: PreviewProps & { rows: Awaited<ReturnType<typeof getLatestPublishedSchedule>> | null }) {
-  // Show the first assigned slots of the first day, or a sample when nothing is published yet.
-  const first = rows?.[0];
-  const sample = !first;
-  const preview = sample
-    ? [
-        { i: 0, name: "Caketie", tag: "KNG" },
-        { i: 1, name: "Orange Cowboy", tag: "ERA" },
-        { i: 2, name: null, tag: null },
-        { i: 3, name: "BabyToes", tag: "GGG" },
-        { i: 4, name: "SugaMami", tag: "ALT" },
-      ].map((r) => ({ ...r, minutes: 30 }))
-    : rows!
-        .filter((r) => r.day_id === first.day_id)
-        .slice(0, 5)
-        .map((r) => ({ i: r.slot_index, name: r.ingame_name, tag: r.alliance_tag, minutes: r.slot_minutes }));
+// Shown until a schedule is published (also the loading state, so it never reads the clock).
+const C = { name: "Caketie", tag: "KNG" };
+const O = { name: "Orange Cowboy", tag: "ERA" };
+const B = { name: "BabyToes", tag: "GGG" };
+const S = { name: "SugaMami", tag: "ALT" };
+const SAMPLE: MiniColumn[] = [
+  { id: "s1", dayNumber: 1, date: null, position: "Construction", cells: [C, O, null, B, S, null] },
+  { id: "s2", dayNumber: 2, date: null, position: "Research", cells: [S, null, C, null, O, B] },
+  { id: "s3", dayNumber: 3, date: null, position: "Training", cells: [B, C, null, S, null, O] },
+  { id: "s4", dayNumber: 4, date: null, position: "Chief Minister", cells: [null, B, O, C, null, S] },
+];
 
-  const dayLabel = (n: number) => fmt(t.common.day, { n });
+/**
+ * A window of the published schedule: up to four days, starting with today while the event runs,
+ * and six slots around the current time (or from the first assigned slot).
+ */
+function livePreview(rows: PublicScheduleRow[]) {
+  const slotMinutes = rows[0].slot_minutes;
+  const holders = new Map(rows.map((r) => [`${r.day_id}:${r.slot_index}`, r]));
+  const days = sortDays(
+    [...new Map(rows.map((r) => [r.day_id, { id: r.day_id, day_number: r.day_number, date: r.date, position: r.position }])).values()],
+  );
+
+  const now = Date.now();
+  const todayIdx = days.findIndex((d) => d.date === todayUtc(now));
+  const start = todayIdx < 0 ? 0 : Math.max(0, Math.min(todayIdx, days.length - PREVIEW_COLS));
+  const shown = days.slice(start, start + PREVIEW_COLS);
+  const liveSlot = todayIdx < 0 ? null : Math.floor((now % 86_400_000) / 60_000 / slotMinutes);
+
+  const firstTaken = rows
+    .filter((r) => r.ingame_name && shown.some((d) => d.id === r.day_id))
+    .reduce((min, r) => Math.min(min, r.slot_index), Infinity);
+  const wanted = liveSlot !== null ? liveSlot - 1 : Number.isFinite(firstTaken) ? firstTaken : 0;
+  const from = Math.max(0, Math.min(wanted, slotCount(slotMinutes) - PREVIEW_ROWS));
+
+  const columns: MiniColumn[] = shown.map((d) => ({
+    id: d.id,
+    dayNumber: d.day_number,
+    date: d.date,
+    position: d.position,
+    today: todayIdx >= 0 && d.id === days[todayIdx].id,
+    cells: Array.from({ length: PREVIEW_ROWS }, (_, r) => {
+      const h = holders.get(`${d.id}:${from + r}`);
+      return h?.ingame_name ? { name: h.ingame_name, tag: h.alliance_tag } : null;
+    }),
+  }));
+  // Phones show two columns: keep today among them.
+  const phoneStart = todayIdx < 0 ? 0 : Math.max(0, Math.min(todayIdx - start, columns.length - 2));
+  return { title: rows[0].event_title, columns, slotMinutes, from, liveSlot, phoneStart };
+}
+
+function SchedulePreviewFrame({ preview, t, tag, href }: PreviewProps & { preview: ReturnType<typeof livePreview> | null }) {
   return (
-    <WindowFrame
-      title={
-        sample
-          ? t.home.previewSample
-          : `${first.event_title} · ${dayLabel(first.day_number)} · ${positionLabel(first.position, t)}`
-      }
-    >
-      <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <p className="text-sm font-medium">
-          {sample
-            ? `${dayLabel(1)} · ${t.positionNames.construction}`
-            : `${formatDay(first.date, tag)} · ${positionLabel(first.position, t)}`}
-        </p>
-        {sample ? (
-          <Badge>{t.common.sample}</Badge>
-        ) : (
+    <WindowFrame title={preview ? preview.title : t.home.previewSample}>
+      <div className="flex items-center justify-between gap-3 px-4 pt-4 pb-3">
+        <p className="font-mono text-[11px] tracking-wider text-muted uppercase">{t.admin.day.allTimesUtc}</p>
+        {preview ? (
           <Badge tone="green">
             <LiveDot /> {t.common.live}
           </Badge>
+        ) : (
+          <Badge>{t.common.sample}</Badge>
         )}
       </div>
-      <ul className="divide-y divide-border px-2 pb-3">
-        {preview.map((r) => {
-          const live = !sample && first && isSlotLive(first.date, r.i, r.minutes);
-          return (
-            <li key={r.i} className="flex items-center gap-4 rounded-xl px-3 py-3">
-              <span className="w-28 shrink-0 font-mono text-xs text-muted tabular-nums">{slotLabel(r.i, r.minutes)}</span>
-              {r.name ? (
-                <span className="flex min-w-0 items-center gap-2.5 text-sm">
-                  <AllianceAvatar tag={r.tag} size={32} />
-                  <span className="truncate">
-                    {r.tag && <span className="mr-1.5 font-mono text-xs text-gold">[{r.tag}]</span>}
-                    {r.name}
-                  </span>
-                </span>
-              ) : (
-                <span className="text-sm italic text-muted/70">{t.common.open}</span>
-              )}
-              {live && (
-                <Badge tone="red" className="ml-auto">
-                  {t.common.now}
-                </Badge>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+      <div className="px-3 pb-3">
+        {preview ? (
+          <MiniGrid
+            columns={preview.columns}
+            slotMinutes={preview.slotMinutes}
+            from={preview.from}
+            liveSlot={preview.liveSlot}
+            phoneStart={preview.phoneStart}
+            t={t}
+            tag={tag}
+          />
+        ) : (
+          <MiniGrid columns={SAMPLE} slotMinutes={30} from={0} t={t} tag={tag} />
+        )}
+      </div>
       <div className="border-t border-border px-5 py-3">
         <Link href={href} className="text-sm text-gold-soft hover:underline">
           {t.home.openFullSchedule}
