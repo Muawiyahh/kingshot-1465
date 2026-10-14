@@ -75,7 +75,7 @@ function MessagesSkeleton() {
         </div>
         {[0, 1, 2].map((i) => (
           <div key={i} className="flex items-center gap-3 border-b border-border px-4 py-3">
-            <Bone className="size-[46px] shrink-0 rounded-full" />
+            <Bone className="size-[2.875rem] shrink-0 rounded-full" />
             <span className="flex-1 space-y-2">
               <Bone className="h-4 w-28" />
               <Bone className="h-3 w-40" />

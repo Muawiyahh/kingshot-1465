@@ -92,7 +92,7 @@ export function SlotPicker({
             className="grid items-center gap-1"
             style={{ gridTemplateColumns: `${perRow > 4 ? "2.75rem " : ""}repeat(${perRow}, minmax(0, 1fr))` }}
           >
-            {perRow > 4 && <span className="font-mono text-[10px] text-muted tabular-nums">{slotStartLabel(r * perRow, slotMinutes)}</span>}
+            {perRow > 4 && <span className="font-mono text-[0.625rem] text-muted tabular-nums">{slotStartLabel(r * perRow, slotMinutes)}</span>}
             {Array.from({ length: perRow }, (_, c) => {
               const i = r * perRow + c;
               if (i >= count) return <span key={c} />;
@@ -118,7 +118,7 @@ export function SlotPicker({
                     onChange(next);
                   }}
                   className={clsx(
-                    "h-9 cursor-pointer rounded-lg font-mono text-[11px] tabular-nums transition-colors",
+                    "h-9 cursor-pointer rounded-lg font-mono text-[0.6875rem] tabular-nums transition-colors",
                     on
                       ? "bg-primary text-on-primary shadow-[0_0_16px_-8px_var(--glow)]"
                       : "bg-bg-elevated text-muted shadow-[inset_0_0_0_1px_var(--border)] hover:text-fg",

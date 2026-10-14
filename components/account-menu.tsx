@@ -108,7 +108,7 @@ export function AccountMenu({
                 <Icon className="size-4 shrink-0" aria-hidden />
                 <span className="flex-1">{item.label}</span>
                 {item.count ? (
-                  <span className="rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-on-primary tabular-nums">
+                  <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] leading-5 font-semibold text-on-primary tabular-nums">
                     {item.count}
                   </span>
                 ) : null}

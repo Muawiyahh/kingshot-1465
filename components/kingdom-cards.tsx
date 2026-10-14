@@ -69,7 +69,7 @@ function Tile({
             {icon}
           </span>
           {/* Wraps instead of truncating: some languages need two lines on small cards. */}
-          <span className="min-w-0 self-center font-mono text-[10px] leading-tight uppercase tracking-[0.08em] break-words text-muted sm:tracking-[0.18em]">
+          <span className="min-w-0 self-center font-mono text-[0.625rem] leading-tight uppercase tracking-[0.08em] break-words text-muted sm:tracking-[0.18em]">
             {label}
           </span>
         </div>

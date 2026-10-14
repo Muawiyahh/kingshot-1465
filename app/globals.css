@@ -156,7 +156,7 @@ select option {
 }
 @media (width >= 48rem) {
   :root {
-    --site-header-h: 65px;
+    --site-header-h: calc(4rem + 1px); /* h-16 bar + its border */
   }
 }
 

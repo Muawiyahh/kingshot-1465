@@ -32,7 +32,7 @@ export function SectionCards({ cards }: { cards: SectionCard[] }) {
               </span>
               <span className="min-w-0 flex-1">
                 {card.group && (
-                  <span className="block font-mono text-[11px] uppercase tracking-[0.18em] text-gold">{card.group}</span>
+                  <span className="block font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-gold">{card.group}</span>
                 )}
                 <span className={card.group ? "mt-1 block font-medium" : "block font-medium"}>{card.label}</span>
                 <span className="mt-1 block text-sm text-muted">{card.description}</span>

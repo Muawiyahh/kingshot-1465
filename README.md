@@ -55,7 +55,7 @@ The homepage is short and aimed at two kinds of visitor: members checking their 
 
 1. **Hero:** the kingdom's key facts (King, alliances, players, next KvK, server time and age), with buttons to the Transfer and Alliance events sections.
 2. **Languages:** a single row with one link per language.
-3. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary and Vikings times. Times are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
+3. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary 1 and 2 and Vikings times. Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
 4. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
 5. **Transfer to 1465:** a short pitch, kingdom facts, three steps for contacting the kingdom, and the transfer managers. Each manager has a **Message** button (see **Transfer accounts** below) and a button that copies their game ID.
 6. **FAQ** and a sign-up box.

@@ -31,7 +31,7 @@ export function AlliancePicker({ defaultValue }: { defaultValue?: string | null 
               className="peer sr-only"
             />
             <AllianceAvatar tag={tag} size={56} />
-            <span className="font-mono text-[11px] text-muted peer-checked:text-gold-soft">{tag || t.common.none}</span>
+            <span className="font-mono text-[0.6875rem] text-muted peer-checked:text-gold-soft">{tag || t.common.none}</span>
           </label>
         ))}
       </div>

@@ -1,19 +1,16 @@
-import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import clsx from "clsx";
-import { ArrowRight, ChevronDown, Globe } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import { Hero } from "@/components/hero";
-import { AllianceEvents } from "@/components/home/alliance-events";
+import { AllianceEvents, AllianceEventsSkeleton } from "@/components/home/alliance-events";
 import { HallOfFame, HallOfFameSkeleton } from "@/components/home/hall-of-fame";
 import { TransferSection } from "@/components/home/transfer-section";
 import { KingdomCards } from "@/components/kingdom-cards";
-import { Bone } from "@/components/skeleton";
 import { ButtonLink, Card, Container, Eyebrow } from "@/components/ui";
 import { weekdayNames } from "@/lib/alliance-events";
-import { ALLIANCES } from "@/lib/alliances";
 import { getUserId } from "@/lib/auth";
 import { getHomeContent, getHomeStats } from "@/lib/data";
-import { LOCALES, LOCALE_INFO, localePath, type Locale } from "@/lib/i18n/config";
+import { localePath, type Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages";
 import { getI18n } from "@/lib/i18n/server";
 
@@ -23,9 +20,22 @@ import { getI18n } from "@/lib/i18n/server";
  */
 const section = "scroll-mt-[var(--site-header-h)] border-t border-border py-20 sm:py-24";
 
-function SectionHeading({ id, eyebrow, title, intro }: { id: string; eyebrow: string; title: string; intro?: ReactNode }) {
+function SectionHeading({
+  id,
+  eyebrow,
+  title,
+  intro,
+  flush = false,
+}: {
+  id: string;
+  eyebrow: string;
+  title: string;
+  intro?: ReactNode;
+  /** No bottom margin: the parent lays out what sits beside or below it. */
+  flush?: boolean;
+}) {
   return (
-    <div className="mb-10">
+    <div className={flush ? undefined : "mb-10"}>
       <Eyebrow>{eyebrow}</Eyebrow>
       <h2 id={id} className="mt-3 max-w-2xl font-display text-3xl font-bold tracking-tight sm:text-4xl">
         {title}
@@ -60,38 +70,20 @@ export default async function HomePage() {
         }
       />
 
-      {/* Languages: one quiet row; each link opens this page in that language */}
-      <nav aria-label={t.welcome.label} className="border-t border-border bg-bg-elevated/40">
-        <Container>
-          <ul className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1.5 py-3.5">
-            <li aria-hidden className="mr-1.5 flex text-gold-soft">
-              <Globe className="size-4" />
-            </li>
-            {LOCALES.map((l) => (
-              <li key={l}>
-                <Link
-                  href={localePath(l, "/")}
-                  lang={LOCALE_INFO[l].tag}
-                  aria-current={l === locale ? "true" : undefined}
-                  className={clsx(
-                    "inline-block rounded-full px-3 py-1.5 text-sm transition-colors",
-                    l === locale ? "bg-white/[0.08] text-fg" : "text-muted hover:text-fg",
-                  )}
-                >
-                  {LOCALE_INFO[l].label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </nav>
-
-      {/* Alliance events: set by leaders in Admin → Homepage */}
+      {/* Alliance events: set by leaders in Admin → Homepage. The heading sits beside the time switch. */}
       <section id="events" className={section} aria-labelledby="events-title">
         <Container>
-          <SectionHeading id="events-title" eyebrow={h.events.eyebrow} title={h.events.title} intro={h.events.intro} />
-          <Suspense fallback={<EventsSkeleton />}>
-            <EventsData tag={tag} />
+          <Suspense
+            fallback={
+              <AllianceEventsSkeleton
+                heading={<SectionHeading flush id="events-title" eyebrow={h.events.eyebrow} title={h.events.title} intro={h.events.intro} />}
+              />
+            }
+          >
+            <EventsData
+              tag={tag}
+              heading={<SectionHeading flush id="events-title" eyebrow={h.events.eyebrow} title={h.events.title} intro={h.events.intro} />}
+            />
           </Suspense>
         </Container>
       </section>
@@ -164,9 +156,9 @@ async function HomeCards() {
   return <KingdomCards stats={stats} />;
 }
 
-async function EventsData({ tag }: { tag: string }) {
+async function EventsData({ tag, heading }: { tag: string; heading: ReactNode }) {
   const { events } = await getHomeContent();
-  return <AllianceEvents rows={events} dayNames={weekdayNames(tag)} />;
+  return <AllianceEvents heading={heading} rows={events} dayNames={weekdayNames(tag)} />;
 }
 
 async function HofData({ t, tag }: { t: Messages; tag: string }) {
@@ -177,25 +169,6 @@ async function HofData({ t, tag }: { t: Messages; tag: string }) {
 async function TransferData({ t, locale }: { t: Messages; locale: Locale }) {
   const { transfer } = await getHomeContent();
   return <TransferSection content={transfer} t={t} locale={locale} />;
-}
-
-/** The events table's shape: a header row and one row per alliance. */
-function EventsSkeleton() {
-  return (
-    <div aria-hidden>
-      <Bone className="mb-5 ml-auto h-11 w-56 rounded-full" />
-      <Card className="divide-y divide-border">
-        {Array.from({ length: ALLIANCES.length + 1 }, (_, i) => (
-          <div key={i} className="flex items-center gap-4 px-5 py-4">
-            <Bone className={i === 0 ? "h-3 w-20" : "size-9 shrink-0 rounded-full"} />
-            {Array.from({ length: 3 }, (_, j) => (
-              <Bone key={j} className="h-4 flex-1" />
-            ))}
-          </div>
-        ))}
-      </Card>
-    </div>
-  );
 }
 
 /** Buttons under the closing heading: sign up / sign in, or straight into the account. */

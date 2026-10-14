@@ -26,7 +26,8 @@ export default async function EventsPage() {
       <PageHeader eyebrow={t.admin.nav.groups.kvk} title={t.admin.events.title}>
         {t.admin.events.intro}
       </PageHeader>
-      <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr]">
+      {/* Side by side only on wide screens; the form gets the larger share so its fields have room. */}
+      <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <section aria-labelledby="all-events">
           <h2 id="all-events" className="mb-4 font-display text-lg font-semibold">
             {t.admin.events.all}

@@ -1,7 +1,7 @@
 /** Alliance events shown on the homepage, and helpers for their times. Safe for client and server. */
 
 /** In display order. The keys are stored in alliance_events.event and name the translations. */
-export const ALLIANCE_EVENTS = ["bear1", "bear2", "swordland", "tri_alliance", "sanctuary", "vikings"] as const;
+export const ALLIANCE_EVENTS = ["bear1", "bear2", "swordland", "tri_alliance", "sanctuary1", "sanctuary2", "vikings"] as const;
 export type AllianceEventKey = (typeof ALLIANCE_EVENTS)[number];
 
 export function isAllianceEvent(value: unknown): value is AllianceEventKey {

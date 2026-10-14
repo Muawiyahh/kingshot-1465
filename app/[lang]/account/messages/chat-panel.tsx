@@ -103,7 +103,7 @@ export function ChatPanel({
                 <Fragment key={msg.id}>
                   {newDay && now !== null && (
                     <li className="flex justify-center py-2" aria-hidden>
-                      <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-muted">
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-[0.6875rem] text-muted">
                         {dayLabel(msg.created_at, now, tag)}
                       </span>
                     </li>
@@ -149,7 +149,7 @@ export function ChatPanel({
                 send();
               }
             }}
-            className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl bg-bg-elevated px-4 py-2.5 text-[16px] text-fg [field-sizing:content] placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] focus:shadow-[inset_0_0_0_1.5px_var(--gold)] focus:outline-none"
+            className="max-h-36 min-h-11 flex-1 resize-none rounded-2xl bg-bg-elevated px-4 py-2.5 text-[1rem] text-fg [field-sizing:content] placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] focus:shadow-[inset_0_0_0_1.5px_var(--gold)] focus:outline-none"
           />
           <button
             type="submit"
@@ -212,7 +212,7 @@ function Bubble({
   return (
     <div
       className={clsx(
-        "max-w-[80%] rounded-2xl px-3 py-1.5 text-[15px] leading-snug shadow-[0_1px_0_rgba(0,0,0,0.25)]",
+        "max-w-[80%] rounded-2xl px-3 py-1.5 text-[0.9375rem] leading-snug shadow-[0_1px_0_rgba(0,0,0,0.25)]",
         mine
           ? "rounded-br-md bg-primary text-on-primary"
           : "rounded-bl-md bg-card-hover text-fg shadow-[inset_0_0_0_1px_var(--border)]",
@@ -222,7 +222,7 @@ function Bubble({
       <span className="whitespace-pre-wrap break-words">{shownText ?? msg.body}</span>
       <span
         className={clsx(
-          "float-right mt-1.5 ml-3 flex items-center gap-1 text-[10px] tabular-nums",
+          "float-right mt-1.5 ml-3 flex items-center gap-1 text-[0.625rem] tabular-nums",
           mine ? "text-white/75" : "text-muted",
         )}
       >
@@ -242,11 +242,11 @@ function Bubble({
             type="button"
             onClick={toggle}
             disabled={loading}
-            className="cursor-pointer text-[11px] text-gold-soft underline-offset-2 hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-70"
+            className="cursor-pointer text-[0.6875rem] text-gold-soft underline-offset-2 hover:underline disabled:cursor-wait disabled:no-underline disabled:opacity-70"
           >
             {loading ? m.translating : shownText ? m.showOriginal : m.translate}
           </button>
-          {failed && <p className="mt-0.5 text-[11px] text-danger">{t.errors.translateFailed}</p>}
+          {failed && <p className="mt-0.5 text-[0.6875rem] text-danger">{t.errors.translateFailed}</p>}
         </div>
       )}
     </div>
@@ -272,7 +272,7 @@ function ChatHeader({ partner }: { partner: Contact | undefined }) {
           <AllianceAvatar tag={partner.alliance_tag} size={40} />
           <div className="min-w-0">
             <p className="truncate font-medium">{partner.ingame_name}</p>
-            <p className="font-mono text-[11px] uppercase tracking-wider text-gold-soft">
+            <p className="font-mono text-[0.6875rem] uppercase tracking-wider text-gold-soft">
               {partner.transfer ? (
                 <span className="text-warning">
                   {partner.from_kingdom ? fmt(t.common.transferFrom, { n: partner.from_kingdom }) : t.common.transfer}
@@ -312,7 +312,7 @@ export function ChatLoading() {
       </div>
       <div className="border-t border-border p-3">
         <div className="flex items-end gap-2">
-          <div className="flex h-11 flex-1 items-center rounded-2xl bg-bg-elevated px-4 text-[16px] text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)]">
+          <div className="flex h-11 flex-1 items-center rounded-2xl bg-bg-elevated px-4 text-[1rem] text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)]">
             {t.account.messages.placeholder}
           </div>
           <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary opacity-40">

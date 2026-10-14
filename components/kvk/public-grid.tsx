@@ -62,7 +62,7 @@ export function PublicGrid({ rows, ownSlotIds }: { rows: PublicScheduleRow[]; ow
       content: (
         <>
           <AllianceDot tag={r.alliance_tag} />
-          {r.alliance_tag && <span className="font-mono text-[10px] text-gold md:hidden">[{r.alliance_tag}]</span>}
+          {r.alliance_tag && <span className="font-mono text-[0.625rem] text-gold md:hidden">[{r.alliance_tag}]</span>}
           <span className="truncate" title={r.ingame_name}>
             {r.ingame_name}
           </span>
@@ -104,7 +104,7 @@ export function PublicGrid({ rows, ownSlotIds }: { rows: PublicScheduleRow[]; ow
         focus={firstOwn ? { dayId: firstOwn.day_id, slot: firstOwn.slot_index } : null}
         ariaLabel={t.kvk.grid.label}
         renderHeader={(col, variant) => (
-          <span className={clsx("block font-mono text-[10px] text-muted", variant === "chip" ? "opacity-80" : "mt-1")}>
+          <span className={clsx("block font-mono text-[0.625rem] text-muted", variant === "chip" ? "opacity-80" : "mt-1")}>
             {fmt(t.kvk.leader.headerFilled, { filled: filled.get(col.id) ?? 0, total })}
           </span>
         )}

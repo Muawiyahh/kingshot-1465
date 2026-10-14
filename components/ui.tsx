@@ -178,11 +178,11 @@ export function Field({
 }
 
 export const inputClass =
-  "block h-11 w-full rounded-xl bg-bg-elevated px-4 text-[16px] text-fg placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus:outline-none focus:shadow-[inset_0_0_0_1.5px_var(--gold)]";
+  "block h-11 w-full rounded-xl bg-bg-elevated px-4 text-[1rem] text-fg placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus:outline-none focus:shadow-[inset_0_0_0_1.5px_var(--gold)]";
 
 /** inputClass for a multi-line field: grows with its rows instead of a fixed height. */
 export const textareaClass =
-  "block w-full resize-y rounded-xl bg-bg-elevated px-4 py-2.5 text-[16px] leading-relaxed text-fg placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus:outline-none focus:shadow-[inset_0_0_0_1.5px_var(--gold)]";
+  "block w-full resize-y rounded-xl bg-bg-elevated px-4 py-2.5 text-[1rem] leading-relaxed text-fg placeholder:text-muted/60 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus:outline-none focus:shadow-[inset_0_0_0_1.5px_var(--gold)]";
 
 export function Notice({
   tone = "neutral",

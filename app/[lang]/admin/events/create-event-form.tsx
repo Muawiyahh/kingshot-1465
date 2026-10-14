@@ -34,13 +34,16 @@ export function CreateEventForm() {
 
   return (
     <form action={action} className="space-y-6">
-      <div className="grid gap-5 sm:grid-cols-[1fr_7rem_11rem_8rem]">
+      {/* Two rows, so the title always has room even in the narrow column beside the event list */}
+      <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_7rem]">
         <Field label={f.title} htmlFor="title">
           <input id="title" name="title" required maxLength={60} placeholder={f.titlePlaceholder} className={inputClass} />
         </Field>
         <Field label={f.season} htmlFor="season" hint={t.common.optional}>
           <input id="season" name="season" type="number" min={0} className={inputClass} />
         </Field>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2">
         <Field label={f.day1Date} htmlFor="startsOn">
           <input id="startsOn" name="startsOn" type="date" required className={inputClass} />
         </Field>

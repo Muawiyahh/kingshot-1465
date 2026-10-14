@@ -77,7 +77,7 @@ export function Workspace({ event }: { event: WorkspaceEvent }) {
       tone,
       locked: s?.locked,
       label: fmt(t.kvk.grid.wantedBy, { n: want }),
-      content: <span className="font-mono text-[10px] text-muted">★ {want}</span>,
+      content: <span className="font-mono text-[0.625rem] text-muted">★ {want}</span>,
     };
   }
 
@@ -116,7 +116,7 @@ export function Workspace({ event }: { event: WorkspaceEvent }) {
           const pending = d.applications.filter((a) => a.status === "pending").length;
           const filled = d.slots.filter((s) => s.profile_id).length;
           return (
-            <span className={clsx("flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[10px]", variant === "header" ? "mt-1.5" : "mt-1")}>
+            <span className={clsx("flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[0.625rem]", variant === "header" ? "mt-1.5" : "mt-1")}>
               {pending > 0 && (
                 <span className={clsx("rounded-full px-1.5", variant === "chip" ? "bg-black/20" : "bg-warning/15 text-warning")}>
                   {fmt(l.headerReview, { n: pending })}

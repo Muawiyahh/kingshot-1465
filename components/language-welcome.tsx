@@ -92,7 +92,7 @@ export function LanguageWelcome() {
                   disabled={pending}
                   onClick={() => choose(l)}
                   className={clsx(
-                    "flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-2xl px-3.5 py-2.5 text-left text-[15px] transition-colors disabled:cursor-wait disabled:opacity-60",
+                    "flex min-h-12 w-full cursor-pointer items-center gap-2 rounded-2xl px-3.5 py-2.5 text-left text-[0.9375rem] transition-colors disabled:cursor-wait disabled:opacity-60",
                     current
                       ? "bg-primary/15 text-fg shadow-[inset_0_0_0_1.5px_var(--primary)]"
                       : "bg-white/[0.04] text-fg shadow-[inset_0_0_0_1px_var(--border)] hover:bg-white/[0.08]",

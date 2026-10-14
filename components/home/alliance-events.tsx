@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore, type ReactNode } from "react";
 import clsx from "clsx";
 import { AllianceAvatar, AllianceDot } from "@/components/alliance-banner";
 import { useI18n } from "@/components/i18n-provider";
+import { Bone } from "@/components/skeleton";
 import { useNow } from "@/components/use-now";
 import { ALLIANCE_EVENTS, formatWeekdays, toLocal } from "@/lib/alliance-events";
 import { ALLIANCES } from "@/lib/alliances";
@@ -50,14 +51,20 @@ function zoneLabel() {
 }
 const noSubscribe = () => () => {};
 
+// The section heading with the UTC / your-time switch beside it, so the whole table fits one screen.
+const headerRow = "mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-4";
+const rowPad = "py-2.5";
+
 /**
- * Every alliance's event times. A table from tablets up; on phones, alliance chips and one
+ * Every alliance's event times. A table on laptops and up; on phones and tablets, alliance chips and one
  * alliance's list. Times are UTC unless the viewer switches to their own time.
  */
 export function AllianceEvents({
+  heading,
   rows,
   dayNames,
 }: {
+  heading: ReactNode;
   rows: AllianceEventRow[];
   /** Short weekday names from the server (0 = Sunday), so server and browser render the same text. */
   dayNames: string[];
@@ -75,7 +82,12 @@ export function AllianceEvents({
   const alliance = chosenAlliance ?? ALLIANCES.find((a) => a.tag === savedAlliance)?.tag ?? ALLIANCES[0].tag;
 
   if (rows.length === 0) {
-    return <p className="rounded-3xl bg-card p-8 text-center text-muted shadow-[inset_0_0_0_1px_var(--border)]">{e.empty}</p>;
+    return (
+      <>
+        <div className={headerRow}>{heading}</div>
+        <p className="rounded-3xl bg-card p-8 text-center text-muted shadow-[inset_0_0_0_1px_var(--border)]">{e.empty}</p>
+      </>
+    );
   }
 
   const byKey = new Map(rows.map((r) => [`${r.alliance}:${r.event}`, r]));
@@ -99,38 +111,41 @@ export function AllianceEvents({
 
   return (
     <div>
-      <div className="mb-5 flex flex-wrap items-center gap-3 md:justify-end">
-        <span className="text-sm text-muted">{e.showIn}</span>
-        <div className="inline-flex rounded-full bg-card p-1 shadow-[inset_0_0_0_1px_var(--border-strong)]">
-          {(["utc", "local"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              aria-pressed={mode === m}
-              onClick={() => pickMode(m)}
-              className={clsx(
-                "h-9 cursor-pointer rounded-full px-4 text-sm whitespace-nowrap transition-colors",
-                mode === m ? "bg-primary text-on-primary" : "text-muted hover:text-fg",
-              )}
-            >
-              {m === "utc" ? e.utc : zone ? `${e.local} · ${zone}` : e.local}
-            </button>
-          ))}
+      <div className={headerRow}>
+        {heading}
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm text-muted">{e.showIn}</span>
+          <div className="inline-flex rounded-full bg-card p-1 shadow-[inset_0_0_0_1px_var(--border-strong)]">
+            {(["utc", "local"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={mode === m}
+                onClick={() => pickMode(m)}
+                className={clsx(
+                  "h-9 cursor-pointer rounded-full px-4 text-sm whitespace-nowrap transition-colors",
+                  mode === m ? "bg-primary text-on-primary" : "text-muted hover:text-fg",
+                )}
+              >
+                {m === "utc" ? e.utc : zone ? `${e.local} · ${zone}` : e.local}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Tablets and up: every alliance at once */}
-      <div className="hidden overflow-hidden rounded-3xl bg-card shadow-[inset_0_0_0_1px_var(--border)] md:block">
+      {/* Laptops and up: every alliance at once (seven event columns need the width) */}
+      <div className="hidden overflow-hidden rounded-3xl bg-card shadow-[inset_0_0_0_1px_var(--border)] lg:block">
         <table className="w-full table-fixed text-left">
           <caption className="sr-only">{e.title}</caption>
           <thead>
             <tr className="border-b border-border">
-              <th scope="col" className="w-32 px-5 py-4 font-mono text-[11px] font-normal tracking-[0.16em] text-muted uppercase lg:w-36">
+              <th scope="col" className="w-32 px-5 py-3 font-mono text-[0.6875rem] font-normal tracking-[0.16em] text-muted uppercase lg:w-36">
                 {e.alliance}
               </th>
               {ALLIANCE_EVENTS.map((ev) => (
-                <th key={ev} scope="col" className="px-3 py-4 align-bottom font-mono text-[11px] font-normal tracking-[0.1em] text-muted uppercase">
-                  <span className="line-clamp-2" title={e.names[ev]}>
+                <th key={ev} scope="col" className="px-3 py-3 align-bottom font-mono text-[0.6875rem] font-normal tracking-[0.1em] text-muted uppercase">
+                  <span className="line-clamp-2 [overflow-wrap:break-word]" title={e.names[ev]}>
                     {e.names[ev]}
                   </span>
                 </th>
@@ -140,14 +155,14 @@ export function AllianceEvents({
           <tbody>
             {ALLIANCES.map((a) => (
               <tr key={a.tag} className="border-b border-border/60 transition-colors last:border-0 hover:bg-white/[0.02]">
-                <th scope="row" className="px-5 py-3 font-normal">
+                <th scope="row" className={clsx("px-5 font-normal", rowPad)}>
                   <span className="flex items-center gap-3">
-                    <AllianceAvatar tag={a.tag} size={36} />
+                    <AllianceAvatar tag={a.tag} size={30} />
                     <span className="font-mono text-sm text-fg">{a.tag}</span>
                   </span>
                 </th>
                 {ALLIANCE_EVENTS.map((ev) => (
-                  <td key={ev} className="px-3 py-3">
+                  <td key={ev} className={clsx("px-3", rowPad)}>
                     <Cell value={shown(a.tag, ev)} notSet={e.notSet} />
                   </td>
                 ))}
@@ -157,8 +172,8 @@ export function AllianceEvents({
         </table>
       </div>
 
-      {/* Phones: one alliance at a time */}
-      <div className="md:hidden">
+      {/* Phones and tablets: one alliance at a time */}
+      <div className="lg:hidden">
         <div role="group" aria-label={e.chipsLabel} className="flex flex-wrap gap-2">
           {ALLIANCES.map((a) => (
             <button
@@ -180,7 +195,7 @@ export function AllianceEvents({
         </div>
         <ul className="mt-4 divide-y divide-border rounded-3xl bg-card shadow-[inset_0_0_0_1px_var(--border)]" aria-label={alliance}>
           {ALLIANCE_EVENTS.map((ev) => (
-            <li key={ev} className="flex items-center gap-4 px-5 py-3.5">
+            <li key={ev} className="flex items-center gap-4 px-5 py-3">
               <span className="min-w-0 flex-1 text-sm">{e.names[ev]}</span>
               <Cell value={shown(alliance, ev)} notSet={e.notSet} align="end" />
             </li>
@@ -200,19 +215,44 @@ function Cell({ value, notSet, align = "start" }: { value: Shown; notSet: string
       </span>
     );
   }
+  // Time and weekday share a line (the weekday wraps under it in narrow columns); a note goes below.
   return (
-    <div className={clsx("min-w-0", align === "end" && "max-w-[55%] shrink-0 text-right")}>
-      {value.time && <p className="font-mono text-base font-semibold text-fg tabular-nums">{value.time}</p>}
-      {value.days && (
-        <p className="truncate text-xs text-gold-soft" title={value.days}>
-          {value.days}
-        </p>
-      )}
+    <div className={clsx("min-w-0", align === "end" && "max-w-[60%] shrink-0 text-right")}>
+      <p className={clsx("flex min-w-0 flex-wrap items-baseline gap-x-2", align === "end" && "justify-end")}>
+        {value.time && <span className="font-mono text-base font-semibold text-fg tabular-nums">{value.time}</span>}
+        {value.days && (
+          <span className="truncate text-xs text-gold-soft" title={value.days}>
+            {value.days}
+          </span>
+        )}
+      </p>
       {value.note && (
         <p className="truncate text-xs text-muted" title={value.note}>
           {value.note}
         </p>
       )}
     </div>
+  );
+}
+
+/** Loading shape: the heading with the switch beside it, then a header row and one row per alliance. */
+export function AllianceEventsSkeleton({ heading }: { heading: ReactNode }) {
+  return (
+    <>
+      <div className={headerRow}>
+        {heading}
+        <Bone className="h-11 w-56 rounded-full" />
+      </div>
+      <div aria-hidden className="divide-y divide-border rounded-3xl bg-card shadow-[inset_0_0_0_1px_var(--border)]">
+        {Array.from({ length: ALLIANCES.length + 1 }, (_, i) => (
+          <div key={i} className={clsx("flex items-center gap-4 px-5", i === 0 ? "py-4" : rowPad)}>
+            <Bone className={i === 0 ? "h-3 w-20" : "size-[30px] shrink-0 rounded-full"} />
+            {Array.from({ length: 3 }, (_, j) => (
+              <Bone key={j} className="h-4 flex-1" />
+            ))}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

@@ -160,7 +160,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
                 on ? "bg-primary text-on-primary" : "bg-card text-muted shadow-[inset_0_0_0_1px_var(--border)]",
               )}
             >
-              <span className="block font-mono text-[10px] uppercase opacity-80">{fmt(t.common.day, { n: c.dayNumber })}</span>
+              <span className="block font-mono text-[0.625rem] uppercase opacity-80">{fmt(t.common.day, { n: c.dayNumber })}</span>
               <span className="block max-w-[9rem] truncate text-sm font-semibold">{positionLabel(c.position, t)}</span>
               {renderHeader?.(c, "chip")}
             </button>
@@ -199,7 +199,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
           <div role="row" className="contents">
             <div
               role="columnheader"
-              className="z-30 flex items-end border-r border-b border-border bg-card px-2 pb-2 font-mono text-[10px] text-muted [grid-column:1] [grid-row:1] md:sticky md:top-0 md:left-0"
+              className="z-30 flex items-end border-r border-b border-border bg-card px-2 pb-2 font-mono text-[0.625rem] text-muted [grid-column:1] [grid-row:1] md:sticky md:top-0 md:left-0"
             >
               {g.utc}
             </div>
@@ -207,10 +207,10 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
               const isSelected = selected?.dayId === c.id && selected.slot === null;
               const inner = (
                 <>
-                  <span className="flex flex-wrap items-center gap-x-1.5 font-mono text-[10px] uppercase tracking-[0.12em] text-muted">
+                  <span className="flex flex-wrap items-center gap-x-1.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-muted">
                     {fmt(t.common.day, { n: c.dayNumber })} · {formatDay(c.date, tag)}
                     {c.date === today && (
-                      <span className="rounded-full bg-primary px-1.5 font-sans text-[10px] leading-4 tracking-normal text-on-primary normal-case">
+                      <span className="rounded-full bg-primary px-1.5 font-sans text-[0.625rem] leading-4 tracking-normal text-on-primary normal-case">
                         {g.today}
                       </span>
                     )}
@@ -266,7 +266,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
                   className={clsx(
                     "z-10 flex items-center border-r border-border bg-card px-2 font-mono tabular-nums [grid-column:1] [grid-row:var(--gr)] md:sticky md:left-0",
                     hourEnd ? "border-b border-b-border-strong" : "border-b border-b-border/50",
-                    onHour || slotMinutes >= 30 ? "text-xs text-muted" : "text-[10px] text-muted/60",
+                    onHour || slotMinutes >= 30 ? "text-xs text-muted" : "text-[0.625rem] text-muted/60",
                     live && "bg-primary/15 text-fg shadow-[inset_3px_0_0_var(--primary)]",
                   )}
                 >

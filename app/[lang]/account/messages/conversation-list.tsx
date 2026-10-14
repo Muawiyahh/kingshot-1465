@@ -44,18 +44,18 @@ export function ConversationList() {
                     {c.ingame_name}
                   </span>
                   {c.role !== "player" && (
-                    <span className="shrink-0 rounded-full bg-gold/10 px-1.5 py-px font-mono text-[10px] uppercase tracking-wider text-gold-soft">
+                    <span className="shrink-0 rounded-full bg-gold/10 px-1.5 py-px font-mono text-[0.625rem] uppercase tracking-wider text-gold-soft">
                       {t.admin.accounts.roles[c.role]}
                     </span>
                   )}
                   {c.transfer && (
-                    <span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-px font-mono text-[10px] uppercase tracking-wider text-warning">
+                    <span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-px font-mono text-[0.625rem] uppercase tracking-wider text-warning">
                       {c.from_kingdom ? fmt(t.common.transferFrom, { n: c.from_kingdom }) : t.common.transfer}
                     </span>
                   )}
                   <span
                     className={clsx(
-                      "ml-auto shrink-0 text-[11px] tabular-nums",
+                      "ml-auto shrink-0 text-[0.6875rem] tabular-nums",
                       unread ? "font-semibold text-primary" : "text-muted",
                     )}
                   >
@@ -74,7 +74,7 @@ export function ConversationList() {
                   </span>
                   {unread && (
                     <span
-                      className="ml-auto shrink-0 rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-on-primary tabular-nums"
+                      className="ml-auto shrink-0 rounded-full bg-primary px-1.5 text-[0.6875rem] leading-5 font-semibold text-on-primary tabular-nums"
                       aria-label={fmt(m.unread, { n: c.unread })}
                     >
                       {c.unread}

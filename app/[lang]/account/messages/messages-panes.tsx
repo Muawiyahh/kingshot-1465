@@ -32,7 +32,7 @@ export function MessagesPanes({ header, children }: { header: ReactNode; childre
           aria-label={m.listLabel}
           className={clsx("min-h-0 overflow-y-auto lg:border-r lg:border-border", open && "max-lg:hidden")}
         >
-          <h2 className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3 font-mono text-[11px] uppercase tracking-[0.18em] text-muted backdrop-blur">
+          <h2 className="sticky top-0 z-10 border-b border-border bg-card/95 px-4 py-3 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-muted backdrop-blur">
             {m.listLabel}
           </h2>
           <ConversationList />

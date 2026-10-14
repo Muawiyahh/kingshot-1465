@@ -43,7 +43,7 @@ export function SectionNavView({ locale, label, groups, badges = {}, isActive = 
         {groups.map((group, g) => (
           <div key={group.label ?? g} className="flex flex-wrap items-center gap-1 lg:flex-col lg:items-stretch">
             {group.label && (
-              <p className="min-w-[4.5rem] px-1 font-mono text-[11px] uppercase tracking-[0.18em] text-muted lg:px-3 lg:pb-1">
+              <p className="min-w-[4.5rem] px-1 font-mono text-[0.6875rem] uppercase tracking-[0.18em] text-muted lg:px-3 lg:pb-1">
                 {group.label}
               </p>
             )}
@@ -67,7 +67,7 @@ export function SectionNavView({ locale, label, groups, badges = {}, isActive = 
                   <Icon className={clsx("size-4 shrink-0", active ? "text-primary" : "text-muted")} aria-hidden />
                   <span className="flex-1">{item.label}</span>
                   {count > 0 && (
-                    <span className="rounded-full bg-primary px-1.5 text-[11px] leading-5 font-semibold text-on-primary tabular-nums">
+                    <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] leading-5 font-semibold text-on-primary tabular-nums">
                       {count}
                     </span>
                   )}

@@ -164,11 +164,11 @@ export function PlayerGrid({
           const own = day.slots[0];
           if (event.status === "published" && own)
             return (
-              <span className={clsx("block font-mono text-[10px] text-gold-soft", variant === "header" && "mt-1")}>
+              <span className={clsx("block font-mono text-[0.625rem] text-gold-soft", variant === "header" && "mt-1")}>
                 ★ {slotStartLabel(own.slot_index, day.slot_minutes)}
               </span>
             );
-          if (!app) return variant === "header" && event.status === "open" ? <span className="mt-1 block text-[11px] text-muted">{t.apply.notApplied}</span> : null;
+          if (!app) return variant === "header" && event.status === "open" ? <span className="mt-1 block text-[0.6875rem] text-muted">{t.apply.notApplied}</span> : null;
           return (
             <span className={clsx("block", variant === "header" ? "mt-1.5" : "mt-1")}>
               <StatusBadge status={app.status} />

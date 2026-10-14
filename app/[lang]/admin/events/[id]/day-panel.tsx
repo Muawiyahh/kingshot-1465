@@ -37,7 +37,7 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
           [t.admin.event.slotsFilled, `${filled}/${slotCount(day.slot_minutes)}`, false],
         ].map(([label, value, warn]) => (
           <div key={String(label)} className="rounded-2xl bg-bg-elevated px-2 py-3 shadow-[inset_0_0_0_1px_var(--border)]">
-            <dt className="text-[11px] text-muted">{label}</dt>
+            <dt className="text-[0.6875rem] text-muted">{label}</dt>
             <dd className={clsx("mt-0.5 font-mono text-lg", warn && "text-warning")}>{value}</dd>
           </div>
         ))}

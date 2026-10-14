@@ -37,7 +37,7 @@ export async function UserNav() {
           title={t.nav.admin}
           className="hidden size-10 items-center justify-center rounded-full text-gold transition-colors hover:bg-white/5 md:flex"
         >
-          <ShieldCheck className="size-[18px]" aria-hidden />
+          <ShieldCheck className="size-[1.125rem]" aria-hidden />
         </Link>
       )}
       <AccountMenu
