@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import clsx from "clsx";
 import { Clock, X } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
 import { Notice, inputClass } from "@/components/ui";
@@ -16,7 +17,14 @@ const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 // One digit group inside the time field: no arrow, a soft highlight on hover and focus.
 const segment =
-  "h-8 cursor-pointer appearance-none self-center rounded-lg bg-transparent px-1.5 text-center font-mono text-lg font-semibold text-fg tabular-nums transition-colors hover:bg-white/[0.06] focus:bg-white/[0.08] focus:outline-none disabled:cursor-not-allowed disabled:text-muted/50 disabled:hover:bg-transparent";
+  "h-8 cursor-pointer appearance-none self-center rounded-lg bg-transparent px-1.5 text-center font-mono text-lg font-semibold text-fg tabular-nums transition-colors hover:bg-white/[0.06] focus:bg-white/[0.08] focus:outline-none disabled:cursor-not-allowed disabled:text-muted/50 disabled:hover:bg-transparent lg:h-7 lg:text-base";
+
+// Wide screens: one line per event, with column labels once at the top. These widths are shared by the
+// label row and every event row so the columns line up. Below that each event stacks; fields are
+// compact from lg so time, days and note still share a line there.
+const columns = "xl:grid-cols-[7.5rem_8.5rem_17.5rem_minmax(0,1fr)_2.25rem] xl:gap-x-3";
+// Field labels: shown above each field when stacked, read out only on wide screens (the top row shows them).
+const fieldLabel = "mb-1.5 block text-xs text-muted xl:sr-only";
 
 /**
  * A 24-hour UTC time: hour and minute pickers inside one field. The browser's own time field follows
@@ -38,10 +46,10 @@ function UtcTime({
   const [hour = "", minute = ""] = value ? value.split(":") : [];
   return (
     <fieldset>
-      <legend className="mb-1.5 block text-xs text-muted">{legend}</legend>
+      <legend className={fieldLabel}>{legend}</legend>
       <input type="hidden" name={name} value={value} />
-      <div className="inline-flex h-11 items-stretch gap-0.5 rounded-xl bg-bg-elevated pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus-within:shadow-[inset_0_0_0_1.5px_var(--gold)]">
-        <Clock className="mr-1 size-4 self-center text-muted" aria-hidden />
+      <div className="inline-flex h-11 items-stretch gap-0.5 rounded-xl bg-bg-elevated pr-2 pl-3 shadow-[inset_0_0_0_1px_var(--border-strong)] transition-shadow focus-within:shadow-[inset_0_0_0_1.5px_var(--gold)] lg:h-9 lg:pl-1.5">
+        <Clock className="mr-1 size-4 self-center text-muted lg:hidden" aria-hidden />
         <select
           aria-label={labels.hour}
           value={hour}
@@ -55,7 +63,7 @@ function UtcTime({
             </option>
           ))}
         </select>
-        <span aria-hidden className="self-center font-mono text-lg text-muted">
+        <span aria-hidden className="self-center font-mono text-lg text-muted lg:text-base">
           :
         </span>
         <select
@@ -81,7 +89,7 @@ function UtcTime({
 }
 
 /**
- * One alliance's six event times. Fields are controlled so they keep what was saved (React resets
+ * One alliance's event times. Fields are controlled so they keep what was saved (React resets
  * uncontrolled fields after a form action).
  */
 export function AllianceEventsForm({
@@ -103,14 +111,7 @@ export function AllianceEventsForm({
     return Object.fromEntries(
       ALLIANCE_EVENTS.map((e) => {
         const r = saved.get(e);
-        return [
-          e,
-          {
-            time: r?.time_utc ?? "",
-            days: r?.weekdays ?? [],
-            note: r?.note ?? "",
-          },
-        ];
+        return [e, { time: r?.time_utc ?? "", days: r?.weekdays ?? [], note: r?.note ?? "" }];
       }),
     ) as Record<AllianceEventKey, Entry>;
   });
@@ -119,29 +120,42 @@ export function AllianceEventsForm({
     setEntries((all) => ({ ...all, [e]: { ...all[e], ...patch } }));
 
   return (
-    <form action={action} className="space-y-6">
+    <form action={action} className="space-y-5">
       <input type="hidden" name="alliance" value={alliance} />
-      <p className="text-sm text-muted">{s.daysHint}</p>
-      <ul className="divide-y divide-border">
+
+      {/* Column labels, wide screens only (each field keeps its own label for screen readers) */}
+      <div aria-hidden className={clsx("hidden border-b border-border pb-2 text-xs text-muted xl:grid", columns)}>
+        <span />
+        <span>{s.time}</span>
+        <span>{s.days}</span>
+        <span>{s.note}</span>
+      </div>
+
+      <ul className="-mt-2 divide-y divide-border">
         {ALLIANCE_EVENTS.map((e) => {
           const entry = entries[e];
+          const name = t.home.events.names[e];
           const filled = entry.time || entry.note || entry.days.length > 0;
           return (
-            <li key={e} className="py-5 first:pt-0 last:pb-0">
-              <div className="flex items-center gap-3">
-                <h3 className="flex-1 font-display text-base font-semibold">{t.home.events.names[e]}</h3>
-                {filled && (
+            <li key={e} className={clsx("py-4 xl:grid xl:items-center xl:py-2", columns)}>
+              <div className="flex min-h-9 items-center gap-3 xl:contents">
+                <h3 className="flex-1 font-display text-base font-semibold xl:text-sm">{name}</h3>
+                {filled ? (
                   <button
                     type="button"
                     onClick={() => update(e, { time: "", days: [], note: "" })}
-                    className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full px-3 text-sm text-muted hover:bg-white/5 hover:text-fg"
+                    aria-label={`${t.slotPicker.clear}: ${name}`}
+                    title={t.slotPicker.clear}
+                    className="inline-flex h-9 cursor-pointer items-center justify-center gap-1 rounded-full px-3 text-sm text-muted hover:bg-white/5 hover:text-fg xl:order-last xl:size-9 xl:px-0"
                   >
-                    <X className="size-3.5" aria-hidden />
-                    {t.slotPicker.clear}
+                    <X className="size-3.5 xl:size-4" aria-hidden />
+                    <span className="xl:hidden">{t.slotPicker.clear}</span>
                   </button>
+                ) : (
+                  <span className="hidden xl:order-last xl:block" />
                 )}
               </div>
-              <div className="mt-3 flex flex-wrap items-end gap-x-6 gap-y-4">
+              <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-3 lg:gap-x-4 xl:contents">
                 <UtcTime
                   name={`${e}.time`}
                   legend={s.time}
@@ -150,8 +164,8 @@ export function AllianceEventsForm({
                   labels={{ hour: s.hour, minute: s.minute }}
                 />
                 <fieldset>
-                  <legend className="mb-1.5 text-xs text-muted">{s.days}</legend>
-                  <div className="flex flex-wrap gap-1.5">
+                  <legend className={fieldLabel}>{s.days}</legend>
+                  <div className="flex flex-wrap gap-1.5 lg:gap-1">
                     {WEEKDAYS_MON_FIRST.map((d) => (
                       <label key={d} title={long[d]} className="cursor-pointer">
                         <input
@@ -169,7 +183,7 @@ export function AllianceEventsForm({
                         />
                         <span
                           aria-hidden
-                          className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-bg-elevated px-2 text-sm text-muted shadow-[inset_0_0_0_1px_var(--border-strong)] transition-colors peer-checked:bg-primary peer-checked:text-on-primary peer-checked:shadow-none peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold"
+                          className="flex h-11 min-w-11 items-center justify-center rounded-xl bg-bg-elevated px-2 text-sm text-muted shadow-[inset_0_0_0_1px_var(--border-strong)] transition-colors peer-checked:bg-primary peer-checked:text-on-primary peer-checked:shadow-none peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-gold lg:h-9 lg:w-9 lg:min-w-0 lg:rounded-lg lg:px-0 lg:text-xs"
                         >
                           {short[d]}
                         </span>
@@ -177,15 +191,15 @@ export function AllianceEventsForm({
                     ))}
                   </div>
                 </fieldset>
-                <label className="block min-w-[12rem] flex-1 space-y-1.5">
-                  <span className="block text-xs text-muted">{s.note}</span>
+                <label className="block min-w-[10rem] flex-1 xl:min-w-0">
+                  <span className={fieldLabel}>{s.note}</span>
                   <input
                     name={`${e}.note`}
                     value={entry.note}
                     maxLength={24}
                     placeholder={s.notePlaceholder}
                     onChange={(ev) => update(e, { note: ev.target.value })}
-                    className={inputClass}
+                    className={clsx(inputClass, "lg:h-9 lg:px-3 lg:text-sm")}
                   />
                 </label>
               </div>
@@ -196,7 +210,10 @@ export function AllianceEventsForm({
 
       {state?.error && <Notice tone="error">{state.error}</Notice>}
       {state?.ok && <Notice tone="success">{state.message}</Notice>}
-      <SubmitButton pendingText={t.common.saving}>{fmt(s.save, { alliance })}</SubmitButton>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-5">
+        <SubmitButton pendingText={t.common.saving}>{fmt(s.save, { alliance })}</SubmitButton>
+        <p className="text-xs text-muted">{s.daysHint}</p>
+      </div>
     </form>
   );
 }

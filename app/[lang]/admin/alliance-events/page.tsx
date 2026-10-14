@@ -30,7 +30,7 @@ const tabs = ALLIANCE_TAGS.map((tag) => ({
 }));
 
 const skeleton = (
-  <Card className="p-5 sm:p-7">
+  <Card className="p-5 sm:p-6">
     <FormSkeleton fields={6} />
   </Card>
 );
@@ -89,7 +89,7 @@ async function Editor({
           })}
         </Notice>
       ) : (
-        <Card className="p-5 sm:p-7">
+        <Card className="p-5 sm:p-6">
           {/* Keyed so switching alliance starts from that alliance's saved times. */}
           <AllianceEventsForm
             key={alliance}

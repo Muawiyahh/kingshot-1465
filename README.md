@@ -20,6 +20,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0005_message_translations.sql`
    - `0006_application_reapply.sql`
    - `0007_homepage_content.sql`
+   - `0008_transfer_contacts.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -70,11 +71,11 @@ Leaders set everything specific in **Admin → Homepage**:
 
 Players still in another kingdom can sign up at **/transfer** (the homepage's **Message a transfer manager** and **Message** buttons lead there) with their game ID, name, current kingdom and a password. The account is approved straight away and opens in **Messages**:
 
-- they can message only the transfer managers, or a leader who has written to them first;
+- they can message only the transfer managers, or a leader who has written to them first. Until leaders pick any transfer managers, they can message every admin instead, so a new transfer account always has someone to talk to;
 - they can't apply for castle positions, and the Governors count on the homepage leaves them out;
 - leaders see them under **Admin → Accounts → Transfers**, and their messages carry a "Transfer · #1234" tag. Once a player has moved to 1465, **Joined 1465** turns the account into a normal member account.
 
-The database enforces all of this (`0007_homepage_content.sql`), not just the pages.
+The database enforces all of this (`0007_homepage_content.sql` and `0008_transfer_contacts.sql`), not just the pages.
 
 ## How the KvK position flow works
 

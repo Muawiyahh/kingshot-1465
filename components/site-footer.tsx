@@ -7,7 +7,7 @@ import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
 
-/** Kingdom name on the left, the site's credit in the middle, quick links on the right. */
+/** Kingdom name on the left, the site's credit in the middle, Discord (when set) on the right. */
 export async function SiteFooter() {
   const { locale, t } = await getI18n();
   return (
@@ -23,16 +23,8 @@ export async function SiteFooter() {
             name: <span className="font-medium text-gold-soft">{site.creator}</span>,
           })}
         </p>
-        <nav
-          aria-label={t.footer.label}
-          className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-muted sm:justify-end"
-        >
-          <Link href={localePath(locale, "/positions")} className="hover:text-fg">
-            {t.nav.positions}
-          </Link>
-          <Link href={localePath(locale, "/account/appointments")} className="hover:text-fg">
-            {t.nav.apply}
-          </Link>
+        {/* Empty when there's no Discord link, so the credit stays centred */}
+        <nav aria-label={t.footer.label} className="flex justify-center text-sm text-muted sm:justify-end">
           {site.discordUrl && (
             <a href={site.discordUrl} className="hover:text-fg" target="_blank" rel="noreferrer">
               Discord
