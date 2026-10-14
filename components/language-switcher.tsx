@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Globe } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
+import { rememberLanguageChosen } from "@/components/language-welcome";
 import { LOCALES, LOCALE_INFO, isLocale, switchLocale } from "@/lib/i18n/config";
 import { saveLanguage } from "@/lib/i18n/language-action";
 
@@ -26,6 +27,7 @@ export function LanguageSwitcher() {
         onChange={(e) => {
           const next = e.target.value;
           if (!isLocale(next)) return;
+          rememberLanguageChosen();
           start(() => {
             void saveLanguage(next);
             // Read the URL at click time rather than with usePathname(), so the header

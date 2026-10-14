@@ -12,14 +12,15 @@ import { fmt } from "@/lib/i18n/format";
 import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { AccountStatus, Profile, UserRole } from "@/lib/types";
-import { setAccountRole, setAccountStatus } from "../actions";
+import { makeMember, setAccountRole, setAccountStatus } from "../actions";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
   return { title: t.meta.adminAccounts };
 }
 
-const STATUSES: AccountStatus[] = ["pending", "approved", "rejected"];
+/** One tab per account status for members, plus one for transfer accounts (whatever their status). */
+const TABS = ["pending", "approved", "rejected", "transfers"] as const;
 const ROLES: UserRole[] = ["player", "leader", "admin"];
 
 export default async function AccountsPage({
@@ -27,7 +28,7 @@ export default async function AccountsPage({
 }: PageProps<"/[lang]/admin/accounts">) {
   const { locale, t } = await getI18n();
   const a = t.admin.accounts;
-  const tabs = STATUSES.map((s) => ({ value: s, label: a.tabs[s] }));
+  const tabs = TABS.map((s) => ({ value: s, label: a.tabs[s] }));
   const href = localePath(locale, "/admin/accounts");
   return (
     <>
@@ -69,23 +70,23 @@ async function AccountsList({
     getI18n(),
     createClient(),
   ]);
-  const status = STATUSES.find((s) => s === params.status) ?? "pending";
+  const tab = TABS.find((s) => s === params.status) ?? "pending";
+  const list = (withTransferColumn: boolean) => {
+    const q = supabase.from("profiles").select("*").order("created_at", { ascending: tab === "pending" });
+    if (tab === "transfers") return q.eq("transfer", true);
+    return withTransferColumn ? q.eq("status", tab).eq("transfer", false) : q.eq("status", tab);
+  };
   // The leader check and the list load together; RLS already limits the list to leaders.
-  const [leader, { data }] = await Promise.all([
-    requireLeader(),
-    supabase
-      .from("profiles")
-      .select("*")
-      .eq("status", status)
-      .order("created_at", { ascending: status === "pending" }),
-  ]);
+  const [leader, first] = await Promise.all([requireLeader(), list(true)]);
+  // Before 0007_homepage_content.sql there's no transfer column: show members unfiltered, and no transfers.
+  const { data } = first.error && tab !== "transfers" ? await list(false) : first;
   const profiles = (data ?? []) as Profile[];
 
   return (
     <QueryTabs
       param="status"
       tabs={tabs}
-      current={status}
+      current={tab}
       href={href}
       label={t.admin.accounts.tabsLabel}
       loading={<RowsSkeleton rows={3} />}
@@ -117,6 +118,11 @@ async function AccountsList({
                         {t.admin.accounts.roles[p.role]}
                       </Badge>
                     )}
+                    {p.transfer && (
+                      <Badge tone="amber" className="ml-2 align-middle">
+                        {p.from_kingdom ? fmt(t.common.transferFrom, { n: p.from_kingdom }) : t.common.transfer}
+                      </Badge>
+                    )}
                   </p>
                   <p className="font-mono text-sm text-muted">
                     {fmt(t.common.id, { id: p.game_id })} ·{" "}
@@ -128,7 +134,15 @@ async function AccountsList({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  {status !== "approved" && (
+                  {p.transfer && p.status === "approved" && (
+                    <form action={makeMember} title={t.admin.accounts.makeMemberHint}>
+                      <input type="hidden" name="profileId" value={p.id} />
+                      <PendingButton className="h-9 cursor-pointer rounded-full bg-primary px-4 text-sm font-medium text-on-primary transition-colors hover:bg-primary-hover">
+                        {t.admin.accounts.makeMember}
+                      </PendingButton>
+                    </form>
+                  )}
+                  {p.status !== "approved" && (
                     <StatusButton
                       id={p.id}
                       status="approved"
@@ -136,7 +150,7 @@ async function AccountsList({
                       tone="primary"
                     />
                   )}
-                  {status !== "rejected" && p.id !== leader.id && (
+                  {p.status !== "rejected" && p.id !== leader.id && (
                     <StatusButton
                       id={p.id}
                       status="rejected"
@@ -144,7 +158,7 @@ async function AccountsList({
                       tone="ghost"
                     />
                   )}
-                  {status === "rejected" && (
+                  {p.status === "rejected" && (
                     <StatusButton
                       id={p.id}
                       status="pending"
@@ -153,7 +167,8 @@ async function AccountsList({
                     />
                   )}
                   {leader.role === "admin" &&
-                    status === "approved" &&
+                    p.status === "approved" &&
+                    !p.transfer &&
                     p.id !== leader.id && (
                       <form
                         action={setAccountRole}

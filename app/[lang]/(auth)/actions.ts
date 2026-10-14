@@ -6,9 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import { gameIdToEmail } from "@/lib/auth";
+import { isUuid } from "@/lib/messages";
+import { site } from "@/lib/site";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { isLocale, localePath, switchLocale } from "@/lib/i18n/config";
-import { getActionI18n } from "@/lib/i18n/action";
+import { getActionI18n, rememberLanguageChosen } from "@/lib/i18n/action";
 import type { Messages } from "@/lib/i18n/messages";
 import type { ActionState } from "@/lib/types";
 
@@ -92,7 +94,88 @@ export async function signUp(_prev: ActionState, formData: FormData): Promise<Ac
 
   const supabase = await createClient();
   await supabase.auth.signInWithPassword({ email, password: v.password });
+  await rememberLanguageChosen();
   redirect(`${localePath(language, "/account")}?welcome=1`);
+}
+
+const transferSchema = z
+  .object({
+    gameId,
+    name: z
+      .string()
+      .trim()
+      .min(1, "nameRequired" satisfies ErrorKey)
+      .max(30, "nameTooLong" satisfies ErrorKey),
+    fromKingdom: z
+      .string()
+      .trim()
+      .regex(/^[0-9]{1,5}$/, "kingdomNumber" satisfies ErrorKey)
+      .transform(Number)
+      .refine((n) => n >= 1, "kingdomNumber" satisfies ErrorKey)
+      .refine((n) => String(n) !== site.kingdom, "alreadyInKingdom" satisfies ErrorKey),
+    password: z.string().min(8, "passwordShort" satisfies ErrorKey),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "passwordMismatch" satisfies ErrorKey });
+
+/**
+ * A transfer account for a player in another kingdom: approved straight away, so they can message
+ * the transfer managers at once (RLS keeps them to the managers and out of KvK applications).
+ * Opens straight into the chat with the manager they picked, if any.
+ */
+export async function signUpTransfer(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { locale, t } = await getActionI18n();
+  if (!supabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) return { error: t.errors.notConfigured };
+
+  const parsed = transferSchema.safeParse({
+    gameId: formData.get("gameId"),
+    name: formData.get("name"),
+    fromKingdom: formData.get("fromKingdom") ?? "",
+    password: formData.get("password"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
+  const v = parsed.data;
+  const chosen = formData.get("language");
+  const language = isLocale(chosen) ? chosen : locale;
+  const to = String(formData.get("to") ?? "");
+
+  const admin = createAdminClient();
+  const email = gameIdToEmail(v.gameId);
+  const { data: created, error: createError } = await admin.auth.admin.createUser({
+    email,
+    password: v.password,
+    email_confirm: true,
+    user_metadata: { game_id: v.gameId },
+  });
+  if (createError || !created.user) {
+    const exists = createError?.message.toLowerCase().includes("already");
+    return { error: exists ? t.errors.accountExists : t.errors.createFailed };
+  }
+
+  const { error: profileError } = await admin.from("profiles").insert({
+    id: created.user.id,
+    game_id: v.gameId,
+    ingame_name: v.name,
+    alliance_tag: null,
+    language,
+    status: "approved",
+    transfer: true,
+    from_kingdom: v.fromKingdom,
+  });
+  if (profileError) {
+    await admin.auth.admin.deleteUser(created.user.id);
+    // 42703 / PGRST204: the transfer columns are missing until 0007_homepage_content.sql has been run.
+    const missing = profileError.code === "42703" || profileError.code === "PGRST204";
+    return {
+      error: missing ? t.errors.transferUnavailable : profileError.code === "23505" ? t.errors.accountExists : t.errors.profileFailed,
+    };
+  }
+
+  const supabase = await createClient();
+  await supabase.auth.signInWithPassword({ email, password: v.password });
+  await rememberLanguageChosen();
+  redirect(localePath(language, isUuid(to) ? `/account/messages/${to}` : "/account/messages"));
 }
 
 export async function signIn(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -115,6 +198,7 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   const { data: profile } = await supabase.from("profiles").select("language").eq("id", data.user.id).maybeSingle();
   const preferred = isLocale(profile?.language) ? profile.language : locale;
   const next = safeNext(formData.get("next"), localePath(locale, "/account"));
+  await rememberLanguageChosen();
   redirect(switchLocale(next, preferred));
 }
 

@@ -273,7 +273,13 @@ function ChatHeader({ partner }: { partner: Contact | undefined }) {
           <div className="min-w-0">
             <p className="truncate font-medium">{partner.ingame_name}</p>
             <p className="font-mono text-[11px] uppercase tracking-wider text-gold-soft">
-              {t.admin.accounts.roles[partner.role]}
+              {partner.transfer ? (
+                <span className="text-warning">
+                  {partner.from_kingdom ? fmt(t.common.transferFrom, { n: partner.from_kingdom }) : t.common.transfer}
+                </span>
+              ) : (
+                t.admin.accounts.roles[partner.role]
+              )}
               {partner.alliance_tag && <span className="text-muted"> · [{partner.alliance_tag}]</span>}
             </p>
           </div>

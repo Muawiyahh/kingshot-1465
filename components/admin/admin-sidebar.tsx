@@ -26,6 +26,14 @@ export function adminGroups(t: Messages): SectionNavGroup[] {
         { key: "server", href: "/admin/server", label: n.server },
       ],
     },
+    {
+      label: n.groups.homepage,
+      items: [
+        { key: "allianceEvents", href: "/admin/alliance-events", label: n.allianceEvents },
+        { key: "hallOfFame", href: "/admin/hall-of-fame", label: n.hallOfFame },
+        { key: "transfers", href: "/admin/transfers", label: n.transfers },
+      ],
+    },
   ];
 }
 

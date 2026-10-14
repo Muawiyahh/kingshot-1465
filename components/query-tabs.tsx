@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import clsx from "clsx";
 
-type Tab = { value: string; label: string };
+type Tab = { value: string; label: ReactNode };
 
 /**
  * Tabs that switch a ?param on the same page. The clicked tab lights up and the content below

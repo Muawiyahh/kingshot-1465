@@ -7,12 +7,21 @@ import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { planAutofill, type FillSlot } from "@/lib/autofill";
 import { addDays, positionLabel, slotCount } from "@/lib/kvk";
+import { ALLIANCE_EVENTS, TIME_RE, isMonday } from "@/lib/alliance-events";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { getActionI18n } from "@/lib/i18n/action";
 import type { Messages } from "@/lib/i18n/messages";
-import type { ActionState, ApplicationStatus, EventStatus, FillReport, FillState, Profile } from "@/lib/types";
+import type {
+  ActionState,
+  ApplicationStatus,
+  EventStatus,
+  FillReport,
+  FillState,
+  Profile,
+  TransferFact,
+} from "@/lib/types";
 
 type ErrorKey = keyof Messages["errors"];
 
@@ -46,6 +55,15 @@ export async function setAccountStatus(formData: FormData) {
   refresh();
 }
 
+/** A transfer account whose player has moved to 1465 becomes a normal member account. */
+export async function makeMember(formData: FormData) {
+  const { supabase, audit } = await leaderContext();
+  const id = uuid.parse(formData.get("profileId"));
+  await supabase.from("profiles").update({ transfer: false }).eq("id", id);
+  await audit("account.member", id);
+  refresh();
+}
+
 export async function setAccountRole(formData: FormData) {
   const { profile, supabase, audit } = await leaderContext();
   if (profile.role !== "admin") throw new Error("Only admins can change roles");
@@ -73,12 +91,16 @@ const serverSchema = z.object({
   serverOpenedOn: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal("")]),
 });
 
-/** Saves some of the kingdom_settings columns and refreshes the homepage cards. */
-async function saveSettings(fields: Record<string, string | null>, auditAction: string): Promise<ActionState> {
+/** Saves some of the kingdom_settings columns and refreshes the homepage. */
+async function saveSettings(
+  fields: Record<string, unknown>,
+  auditAction: string,
+  failed: ErrorKey = "settingsFailed",
+): Promise<ActionState> {
   const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
   const values = { ...fields, updated_by: profile.id };
   const { data, error } = await supabase.from("kingdom_settings").update(values).eq("id", 1).select("id");
-  if (error || !data?.length) return { error: t.errors.settingsFailed };
+  if (error || !data?.length) return { error: t.errors[failed] };
   await audit(auditAction, "kingdom", values);
   refresh();
   return { ok: true, message: t.success.settingsSaved };
@@ -100,6 +122,142 @@ export async function updateServer(_prev: ActionState, formData: FormData): Prom
   const parsed = serverSchema.safeParse({ serverOpenedOn: formData.get("serverOpenedOn") ?? "" });
   if (!parsed.success) return { error: t.errors.generic };
   return saveSettings({ server_opened_on: parsed.data.serverOpenedOn || null }, "server.update");
+}
+
+// ---------------------------------------------------------------------------
+// Homepage: alliance events, Hall of Fame, Transfer to 1465
+// ---------------------------------------------------------------------------
+
+const allianceTag = z.enum(ALLIANCE_TAGS);
+
+/** A form field as trimmed text, with Windows line breaks made plain ("" when missing). */
+function field(formData: FormData, name: string) {
+  return String(formData.get(name) ?? "").replace(/\r\n?/g, "\n").trim();
+}
+
+function fields(formData: FormData, name: string) {
+  return formData.getAll(name).map((v) => String(v).trim());
+}
+
+/** Saves one alliance's event times. Rows left completely empty are deleted. */
+export async function saveAllianceEvents(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const alliance = allianceTag.safeParse(formData.get("alliance"));
+  if (!alliance.success) return { error: t.errors.generic };
+
+  const rows = [];
+  const cleared: string[] = [];
+  for (const event of ALLIANCE_EVENTS) {
+    // Time inputs can send seconds (HH:MM:SS); only HH:MM is kept.
+    const time = field(formData, `${event}.time`).slice(0, 5);
+    const note = field(formData, `${event}.note`);
+    const weekdays = [...new Set(formData.getAll(`${event}.days`).map(Number))]
+      .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+      .sort((a, b) => a - b);
+    if (time && !TIME_RE.test(time)) return { error: t.errors.eventTime };
+    if (note.length > 24) return { error: t.errors.textTooLong };
+    if (!time && !note && weekdays.length === 0) cleared.push(event);
+    else rows.push({ alliance: alliance.data, event, time_utc: time || null, weekdays, note: note || null, updated_by: profile.id });
+  }
+
+  if (rows.length) {
+    const { data, error } = await supabase.from("alliance_events").upsert(rows, { onConflict: "alliance,event" }).select("event");
+    if (error || data?.length !== rows.length) return { error: t.errors.homepageFailed };
+  }
+  if (cleared.length) {
+    const { error } = await supabase.from("alliance_events").delete().eq("alliance", alliance.data).in("event", cleared);
+    if (error) return { error: t.errors.homepageFailed };
+  }
+  await audit("home.events", alliance.data, { set: rows.map((r) => r.event), cleared });
+  refresh();
+  return { ok: true, message: t.success.settingsSaved };
+}
+
+/** Saves one week of the Hall of Fame: a player and quote per alliance. An empty name drops that alliance. */
+export async function saveHallOfFame(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const week = field(formData, "week");
+  if (!isMonday(week)) return { error: t.errors.hofWeek };
+
+  const picks = [];
+  const skipped: string[] = [];
+  for (const alliance of ALLIANCE_TAGS) {
+    const name = field(formData, `${alliance}.name`);
+    // Quotes are shown on one line.
+    const quote = field(formData, `${alliance}.quote`).replace(/\s+/g, " ");
+    if (!name) {
+      if (quote) return { error: fmt(t.errors.hofName, { alliance }) };
+      skipped.push(alliance);
+      continue;
+    }
+    if (name.length > 40 || quote.length > 160) return { error: t.errors.textTooLong };
+    picks.push({ week_of: week, alliance, player_name: name, quote: quote || null, updated_by: profile.id });
+  }
+
+  if (picks.length) {
+    const { data, error } = await supabase.from("hall_of_fame").upsert(picks, { onConflict: "week_of,alliance" }).select("alliance");
+    if (error || data?.length !== picks.length) return { error: t.errors.homepageFailed };
+  }
+  if (skipped.length) {
+    const { error } = await supabase.from("hall_of_fame").delete().eq("week_of", week).in("alliance", skipped);
+    if (error) return { error: t.errors.homepageFailed };
+  }
+  await audit("home.hallOfFame", week, { picks: picks.map((p) => p.alliance) });
+  refresh();
+  return { ok: true, message: t.success.settingsSaved };
+}
+
+const MAX_FACTS = 8;
+const MAX_MANAGERS = 6;
+
+/** Saves the Transfer to 1465 section: pitch, kingdom facts and which leaders are transfer managers. */
+export async function saveTransfers(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const pitch = field(formData, "pitch");
+  if (pitch.length > 400) return { error: t.errors.textTooLong };
+
+  const labels = fields(formData, "factLabel");
+  const values = fields(formData, "factValue");
+  const facts: TransferFact[] = [];
+  for (let i = 0; i < Math.max(labels.length, values.length); i++) {
+    const label = labels[i] ?? "";
+    const value = values[i] ?? "";
+    if (!label && !value) continue;
+    if (!label || !value) return { error: t.errors.factIncomplete };
+    if (label.length > 40 || value.length > 80) return { error: t.errors.textTooLong };
+    facts.push({ label, value });
+  }
+
+  // Managers: the ticked leaders and admins, in the order shown, each with an optional note.
+  const managers = [...new Set(fields(formData, "manager"))].filter((id) => uuid.safeParse(id).success);
+  const notes = managers.map((id) => field(formData, `note.${id}`));
+  if (facts.length > MAX_FACTS || managers.length > MAX_MANAGERS) return { error: t.errors.tooManyRows };
+  if (notes.some((n) => n.length > 40)) return { error: t.errors.textTooLong };
+
+  // Only approved leaders and admins can answer transfer accounts.
+  if (managers.length) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .in("id", managers)
+      .in("role", ["leader", "admin"])
+      .eq("status", "approved");
+    if (error || data.length !== managers.length) return { error: t.errors.generic };
+  }
+
+  // Replace the list: drop anyone unticked, then save the rest with their order and note.
+  const dropped = managers.length
+    ? await supabase.from("transfer_managers").delete().not("profile_id", "in", `(${managers.join(",")})`)
+    : await supabase.from("transfer_managers").delete().not("profile_id", "is", null);
+  if (dropped.error) return { error: t.errors.homepageFailed };
+  if (managers.length) {
+    const rows = managers.map((id, sort) => ({ profile_id: id, note: notes[sort] || null, sort, updated_by: profile.id }));
+    const { data, error } = await supabase.from("transfer_managers").upsert(rows, { onConflict: "profile_id" }).select("profile_id");
+    if (error || data?.length !== rows.length) return { error: t.errors.homepageFailed };
+  }
+  await audit("home.transferManagers", "kingdom", { managers });
+
+  return saveSettings({ transfer_pitch: pitch || null, transfer_facts: facts }, "home.transfers", "homepageFailed");
 }
 
 // ---------------------------------------------------------------------------

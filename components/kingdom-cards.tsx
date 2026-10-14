@@ -52,7 +52,9 @@ function Tile({
     >
       <div
         className={clsx(
-          "relative flex h-full min-h-[10.5rem] flex-col rounded-[calc(1rem-1px)] p-4 backdrop-blur-xl sm:min-h-[11.5rem]",
+          "relative flex h-full flex-col rounded-[calc(1rem-1px)] p-4 backdrop-blur-xl",
+          // The King's full-width tile only needs its content's height; the others share a row height.
+          !featured && "min-h-[10.5rem] sm:min-h-[10rem]",
           featured ? "bg-[#1d1517]/80" : "bg-card/75",
           "shadow-[0_20px_40px_-14px_rgba(0,0,0,0.7)]",
         )}
@@ -115,7 +117,7 @@ function kvkDisplay(kvk: HomeStats["kvk"], now: number | null, t: Messages): { v
   return { value: text, sub: kvk.title };
 }
 
-/** Six glass tiles with the kingdom's key facts: two rows of three on larger screens. */
+/** Six glass tiles with the kingdom's key facts, the King on a row of their own. */
 export function KingdomCards({ stats }: { stats: HomeStats | null }) {
   const { t, tag } = useI18n();
   const now = useNow(1000);
@@ -134,9 +136,12 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
   const opened = stats?.serverOpenedOn ? utcMidnight(stats.serverOpenedOn) : null;
   const serverDay = opened !== null && now !== null ? Math.max(1, Math.floor((now - opened) / DAY) + 1) : null;
 
-  const tiles: { key: string; tile: ReactNode }[] = [
+  // The King gets a full row so the name always fits. Phones (2 columns): King, 2 × 2, Server age.
+  // Wider screens (6 columns): King, three thirds, two halves.
+  const tiles: { key: string; tile: ReactNode; span: string }[] = [
     {
       key: "king",
+      span: "col-span-2 sm:col-span-6",
       tile: (
         <Tile seed={0}
           featured
@@ -146,7 +151,9 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
             stats?.king ? (
               <span className="flex items-center gap-2.5">
                 <AllianceAvatar tag={stats.king.alliance} size={44} />
-                <span className="truncate text-lg sm:text-xl">{stats.king.name}</span>
+                <span className="truncate text-lg sm:text-xl" title={stats.king.name}>
+                  {stats.king.name}
+                </span>
               </span>
             ) : (
               dim
@@ -164,6 +171,7 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
     },
     {
       key: "alliances",
+      span: "sm:col-span-2",
       tile: (
         <Tile seed={1}
           icon={<ShieldHalf className="size-3.5" aria-hidden />}
@@ -181,6 +189,7 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
     },
     {
       key: "players",
+      span: "sm:col-span-2",
       tile: (
         <Tile seed={2}
           icon={<Users className="size-3.5" aria-hidden />}
@@ -192,12 +201,14 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
     },
     {
       key: "kvk",
+      span: "sm:col-span-2",
       tile: (
         <Tile seed={3} icon={<Hourglass className="size-3.5" aria-hidden />} label={t.cards.nextKvk} value={kvk.value} sub={kvk.sub} />
       ),
     },
     {
       key: "time",
+      span: "sm:col-span-3",
       tile: (
         <Tile seed={4}
           icon={<Clock className="size-3.5" aria-hidden />}
@@ -214,6 +225,7 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
     },
     {
       key: "age",
+      span: "col-span-2 sm:col-span-3",
       tile: (
         <Tile seed={5}
           icon={<CalendarDays className="size-3.5" aria-hidden />}
@@ -237,14 +249,14 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
   ];
 
   return (
-    <div role="group" aria-label={fmt(t.cards.group, { kingdom: site.kingdom })} className="grid auto-rows-fr grid-cols-2 gap-3.5 sm:grid-cols-3 sm:gap-5">
+    <div role="group" aria-label={fmt(t.cards.group, { kingdom: site.kingdom })} className="grid grid-cols-2 gap-3.5 sm:grid-cols-6 sm:gap-5">
       {tiles.map((t, i) => (
         <motion.div
           key={t.key}
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease, delay: 0.2 + i * 0.08 }}
-          className="h-full"
+          className={clsx("h-full", t.span)}
         >
           {t.tile}
         </motion.div>

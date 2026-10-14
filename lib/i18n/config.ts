@@ -5,6 +5,9 @@ export type Locale = (typeof LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = "en";
 export const LOCALE_COOKIE = "NEXT_LOCALE";
+/** Set once a visitor has picked a language (first-visit picker, globe menu, sign-in or sign-up). */
+export const LANGUAGE_CHOSEN_COOKIE = "lang_chosen";
+export const LANGUAGE_CHOSEN_MAX_AGE = 60 * 60 * 24 * 365;
 
 export const LOCALE_INFO: Record<Locale, { label: string; short: string; /** BCP 47 tag for <html lang> and Intl */ tag: string }> = {
   en: { label: "English", short: "EN", tag: "en-GB" },

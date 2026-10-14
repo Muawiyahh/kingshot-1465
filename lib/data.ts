@@ -1,10 +1,19 @@
 import "server-only";
 import { connection } from "next/server";
+import { cache } from "react";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { currentWeek } from "@/lib/alliance-events";
 import { addDays } from "@/lib/kvk";
-import type { KingdomSettings, PublicScheduleRow } from "@/lib/types";
+import type {
+  AllianceEventRow,
+  HallOfFameRow,
+  KingdomSettings,
+  PublicScheduleRow,
+  TransferFact,
+  TransferManager,
+} from "@/lib/types";
 
 /** Cookie-less anonymous client for public data. */
 function publicClient() {
@@ -47,13 +56,87 @@ export async function getLatestPublishedSchedule(): Promise<PublicScheduleRow[]>
   return rows;
 }
 
-/** Public kingdom settings (King, server open date). Null until 0002_kingdom_settings.sql has been run. */
-export async function getKingdomSettings(): Promise<KingdomSettings | null> {
+/**
+ * Public kingdom settings (King, server open date, Transfer section). Null until
+ * 0002_kingdom_settings.sql has been run. Read once per request however many sections ask.
+ */
+export const getKingdomSettings = cache(async (): Promise<KingdomSettings | null> => {
   await connection();
   if (!supabaseConfigured) return null;
   const { data, error } = await publicClient().from("kingdom_settings").select("*").eq("id", 1).maybeSingle();
   if (error) return null;
   return (data as KingdomSettings | null) ?? null;
+});
+
+export type HomeContent = {
+  /** Every alliance's event times. */
+  events: AllianceEventRow[];
+  /** The latest Hall of Fame week up to this one, or null if there's none yet. */
+  hallOfFame: { weekOf: string; picks: HallOfFameRow[] } | null;
+  transfer: { pitch: string | null; facts: TransferFact[]; managers: TransferManager[] };
+};
+
+const isText = (v: unknown): v is string => typeof v === "string";
+
+/**
+ * The leader-edited homepage sections. Before 0007_homepage_content.sql has been run the tables and
+ * columns are missing; every part then comes back empty instead of failing the page.
+ */
+export const getHomeContent = cache(async (): Promise<HomeContent> => {
+  await connection();
+  const empty: HomeContent = { events: [], hallOfFame: null, transfer: { pitch: null, facts: [], managers: [] } };
+  if (!supabaseConfigured) return empty;
+
+  const supabase = publicClient();
+  const [settings, events, picks, managers] = await Promise.all([
+    getKingdomSettings(),
+    supabase.from("alliance_events").select("alliance, event, time_utc, weekdays, note"),
+    // A week holds at most one pick per alliance, so this always covers the whole latest week.
+    supabase
+      .from("hall_of_fame")
+      .select("week_of, alliance, player_name, quote")
+      .lte("week_of", currentWeek())
+      .order("week_of", { ascending: false })
+      .limit(50),
+    supabase
+      .from("public_transfer_managers")
+      .select("profile_id, ingame_name, alliance_tag, game_id, note")
+      .order("sort")
+      .order("ingame_name"),
+  ]);
+
+  const hof = (picks.data ?? []) as HallOfFameRow[];
+  const weekOf = hof[0]?.week_of;
+  const facts = Array.isArray(settings?.transfer_facts) ? settings.transfer_facts : [];
+  type ManagerRow = { profile_id: string; ingame_name: string; alliance_tag: string | null; game_id: string; note: string | null };
+
+  return {
+    events: (events.data ?? []) as AllianceEventRow[],
+    hallOfFame: weekOf ? { weekOf, picks: hof.filter((p) => p.week_of === weekOf) } : null,
+    transfer: {
+      pitch: settings?.transfer_pitch?.trim() || null,
+      facts: facts.filter((f) => isText(f?.label) && isText(f?.value)),
+      managers: ((managers.data ?? []) as ManagerRow[]).map((m) => ({
+        profileId: m.profile_id,
+        name: m.ingame_name,
+        alliance: m.alliance_tag,
+        gameId: m.game_id,
+        note: m.note,
+      })),
+    },
+  };
+});
+
+/**
+ * Approved members (not transfer accounts). Profiles aren't publicly readable, so this uses the
+ * service role on the server and returns only the number. Before 0007 there's no transfer column,
+ * so every approved account counts.
+ */
+async function countMembers(): Promise<{ count: number | null; error: unknown }> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { count: null, error: null };
+  const approved = () => createAdminClient().from("profiles").select("id", { count: "exact", head: true }).eq("status", "approved");
+  const members = await approved().eq("transfer", false);
+  return members.error ? approved() : members;
 }
 
 export type HomeStats = {
@@ -64,10 +147,7 @@ export type HomeStats = {
   kvk: { title: string; startsOn: string; days: number } | null;
 };
 
-/**
- * Headline numbers for the homepage cards. Profiles aren't publicly readable,
- * so the player count uses the service role on the server and returns only the number.
- */
+/** Headline numbers for the homepage cards. */
 export async function getHomeStats(): Promise<HomeStats> {
   await connection();
   const empty: HomeStats = { players: null, king: null, serverOpenedOn: null, kvk: null };
@@ -75,9 +155,7 @@ export async function getHomeStats(): Promise<HomeStats> {
 
   const today = new Date().toISOString().slice(0, 10);
   const [players, settings, events] = await Promise.all([
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-      ? createAdminClient().from("profiles").select("id", { count: "exact", head: true }).eq("status", "approved")
-      : Promise.resolve({ count: null, error: null }),
+    countMembers(),
     getKingdomSettings(),
     // Anything that started in the last week may still be running.
     publicClient()

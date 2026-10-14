@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { cache, Suspense } from "react";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { accountGroups } from "@/components/account-sidebar";
 import { AllianceBanner } from "@/components/alliance-banner";
 import { SectionCards } from "@/components/section-cards";
@@ -106,6 +106,9 @@ async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/acc
           <p className="mt-2 text-muted">
             <span className="font-mono">{fmt(t.common.gameId, { id: profile.game_id })}</span>
             {profile.alliance_tag && <span className="ml-3 font-mono text-gold">[{profile.alliance_tag}]</span>}
+            {profile.transfer && profile.from_kingdom && (
+              <span className="ml-3 font-mono text-warning">{fmt(t.common.transferFrom, { n: profile.from_kingdom })}</span>
+            )}
           </p>
         </div>
       </div>
@@ -116,25 +119,36 @@ async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/acc
         </div>
       )}
 
-      <Card className="flex flex-wrap items-center gap-4 p-6">
-        {profile.status === "approved" && <CheckCircle2 className="size-6 text-success" aria-hidden />}
-        {profile.status === "pending" && <Clock className="size-6 text-warning" aria-hidden />}
-        {profile.status === "rejected" && <XCircle className="size-6 text-danger" aria-hidden />}
-        <div className="flex-1">
-          <p className="font-semibold">{t.status.account[profile.status]}</p>
-          <p className="text-sm text-muted">{statusBody}</p>
-        </div>
-        {profile.status === "approved" && (
-          <ButtonLink href={localePath(locale, "/account/appointments")}>{t.account.applyCta}</ButtonLink>
-        )}
-      </Card>
+      {profile.transfer && profile.status === "approved" ? (
+        <Card className="flex flex-wrap items-center gap-4 p-6">
+          <ArrowLeftRight className="size-6 text-warning" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">{t.account.transfer.status}</p>
+            <p className="text-sm text-muted">{t.account.transfer.body}</p>
+          </div>
+          <ButtonLink href={localePath(locale, "/account/messages")}>{t.account.transfer.cta}</ButtonLink>
+        </Card>
+      ) : (
+        <Card className="flex flex-wrap items-center gap-4 p-6">
+          {profile.status === "approved" && <CheckCircle2 className="size-6 text-success" aria-hidden />}
+          {profile.status === "pending" && <Clock className="size-6 text-warning" aria-hidden />}
+          {profile.status === "rejected" && <XCircle className="size-6 text-danger" aria-hidden />}
+          <div className="flex-1">
+            <p className="font-semibold">{t.status.account[profile.status]}</p>
+            <p className="text-sm text-muted">{statusBody}</p>
+          </div>
+          {profile.status === "approved" && (
+            <ButtonLink href={localePath(locale, "/account/appointments")}>{t.account.applyCta}</ButtonLink>
+          )}
+        </Card>
+      )}
     </>
   );
 }
 
 /** One card per account section, with what it currently holds when known. */
-function sectionCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}) {
-  return accountGroups(t)
+function sectionCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}, transfer = false) {
+  return accountGroups(t, { transfer })
     .flatMap((g) => g.items)
     .filter((item) => item.key !== "overview")
     .map((item) => ({
@@ -154,7 +168,7 @@ async function Sections() {
         appointments: fmt(t.account.applicationsChip, { n: applications }),
         messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
         profile: `${profile.ingame_name}${profile.alliance_tag ? ` [${profile.alliance_tag}]` : ""}`,
-      })}
+      }, Boolean(profile.transfer))}
     />
   );
 }

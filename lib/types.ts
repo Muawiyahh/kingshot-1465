@@ -13,6 +13,10 @@ export type Profile = {
   status: AccountStatus;
   /** Preferred site language (a Locale). Missing until 0003_profile_language.sql has been run. */
   language?: string | null;
+  /** A player from another kingdom talking to the transfer managers (0007_homepage_content.sql). */
+  transfer?: boolean;
+  /** The kingdom a transfer account is coming from. */
+  from_kingdom?: number | null;
   created_at: string;
 };
 
@@ -77,6 +81,34 @@ export type KingdomSettings = {
   king_alliance: string | null;
   server_opened_on: string | null;
   updated_at: string;
+  /** Transfer to 1465 section. Missing until 0007_homepage_content.sql has been run. */
+  transfer_pitch?: string | null;
+  transfer_facts?: TransferFact[];
+};
+
+/** A line of kingdom facts in the Transfer section, e.g. "Min. power" → "50M". */
+export type TransferFact = { label: string; value: string };
+
+/** A leader or admin who answers transfer accounts, as the homepage lists them. */
+export type TransferManager = { profileId: string; name: string; alliance: string | null; gameId: string; note: string | null };
+
+/** One alliance's time for one event (0007_homepage_content.sql). */
+export type AllianceEventRow = {
+  alliance: string;
+  event: string;
+  /** HH:MM, UTC. */
+  time_utc: string | null;
+  /** 0 = Sunday … 6 = Saturday. */
+  weekdays: number[];
+  note: string | null;
+};
+
+export type HallOfFameRow = {
+  /** Monday of the week, YYYY-MM-DD. */
+  week_of: string;
+  alliance: string;
+  player_name: string;
+  quote: string | null;
 };
 
 /** Result shape returned by Server Actions to useActionState forms. */
@@ -108,6 +140,9 @@ export type Contact = {
   ingame_name: string;
   alliance_tag: string | null;
   role: UserRole;
+  /** Transfer account, and the kingdom it's coming from (missing until 0007 has been run). */
+  transfer?: boolean;
+  from_kingdom?: number | null;
   last_body: string | null;
   last_at: string | null;
   last_from_me: boolean | null;

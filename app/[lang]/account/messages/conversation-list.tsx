@@ -48,6 +48,11 @@ export function ConversationList() {
                       {t.admin.accounts.roles[c.role]}
                     </span>
                   )}
+                  {c.transfer && (
+                    <span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-px font-mono text-[10px] uppercase tracking-wider text-warning">
+                      {c.from_kingdom ? fmt(t.common.transferFrom, { n: c.from_kingdom }) : t.common.transfer}
+                    </span>
+                  )}
                   <span
                     className={clsx(
                       "ml-auto shrink-0 text-[11px] tabular-nums",

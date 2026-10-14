@@ -3,6 +3,7 @@
 import { MotionConfig, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
 import type { ReactNode } from "react";
 import { site } from "@/lib/site";
+import { ALLIANCES } from "@/lib/alliances";
 import { Crest } from "@/components/crest";
 import { useI18n } from "@/components/i18n-provider";
 import { fmt } from "@/lib/i18n/format";
@@ -107,7 +108,7 @@ export function Hero({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease, delay: 0.35 }}
           >
-            <p className="mt-4 font-display text-xl tracking-wide text-gold-soft sm:text-2xl">{t.home.motto}</p>
+            <p className="mt-4 font-display text-xl tracking-wide text-gold-soft sm:text-2xl">{fmt(t.home.motto, { n: ALLIANCES.length })}</p>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-muted sm:text-lg">{t.home.intro}</p>
             <div className="mt-8 flex flex-wrap items-center gap-3">{actions}</div>
           </motion.div>

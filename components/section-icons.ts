@@ -1,10 +1,13 @@
 import {
+  ArrowLeftRight,
   CalendarRange,
   Castle,
   Crown,
   LayoutDashboard,
   MessagesSquare,
   Server,
+  Swords,
+  Trophy,
   UserCheck,
   UserRoundPen,
 } from "lucide-react";
@@ -19,6 +22,9 @@ export const SECTION_ICONS = {
   accounts: UserCheck,
   king: Crown,
   server: Server,
+  allianceEvents: Swords,
+  hallOfFame: Trophy,
+  transfers: ArrowLeftRight,
   appointments: Castle,
   messages: MessagesSquare,
   profile: UserRoundPen,

@@ -8,11 +8,6 @@ export const site = {
   /** In-game name credited in the footer. */
   creator: "ShowMeYourToes",
   discordUrl: "", // e.g. "https://discord.gg/xxxx" — leave empty to hide the link
-  // In-game contacts for migration and questions. Replace with real leaders.
-  // `role` is "king" or "coordinator" and is shown translated.
-  council: [
-    { name: "King of 1465", role: "king", gameId: "—" },
-    { name: "R5 · Alliance one", role: "coordinator", gameId: "—" },
-    { name: "R5 · Alliance two", role: "coordinator", gameId: "—" },
-  ],
+  // Transfer contacts, kingdom facts, event times and the Hall of Fame are set by leaders in
+  // Admin → Homepage, not here.
 } as const;

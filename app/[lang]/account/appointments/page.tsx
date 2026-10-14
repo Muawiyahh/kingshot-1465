@@ -53,6 +53,18 @@ async function Appointments() {
     getLatestPublishedSchedule(),
   ]);
 
+  // Transfer accounts (players still in another kingdom) can't apply; point them to the managers.
+  if (profile.transfer) {
+    return (
+      <Card className="px-6 py-14 text-center">
+        <p className="mx-auto max-w-lg text-muted">{t.account.transfer.appointments}</p>
+        <div className="mt-6">
+          <ButtonLink href={localePath(locale, "/account/messages")}>{t.account.transfer.cta}</ButtonLink>
+        </div>
+      </Card>
+    );
+  }
+
   // Open and closed events, plus the latest published one; open first.
   const all = ((data ?? []) as PlayerEvent[]).filter((e) => e.event_days.length > 0);
   const latestPublished = all.find((e) => e.status === "published");

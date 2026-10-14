@@ -19,7 +19,6 @@ export const ALLIANCES: Alliance[] = [
   { tag: "ERA", field: "#0f5c47", trim: "#e9c46a", weapon: "bow" },
   { tag: "ALT", field: "#4a2a7a", trim: "#dfe6ee", weapon: "spear" },
   { tag: "KOR", field: "#a34112", trim: "#f6d58e", weapon: "scimitar" },
-  { tag: "ESN", field: "#2f3e52", trim: "#cfe3f5", weapon: "trident" },
 ];
 
 export const ALLIANCE_TAGS = ALLIANCES.map((a) => a.tag) as [string, ...string[]];

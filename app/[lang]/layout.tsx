@@ -3,6 +3,7 @@ import { Cinzel, Geist, Geist_Mono } from "next/font/google";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { I18nProvider } from "@/components/i18n-provider";
+import { LanguageWelcome } from "@/components/language-welcome";
 import { LOCALES, LOCALE_INFO, localePath } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
@@ -50,6 +51,7 @@ export default async function RootLayout({ children }: LayoutProps<"/[lang]">) {
             {children}
           </main>
           <SiteFooter />
+          <LanguageWelcome />
         </I18nProvider>
       </body>
     </html>

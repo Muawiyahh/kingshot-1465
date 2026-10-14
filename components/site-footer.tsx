@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Crest } from "@/components/crest";
+import { FlamingHeart } from "@/components/flaming-heart";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { rich } from "@/lib/i18n/rich";
@@ -17,7 +18,10 @@ export async function SiteFooter() {
           <span className="font-display font-semibold">{fmt(t.common.kingdomName, { n: site.kingdom })}</span>
         </Link>
         <p className="text-sm text-muted sm:text-center">
-          {rich(t.footer.credit, { name: <span className="font-medium text-gold-soft">{site.creator}</span> })}
+          {rich(t.footer.credit, {
+            heart: <FlamingHeart label={t.footer.heart} />,
+            name: <span className="font-medium text-gold-soft">{site.creator}</span>,
+          })}
         </p>
         <nav
           aria-label={t.footer.label}

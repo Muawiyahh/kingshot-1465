@@ -19,6 +19,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0004_messages.sql`
    - `0005_message_translations.sql`
    - `0006_application_reapply.sql`
+   - `0007_homepage_content.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -35,18 +36,45 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 
 ## Customise
 
-- **Kingdom text, stats and council contacts:** `lib/site.ts`
 - **King and server open date:** **Admin → Kingdom → Current King** and **Server**
-- **Discord link:** `discordUrl` in `lib/site.ts`
+- **Alliance event times, Hall of Fame, and the Transfer section** (pitch, kingdom facts, transfer managers): **Admin → Homepage** (see **Homepage** below)
+- **Kingdom number and Discord link:** `lib/site.ts`
 - **Colours and fonts:** `app/globals.css`, documented in `design-system/MASTER.md`
 
 ## Languages
 
 The site is in English, German, Simplified and Traditional Chinese, French, Spanish, Indonesian, Tagalog, Brazilian Portuguese and Korean. Each language has its own address, for example `/de/positions` or `/zh-tw/apply`.
 
-- **Choosing a language:** visitors get their browser's language automatically and can switch with the globe menu in the header. Players also pick a language when they sign up, and the site opens in it when they sign in.
+- **Choosing a language:** visitors get their browser's language automatically. On their first visit a language picker opens, with every language written in its own script, so nobody has to read English to find their language. They can switch later with the globe menu in the header. Players also pick a language when they sign up, and the site opens in it when they sign in.
 - **Editing translations:** each language is one file in `lib/i18n/messages/`, and `en.ts` is the source. Keep every `{placeholder}` exactly as written, but move it wherever the sentence needs it. TypeScript reports any key that's missing or added by mistake.
 - **What stays untranslated:** text that leaders or players type (event titles, custom position names, names, notes) is shown as entered. The five standard positions (Construction, Research, Training, Chief Minister, Noble Advisor) are translated automatically when stored in English.
+
+## Homepage
+
+The homepage is short and aimed at two kinds of visitor: members checking their alliance's times, and players from other kingdoms thinking of transferring. Applying for castle positions isn't on it; that lives in the account area.
+
+1. **Hero:** the kingdom's key facts (King, alliances, players, next KvK, server time and age), with buttons to the Transfer and Alliance events sections.
+2. **Languages:** a single row with one link per language.
+3. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary and Vikings times. Times are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
+4. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
+5. **Transfer to 1465:** a short pitch, kingdom facts, three steps for contacting the kingdom, and the transfer managers. Each manager has a **Message** button (see **Transfer accounts** below) and a button that copies their game ID.
+6. **FAQ** and a sign-up box.
+
+Leaders set everything specific in **Admin → Homepage**:
+
+- **Alliance events:** pick an alliance, then set each event's time (UTC), days of the week and an optional short note. Clearing a row removes it from the homepage.
+- **Hall of Fame:** pick a week, then type a player and a quote for each alliance. A blank name leaves that alliance out for the week.
+- **Transfers:** the pitch, kingdom facts, and which leaders and admins are transfer managers (tick them in the list, with an optional note such as the languages they speak). With the pitch left empty, the site's own pitch is shown, translated into every language; anything leaders type is shown as written.
+
+### Transfer accounts
+
+Players still in another kingdom can sign up at **/transfer** (the homepage's **Message a transfer manager** and **Message** buttons lead there) with their game ID, name, current kingdom and a password. The account is approved straight away and opens in **Messages**:
+
+- they can message only the transfer managers, or a leader who has written to them first;
+- they can't apply for castle positions, and the Governors count on the homepage leaves them out;
+- leaders see them under **Admin → Accounts → Transfers**, and their messages carry a "Transfer · #1234" tag. Once a player has moved to 1465, **Joined 1465** turns the account into a normal member account.
+
+The database enforces all of this (`0007_homepage_content.sql`), not just the pages.
 
 ## How the KvK position flow works
 
