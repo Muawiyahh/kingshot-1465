@@ -23,6 +23,8 @@ const zhTW: Messages = {
     appointments: "城堡職位",
     messages: "訊息",
     profile: "個人資料",
+    adminNextKvk: "下一場 KvK · 管理",
+    adminTransferMessages: "轉服訊息 · 管理",
   },
   nav: {
     home: "首頁",
@@ -108,6 +110,7 @@ const zhTW: Messages = {
         sanctuary1: "聖所 1",
         sanctuary2: "聖所 2",
         vikings: "維京",
+        fortress: "要塞",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const zhTW: Messages = {
       copied: "已複製",
       cta: "聯絡轉服負責人",
       message: "傳訊息",
+      showAll: "查看全部 {n} 位",
+      showFewer: "收合",
     },
     faq: {
       eyebrow: "須知",
@@ -170,15 +175,19 @@ const zhTW: Messages = {
     nextKvk: "下一場 KvK",
     noneScheduled: "尚無安排",
     liveDay: "第 {day} / {days} 天",
-    countdownDays: "{d}天 {h}小時",
-    countdownHours: "{h}小時 {m}分",
-    countdownMinutes: "{m}分 {s}秒",
     serverTime: "伺服器時間",
     yourTime: "你的時間 {time}",
     serverAge: "開服天數",
     serverDay: "第 {n} 天",
     since: "開服於 {date}",
     openDateNotSet: "未設定開服日期",
+    units: {
+      d: "天",
+      h: "時",
+      m: "分",
+      s: "秒",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "KvK 城堡職位",
@@ -369,6 +378,8 @@ const zhTW: Messages = {
     kingdomNumber: "請輸入你目前王國的編號，例如 1234。",
     alreadyInKingdom: "你已經在 1465 了，請建立一般帳號。",
     transferUnavailable: "轉服帳號尚未開放，請稍後再試。",
+    nextKvkDate: "請選擇有效的日期和時間。",
+    nextKvkFailed: "無法儲存日期。如果資料庫尚未更新，請執行 0009_next_kvk.sql。",
   },
   success: {
     applicationUpdated: "申請已更新。",
@@ -391,6 +402,8 @@ const zhTW: Messages = {
       allianceEvents: "聯盟活動",
       hallOfFame: "名人堂",
       transfers: "轉服",
+      nextKvk: "下一場 KvK",
+      transferMessages: "轉服訊息",
     },
     overview: {
       attention: "需要你處理",
@@ -404,6 +417,8 @@ const zhTW: Messages = {
         allianceEvents: "設定各聯盟的熊陷阱、劍之地、三盟之戰、聖所和維京時間。",
         hallOfFame: "每週從每個聯盟選出一位玩家，並附上其引言。",
         transfers: "王國資訊、轉服負責人，以及吸引玩家加入的介紹。",
+        nextKvk: "設定下一場 KvK 的開始時間，首頁會倒數計時。",
+        transferMessages: "閱讀並回覆想轉到 1465 的其他王國玩家。",
       },
       welcome: "歡迎，{name}",
       intro: "核准新玩家，為下一場 KvK 開放申請，然後分配並發布城堡職位。",
@@ -505,6 +520,7 @@ const zhTW: Messages = {
         openDateHint: "1465 開服的日期，首頁會據此計算開服天數。",
         save: "儲存開服日期",
       },
+      needsUpdate: "需要更新資料庫。請在 Supabase SQL Editor 中執行 {file}，然後重新整理此頁面。",
     },
     home: {
       events: {
@@ -552,6 +568,25 @@ const zhTW: Messages = {
         remove: "移除",
         save: "儲存轉服資訊",
       },
+    },
+    nextKvk: {
+      title: "下一場 KvK",
+      intro: "下一場 KvK 的開始時間。首頁的「下一場 KvK」卡片會倒數到這個時間。",
+      date: "開始日期（UTC）",
+      time: "開始時間",
+      save: "儲存日期",
+      clear: "清除日期",
+      current: "首頁正在倒數到 {date} {time} UTC。",
+      none: "尚未設定日期。如有下一場 KvK 活動，首頁會倒數到該活動。",
+      hint: "時間為 UTC，即遊戲伺服器時間。KvK 活動進行期間，卡片會改為顯示當前進行的日子。",
+    },
+    messages: {
+      intro: "來自 1465 成員和其他領袖的訊息。其他王國的玩家在「轉服訊息」中。",
+      empty: "還沒有對話。",
+    },
+    transferMessages: {
+      intro: "來自正在考慮轉到 1465 的其他王國玩家的訊息。",
+      empty: "還沒有轉服帳號傳來訊息。",
     },
   },
   kvk: {

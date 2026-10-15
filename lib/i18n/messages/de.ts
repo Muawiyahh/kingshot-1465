@@ -23,6 +23,8 @@ const de: Messages = {
     appointments: "Burgpositionen",
     messages: "Nachrichten",
     profile: "Profil",
+    adminNextKvk: "Nächstes KvK · Admin",
+    adminTransferMessages: "Transfer-Nachrichten · Admin",
   },
   nav: {
     home: "Start",
@@ -108,6 +110,7 @@ const de: Messages = {
         sanctuary1: "Heiligtum 1",
         sanctuary2: "Heiligtum 2",
         vikings: "Wikinger",
+        fortress: "Festung",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const de: Messages = {
       copied: "Kopiert",
       cta: "Transfer-Manager anschreiben",
       message: "Schreiben",
+      showAll: "Alle {n} anzeigen",
+      showFewer: "Weniger anzeigen",
     },
     faq: {
       eyebrow: "Gut zu wissen",
@@ -170,15 +175,19 @@ const de: Messages = {
     nextKvk: "Nächstes KvK",
     noneScheduled: "keins geplant",
     liveDay: "Tag {day} von {days}",
-    countdownDays: "{d} T {h} Std",
-    countdownHours: "{h} Std {m} Min",
-    countdownMinutes: "{m} Min {s} Sek",
     serverTime: "Serverzeit",
     yourTime: "Deine Zeit {time}",
     serverAge: "Serveralter",
     serverDay: "Tag {n}",
     since: "seit {date}",
     openDateNotSet: "Startdatum nicht gesetzt",
+    units: {
+      d: "Tage",
+      h: "Std",
+      m: "Min",
+      s: "Sek",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "KvK-Burgpositionen",
@@ -370,6 +379,8 @@ const de: Messages = {
     kingdomNumber: "Gib die Nummer deines aktuellen Königreichs ein, zum Beispiel 1234.",
     alreadyInKingdom: "Du bist schon in 1465. Erstelle stattdessen ein normales Konto.",
     transferUnavailable: "Transferkonten sind noch nicht freigeschaltet. Versuche es später erneut.",
+    nextKvkDate: "Wähle ein gültiges Datum und eine gültige Uhrzeit.",
+    nextKvkFailed: "Das Datum konnte nicht gespeichert werden. Falls die Datenbank noch nicht aktualisiert ist, führe 0009_next_kvk.sql aus.",
   },
   success: {
     applicationUpdated: "Bewerbung aktualisiert.",
@@ -392,6 +403,8 @@ const de: Messages = {
       allianceEvents: "Allianz-Events",
       hallOfFame: "Ruhmeshalle",
       transfers: "Transfers",
+      nextKvk: "Nächstes KvK",
+      transferMessages: "Transfer-Nachrichten",
     },
     overview: {
       attention: "Braucht deine Aufmerksamkeit",
@@ -405,6 +418,8 @@ const de: Messages = {
         allianceEvents: "Lege für jede Allianz die Zeiten von Bärenfalle, Swordland, Tri-Allianz, Heiligtum und Wikinger fest.",
         hallOfFame: "Wähle jede Woche einen Spieler pro Allianz, samt Zitat.",
         transfers: "Fakten zum Königreich, Transfer-Manager und der Werbetext für wechselwillige Spieler.",
+        nextKvk: "Lege fest, wann das nächste KvK beginnt. Die Startseite zählt bis dahin herunter.",
+        transferMessages: "Lies und beantworte Nachrichten von Spielern aus anderen Königreichen, die zu 1465 wechseln wollen.",
       },
       welcome: "Willkommen, {name}",
       intro: "Gib neue Spieler frei, öffne die Bewerbungen für das nächste KvK und vergib und veröffentliche dann die Burgpositionen.",
@@ -506,6 +521,7 @@ const de: Messages = {
         openDateHint: "Der Tag, an dem 1465 eröffnet wurde. Daraus berechnet die Startseite das Serveralter.",
         save: "Serverdatum speichern",
       },
+      needsUpdate: "Dafür ist ein Datenbank-Update nötig. Führe {file} im Supabase SQL Editor aus und lade die Seite dann neu.",
     },
     home: {
       events: {
@@ -553,6 +569,25 @@ const de: Messages = {
         remove: "Entfernen",
         save: "Transfers speichern",
       },
+    },
+    nextKvk: {
+      title: "Nächstes KvK",
+      intro: "Wann das nächste KvK beginnt. Die Karte „Nächstes KvK“ auf der Startseite zählt bis dahin herunter.",
+      date: "Startdatum (UTC)",
+      time: "Startzeit",
+      save: "Datum speichern",
+      clear: "Datum löschen",
+      current: "Die Startseite zählt bis {date} um {time} UTC herunter.",
+      none: "Kein Datum gesetzt. Die Startseite zählt stattdessen bis zum nächsten KvK-Event herunter, falls es eines gibt.",
+      hint: "Zeiten sind in UTC, der Serverzeit des Spiels. Während ein KvK-Event läuft, zeigt die Karte stattdessen den aktuellen Tag.",
+    },
+    messages: {
+      intro: "Nachrichten von Mitgliedern von 1465 und anderen Leitern. Spieler aus anderen Königreichen findest du unter Transfer-Nachrichten.",
+      empty: "Noch keine Unterhaltungen.",
+    },
+    transferMessages: {
+      intro: "Nachrichten von Spielern aus anderen Königreichen, die überlegen, zu 1465 zu wechseln.",
+      empty: "Noch hat kein Transferkonto geschrieben.",
     },
   },
   kvk: {

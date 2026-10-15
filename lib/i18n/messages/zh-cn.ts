@@ -23,6 +23,8 @@ const zhCN: Messages = {
     appointments: "城堡职位",
     messages: "消息",
     profile: "个人资料",
+    adminNextKvk: "下一场 KvK · 管理",
+    adminTransferMessages: "转服消息 · 管理",
   },
   nav: {
     home: "首页",
@@ -108,6 +110,7 @@ const zhCN: Messages = {
         sanctuary1: "圣所 1",
         sanctuary2: "圣所 2",
         vikings: "维京",
+        fortress: "要塞",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const zhCN: Messages = {
       copied: "已复制",
       cta: "联系转服负责人",
       message: "发消息",
+      showAll: "查看全部 {n} 位",
+      showFewer: "收起",
     },
     faq: {
       eyebrow: "须知",
@@ -170,15 +175,19 @@ const zhCN: Messages = {
     nextKvk: "下一场 KvK",
     noneScheduled: "暂无安排",
     liveDay: "第 {day} / {days} 天",
-    countdownDays: "{d}天 {h}小时",
-    countdownHours: "{h}小时 {m}分",
-    countdownMinutes: "{m}分 {s}秒",
     serverTime: "服务器时间",
     yourTime: "你的时间 {time}",
     serverAge: "开服天数",
     serverDay: "第 {n} 天",
     since: "开服于 {date}",
     openDateNotSet: "未设置开服日期",
+    units: {
+      d: "天",
+      h: "时",
+      m: "分",
+      s: "秒",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "KvK 城堡职位",
@@ -369,6 +378,8 @@ const zhCN: Messages = {
     kingdomNumber: "请输入你当前王国的编号，例如 1234。",
     alreadyInKingdom: "你已经在 1465 了，请创建普通账户。",
     transferUnavailable: "转服账户尚未开放，请稍后再试。",
+    nextKvkDate: "请选择有效的日期和时间。",
+    nextKvkFailed: "无法保存日期。如果数据库尚未更新，请运行 0009_next_kvk.sql。",
   },
   success: {
     applicationUpdated: "申请已更新。",
@@ -391,6 +402,8 @@ const zhCN: Messages = {
       allianceEvents: "联盟活动",
       hallOfFame: "名人堂",
       transfers: "转服",
+      nextKvk: "下一场 KvK",
+      transferMessages: "转服消息",
     },
     overview: {
       attention: "需要你处理",
@@ -404,6 +417,8 @@ const zhCN: Messages = {
         allianceEvents: "设定各联盟的熊陷阱、剑之地、三盟之战、圣所和维京时间。",
         hallOfFame: "每周从每个联盟选出一位玩家，并附上其引言。",
         transfers: "王国信息、转服负责人，以及吸引玩家加入的介绍。",
+        nextKvk: "设定下一场 KvK 的开始时间，首页会倒计时。",
+        transferMessages: "阅读并回复想转到 1465 的其他王国玩家。",
       },
       welcome: "欢迎，{name}",
       intro: "审核新玩家，为下一场 KvK 开放申请，然后分配并发布城堡职位。",
@@ -505,6 +520,7 @@ const zhCN: Messages = {
         openDateHint: "1465 开服的日期，首页据此计算开服天数。",
         save: "保存开服日期",
       },
+      needsUpdate: "需要更新数据库。请在 Supabase SQL Editor 中运行 {file}，然后刷新此页面。",
     },
     home: {
       events: {
@@ -552,6 +568,25 @@ const zhCN: Messages = {
         remove: "移除",
         save: "保存转服信息",
       },
+    },
+    nextKvk: {
+      title: "下一场 KvK",
+      intro: "下一场 KvK 的开始时间。首页的“下一场 KvK”卡片会倒计时到这个时间。",
+      date: "开始日期（UTC）",
+      time: "开始时间",
+      save: "保存日期",
+      clear: "清除日期",
+      current: "首页正在倒计时到 {date} {time} UTC。",
+      none: "尚未设定日期。如有下一场 KvK 活动，首页会倒计时到该活动。",
+      hint: "时间为 UTC，即游戏服务器时间。KvK 活动进行期间，卡片会改为显示当前进行的日子。",
+    },
+    messages: {
+      intro: "来自 1465 成员和其他领袖的消息。其他王国的玩家在“转服消息”中。",
+      empty: "还没有对话。",
+    },
+    transferMessages: {
+      intro: "来自正在考虑转到 1465 的其他王国玩家的消息。",
+      empty: "还没有转服账户发来消息。",
     },
   },
   kvk: {

@@ -256,11 +256,11 @@ function Bubble({
 /** Name, banner and role of the person you're talking to, with a back arrow on phones. */
 function ChatHeader({ partner }: { partner: Contact | undefined }) {
   const { locale, t } = useI18n();
-  const { open } = useMessages();
+  const { basePath, open } = useMessages();
   return (
     <div className="flex items-center gap-3 border-b border-border px-4 py-3">
       <Link
-        href={localePath(locale, "/account/messages")}
+        href={localePath(locale, basePath)}
         onClick={() => open(null)}
         className="-ml-1 flex size-9 items-center justify-center rounded-full text-muted hover:bg-white/5 hover:text-fg lg:hidden"
         aria-label={t.account.messages.back}

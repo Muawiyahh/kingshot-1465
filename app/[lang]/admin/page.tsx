@@ -15,7 +15,7 @@ import type { Messages } from "@/lib/i18n/messages";
 import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
 import { formatDay } from "@/lib/kvk";
-import { getUnreadCount } from "@/lib/messages";
+import { getUnreadByInbox } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 import type { KingdomSettings, KvkEvent } from "@/lib/types";
 
@@ -37,7 +37,7 @@ const loadOverview = cache(async () => {
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("kvk_events").select("*").order("starts_on", { ascending: false }).limit(5),
     supabase.from("kingdom_settings").select("*").eq("id", 1).maybeSingle(),
-    me ? getUnreadCount(me) : 0,
+    me ? getUnreadByInbox() : { members: 0, transfers: 0 },
   ]);
   return {
     leader,
@@ -135,7 +135,8 @@ async function Stats() {
 function manageCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}) {
   return adminGroups(t)
     .flatMap((group) => group.items.map((item) => ({ ...item, group: group.label })))
-    .filter((item) => item.group)
+    // Admin sections only: the leader's own account pages aren't managed here.
+    .filter((item) => item.group && item.href.startsWith("/admin"))
     .map((item) => ({
       key: item.key,
       href: localePath(locale, item.href),
@@ -149,7 +150,11 @@ function manageCards(locale: Locale, t: Messages, current: Partial<Record<string
 async function ManageCards() {
   const [{ kingdom, unread }, { locale, t, tag }] = await Promise.all([loadOverview(), getI18n()]);
   const current = {
-    messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
+    messages: unread.members > 0 ? fmt(t.account.messages.unread, { n: unread.members }) : undefined,
+    transferMessages: unread.transfers > 0 ? fmt(t.account.messages.unread, { n: unread.transfers }) : undefined,
+    nextKvk: kingdom?.next_kvk_at
+      ? new Date(kingdom.next_kvk_at).toLocaleDateString(tag, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+      : undefined,
     king: kingdom?.king_name ? `${kingdom.king_name}${kingdom.king_alliance ? ` [${kingdom.king_alliance}]` : ""}` : undefined,
     server: kingdom?.server_opened_on
       ? new Date(`${kingdom.server_opened_on}T00:00:00Z`).toLocaleDateString(tag, {

@@ -59,7 +59,8 @@ export function AccountMenu({
   const items = [
     { key: "overview" as const, path: "/account", label: t.account.nav.label },
     { key: "appointments" as const, path: "/account/appointments", label: t.account.nav.appointments },
-    { key: "messages" as const, path: "/account/messages", label: t.account.nav.messages, count: unread },
+    // Leaders read messages in the admin panel, where members and transfer accounts are apart.
+    { key: "messages" as const, path: leader ? "/admin/messages" : "/account/messages", label: t.account.nav.messages, count: unread },
     { key: "profile" as const, path: "/account/profile", label: t.account.nav.profile },
   ];
   const itemClass =

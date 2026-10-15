@@ -103,8 +103,8 @@ export default async function HomePage() {
       <section id="transfer" className={clsx(section, "relative overflow-hidden")} aria-labelledby="transfer-title">
         <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
         <Container className="relative">
-          <Suspense fallback={<TransferSection content={null} t={t} locale={locale} />}>
-            <TransferData t={t} locale={locale} />
+          <Suspense fallback={<TransferSection content={null} stats={null} t={t} locale={locale} tag={tag} />}>
+            <TransferData t={t} locale={locale} tag={tag} />
           </Suspense>
         </Container>
       </section>
@@ -166,9 +166,10 @@ async function HofData({ t, tag }: { t: Messages; tag: string }) {
   return <HallOfFame hof={hallOfFame} t={t} tag={tag} />;
 }
 
-async function TransferData({ t, locale }: { t: Messages; locale: Locale }) {
-  const { transfer } = await getHomeContent();
-  return <TransferSection content={transfer} t={t} locale={locale} />;
+async function TransferData({ t, locale, tag }: { t: Messages; locale: Locale; tag: string }) {
+  // Both are cached per request, so the hero cards' queries are shared.
+  const [{ transfer }, stats] = await Promise.all([getHomeContent(), getHomeStats()]);
+  return <TransferSection content={transfer} stats={stats} t={t} locale={locale} tag={tag} />;
 }
 
 /** Buttons under the closing heading: sign up / sign in, or straight into the account. */

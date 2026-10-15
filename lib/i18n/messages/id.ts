@@ -23,6 +23,8 @@ const id: Messages = {
     appointments: "Posisi kastil",
     messages: "Pesan",
     profile: "Profil",
+    adminNextKvk: "KvK berikutnya · Admin",
+    adminTransferMessages: "Pesan transfer · Admin",
   },
   nav: {
     home: "Beranda",
@@ -108,6 +110,7 @@ const id: Messages = {
         sanctuary1: "Sanctuary 1",
         sanctuary2: "Sanctuary 2",
         vikings: "Viking",
+        fortress: "Benteng",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const id: Messages = {
       copied: "Tersalin",
       cta: "Kirim pesan ke pengurus transfer",
       message: "Kirim pesan",
+      showAll: "Lihat semua {n}",
+      showFewer: "Lebih sedikit",
     },
     faq: {
       eyebrow: "Perlu diketahui",
@@ -170,15 +175,19 @@ const id: Messages = {
     nextKvk: "KvK berikutnya",
     noneScheduled: "belum dijadwalkan",
     liveDay: "Hari {day} dari {days}",
-    countdownDays: "{d}h {h}j",
-    countdownHours: "{h}j {m}m",
-    countdownMinutes: "{m}m {s}d",
     serverTime: "Waktu server",
     yourTime: "Waktumu {time}",
     serverAge: "Umur server",
     serverDay: "Hari {n}",
     since: "sejak {date}",
     openDateNotSet: "tanggal buka belum diatur",
+    units: {
+      d: "hari",
+      h: "jam",
+      m: "mnt",
+      s: "dtk",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "Posisi kastel KvK",
@@ -370,6 +379,8 @@ const id: Messages = {
     kingdomNumber: "Masukkan nomor kerajaanmu saat ini, misalnya 1234.",
     alreadyInKingdom: "Kamu sudah di 1465. Buat akun biasa saja.",
     transferUnavailable: "Akun transfer belum diaktifkan. Coba lagi nanti.",
+    nextKvkDate: "Pilih tanggal dan jam yang valid.",
+    nextKvkFailed: "Tanggal tidak bisa disimpan. Jika database belum diperbarui, jalankan 0009_next_kvk.sql.",
   },
   success: {
     applicationUpdated: "Pendaftaran diperbarui.",
@@ -392,6 +403,8 @@ const id: Messages = {
       allianceEvents: "Event aliansi",
       hallOfFame: "Hall of Fame",
       transfers: "Transfer",
+      nextKvk: "KvK berikutnya",
+      transferMessages: "Pesan transfer",
     },
     overview: {
       attention: "Perlu perhatianmu",
@@ -405,6 +418,8 @@ const id: Messages = {
         allianceEvents: "Atur waktu Perangkap Beruang, Swordland, Tri-Aliansi, Sanctuary, dan Viking untuk tiap aliansi.",
         hallOfFame: "Pilih satu pemain dari tiap aliansi setiap pekan, beserta kutipannya.",
         transfers: "Info kerajaan, pengurus transfer, dan teks ajakan untuk pemain yang ingin bergabung.",
+        nextKvk: "Atur kapan KvK berikutnya dimulai. Beranda menghitung mundur ke waktu itu.",
+        transferMessages: "Baca dan balas pemain dari kerajaan lain yang ingin pindah ke 1465.",
       },
       welcome: "Selamat datang, {name}",
       intro: "Setujui pemain baru, buka pendaftaran untuk KvK berikutnya, lalu bagi dan publikasikan posisi kastel.",
@@ -506,6 +521,7 @@ const id: Messages = {
         openDateHint: "Hari saat 1465 dibuka. Beranda menghitung umur server dari tanggal ini.",
         save: "Simpan tanggal server",
       },
+      needsUpdate: "Ini memerlukan pembaruan database. Jalankan {file} di Supabase SQL Editor, lalu muat ulang halaman ini.",
     },
     home: {
       events: {
@@ -553,6 +569,25 @@ const id: Messages = {
         remove: "Hapus",
         save: "Simpan transfer",
       },
+    },
+    nextKvk: {
+      title: "KvK berikutnya",
+      intro: "Kapan KvK berikutnya dimulai. Kartu KvK berikutnya di beranda menghitung mundur ke waktu itu.",
+      date: "Tanggal mulai (UTC)",
+      time: "Jam mulai",
+      save: "Simpan tanggal",
+      clear: "Hapus tanggal",
+      current: "Beranda menghitung mundur ke {date} pukul {time} UTC.",
+      none: "Belum ada tanggal. Beranda akan menghitung mundur ke event KvK berikutnya, jika ada.",
+      hint: "Waktu dalam UTC, waktu server game. Saat event KvK sedang berjalan, kartu menampilkan hari yang sedang berlangsung.",
+    },
+    messages: {
+      intro: "Pesan dari anggota 1465 dan pemimpin lain. Pemain dari kerajaan lain ada di Pesan transfer.",
+      empty: "Belum ada percakapan.",
+    },
+    transferMessages: {
+      intro: "Pesan dari pemain kerajaan lain yang ingin pindah ke 1465.",
+      empty: "Belum ada akun transfer yang mengirim pesan.",
     },
   },
   kvk: {

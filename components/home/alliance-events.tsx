@@ -6,7 +6,7 @@ import { AllianceAvatar, AllianceDot } from "@/components/alliance-banner";
 import { useI18n } from "@/components/i18n-provider";
 import { Bone } from "@/components/skeleton";
 import { useNow } from "@/components/use-now";
-import { ALLIANCE_EVENTS, formatWeekdays, toLocal } from "@/lib/alliance-events";
+import { ALLIANCE_EVENTS, allianceHasEvent, eventsFor, formatWeekdays, toLocal } from "@/lib/alliance-events";
 import { ALLIANCES } from "@/lib/alliances";
 import type { AllianceEventRow } from "@/lib/types";
 
@@ -163,7 +163,8 @@ export function AllianceEvents({
                 </th>
                 {ALLIANCE_EVENTS.map((ev) => (
                   <td key={ev} className={clsx("px-3", rowPad)}>
-                    <Cell value={shown(a.tag, ev)} notSet={e.notSet} />
+                    {/* Blank when the alliance doesn't take part (Fortress is for some alliances only) */}
+                    {allianceHasEvent(a.tag, ev) && <Cell value={shown(a.tag, ev)} notSet={e.notSet} />}
                   </td>
                 ))}
               </tr>
@@ -194,7 +195,7 @@ export function AllianceEvents({
           ))}
         </div>
         <ul className="mt-4 divide-y divide-border rounded-3xl bg-card shadow-[inset_0_0_0_1px_var(--border)]" aria-label={alliance}>
-          {ALLIANCE_EVENTS.map((ev) => (
+          {eventsFor(alliance).map((ev) => (
             <li key={ev} className="flex items-center gap-4 px-5 py-3">
               <span className="min-w-0 flex-1 text-sm">{e.names[ev]}</span>
               <Cell value={shown(alliance, ev)} notSet={e.notSet} align="end" />

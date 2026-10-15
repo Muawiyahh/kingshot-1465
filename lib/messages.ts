@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { ChatMessage, Contact } from "@/lib/types";
 
@@ -15,15 +16,23 @@ export function isUuid(value: string) {
 const THREAD_LIMIT = 200;
 
 /**
- * Everyone the signed-in user can message, newest conversation first.
- * `ready` is false until the messages migration has been run. Call after getProfile().
+ * Everyone the signed-in user can message, newest conversation first. Once per request (the inbox,
+ * its chat pane and the admin menu's counts share it). `ready` is false until the messages
+ * migration has been run.
  */
-export async function getConversations(): Promise<{ ready: boolean; contacts: Contact[] }> {
+export const getConversations = cache(async (): Promise<{ ready: boolean; contacts: Contact[] }> => {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("my_conversations");
   if (error) return { ready: !NOT_SET_UP.has(error.code ?? ""), contacts: [] };
   const contacts = ((data ?? []) as Contact[]).map((c) => ({ ...c, unread: Number(c.unread) }));
   return { ready: true, contacts };
+});
+
+/** Unread messages for a leader, split the way the admin panel's two inboxes are. */
+export async function getUnreadByInbox(): Promise<{ members: number; transfers: number }> {
+  const { contacts } = await getConversations();
+  const sum = (transfer: boolean) => contacts.filter((c) => Boolean(c.transfer) === transfer).reduce((n, c) => n + c.unread, 0);
+  return { members: sum(false), transfers: sum(true) };
 }
 
 /** Unread messages waiting for the user; 0 if messaging isn't set up. */

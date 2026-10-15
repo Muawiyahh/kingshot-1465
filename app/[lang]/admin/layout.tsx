@@ -8,8 +8,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/[lang]/adm
 
   return (
     <Container className="py-8 sm:py-12">
-      <div className="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
-        <aside className="mb-8 lg:mb-0">
+      <div className="account-shell lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-12">
+        {/* On phones an open chat fills the screen like a messaging app, so the menu steps aside. */}
+        <aside className="mb-8 lg:mb-0 max-lg:[.account-shell:has([data-chat-open])>&]:hidden">
           <Eyebrow className="mb-4 hidden lg:block">{t.admin.eyebrow}</Eyebrow>
           <div className="lg:sticky lg:top-24">
             <Suspense fallback={<AdminSidebarFallback locale={locale} t={t} />}>

@@ -84,6 +84,8 @@ export type KingdomSettings = {
   /** Transfer to 1465 section. Missing until 0007_homepage_content.sql has been run. */
   transfer_pitch?: string | null;
   transfer_facts?: TransferFact[];
+  /** When the next KvK starts (UTC). Missing until 0009_next_kvk.sql has been run. */
+  next_kvk_at?: string | null;
 };
 
 /** A line of kingdom facts in the Transfer section, e.g. "Min. power" → "50M". */

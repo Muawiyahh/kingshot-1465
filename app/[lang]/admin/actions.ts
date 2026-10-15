@@ -2,12 +2,13 @@
 
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { planAutofill, type FillSlot } from "@/lib/autofill";
 import { addDays, positionLabel, slotCount } from "@/lib/kvk";
-import { ALLIANCE_EVENTS, TIME_RE, isMonday } from "@/lib/alliance-events";
+import { TIME_RE, eventsFor, isMonday } from "@/lib/alliance-events";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
@@ -34,8 +35,11 @@ async function leaderContext() {
   const profile = await getProfile();
   if (!isLeader(profile)) throw new Error("Not authorised");
   const supabase = await createClient();
+  // The log is written after the response has gone out, so saving never waits for it.
   async function audit(action: string, target: string, payload?: unknown) {
-    await supabase.from("audit_log").insert({ actor_id: profile!.id, action, target, payload: payload ?? null });
+    after(async () => {
+      await supabase.from("audit_log").insert({ actor_id: profile!.id, action, target, payload: payload ?? null });
+    });
   }
   return { profile: profile as Profile, supabase, audit };
 }
@@ -124,6 +128,22 @@ export async function updateServer(_prev: ActionState, formData: FormData): Prom
   return saveSettings({ server_opened_on: parsed.data.serverOpenedOn || null }, "server.update");
 }
 
+/**
+ * When the next KvK starts (UTC), or none. The homepage's Next KvK card counts down to it. The
+ * "clear" button removes the date.
+ */
+export async function saveNextKvk(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { t } = await getActionI18n();
+  if (formData.get("clear")) return saveSettings({ next_kvk_at: null }, "kingdom.nextKvk", "nextKvkFailed");
+  const date = field(formData, "date");
+  const time = field(formData, "time") || "00:00";
+  const at = `${date}T${time}:00Z`;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !TIME_RE.test(time) || Number.isNaN(Date.parse(at))) {
+    return { error: t.errors.nextKvkDate };
+  }
+  return saveSettings({ next_kvk_at: at }, "kingdom.nextKvk", "nextKvkFailed");
+}
+
 // ---------------------------------------------------------------------------
 // Homepage: alliance events, Hall of Fame, Transfer to 1465
 // ---------------------------------------------------------------------------
@@ -147,7 +167,8 @@ export async function saveAllianceEvents(_prev: ActionState, formData: FormData)
 
   const rows = [];
   const cleared: string[] = [];
-  for (const event of ALLIANCE_EVENTS) {
+  // Only the events this alliance takes part in (Fortress is for some alliances only).
+  for (const event of eventsFor(alliance.data)) {
     // Time inputs can send seconds (HH:MM:SS); only HH:MM is kept.
     const time = field(formData, `${event}.time`).slice(0, 5);
     const note = field(formData, `${event}.note`);
@@ -160,14 +181,13 @@ export async function saveAllianceEvents(_prev: ActionState, formData: FormData)
     else rows.push({ alliance: alliance.data, event, time_utc: time || null, weekdays, note: note || null, updated_by: profile.id });
   }
 
-  if (rows.length) {
-    const { data, error } = await supabase.from("alliance_events").upsert(rows, { onConflict: "alliance,event" }).select("event");
-    if (error || data?.length !== rows.length) return { error: t.errors.homepageFailed };
-  }
-  if (cleared.length) {
-    const { error } = await supabase.from("alliance_events").delete().eq("alliance", alliance.data).in("event", cleared);
-    if (error) return { error: t.errors.homepageFailed };
-  }
+  // Saved and cleared rows are separate, so both writes go at once.
+  const [saved, removed] = await Promise.all([
+    rows.length ? supabase.from("alliance_events").upsert(rows, { onConflict: "alliance,event" }).select("event") : null,
+    cleared.length ? supabase.from("alliance_events").delete().eq("alliance", alliance.data).in("event", cleared) : null,
+  ]);
+  if (saved && (saved.error || saved.data?.length !== rows.length)) return { error: t.errors.homepageFailed };
+  if (removed?.error) return { error: t.errors.homepageFailed };
   await audit("home.events", alliance.data, { set: rows.map((r) => r.event), cleared });
   refresh();
   return { ok: true, message: t.success.settingsSaved };
@@ -194,14 +214,13 @@ export async function saveHallOfFame(_prev: ActionState, formData: FormData): Pr
     picks.push({ week_of: week, alliance, player_name: name, quote: quote || null, updated_by: profile.id });
   }
 
-  if (picks.length) {
-    const { data, error } = await supabase.from("hall_of_fame").upsert(picks, { onConflict: "week_of,alliance" }).select("alliance");
-    if (error || data?.length !== picks.length) return { error: t.errors.homepageFailed };
-  }
-  if (skipped.length) {
-    const { error } = await supabase.from("hall_of_fame").delete().eq("week_of", week).in("alliance", skipped);
-    if (error) return { error: t.errors.homepageFailed };
-  }
+  // Kept and dropped alliances are separate, so both writes go at once.
+  const [saved, removed] = await Promise.all([
+    picks.length ? supabase.from("hall_of_fame").upsert(picks, { onConflict: "week_of,alliance" }).select("alliance") : null,
+    skipped.length ? supabase.from("hall_of_fame").delete().eq("week_of", week).in("alliance", skipped) : null,
+  ]);
+  if (saved && (saved.error || saved.data?.length !== picks.length)) return { error: t.errors.homepageFailed };
+  if (removed?.error) return { error: t.errors.homepageFailed };
   await audit("home.hallOfFame", week, { picks: picks.map((p) => p.alliance) });
   refresh();
   return { ok: true, message: t.success.settingsSaved };

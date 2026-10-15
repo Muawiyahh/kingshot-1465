@@ -1,9 +1,12 @@
 import {
   ArrowLeftRight,
+  CalendarClock,
   CalendarRange,
   Castle,
+  CircleUserRound,
   Crown,
   LayoutDashboard,
+  MessageSquareShare,
   MessagesSquare,
   Server,
   Swords,
@@ -19,7 +22,9 @@ import {
 export const SECTION_ICONS = {
   overview: LayoutDashboard,
   events: CalendarRange,
+  nextKvk: CalendarClock,
   accounts: UserCheck,
+  transferMessages: MessageSquareShare,
   king: Crown,
   server: Server,
   allianceEvents: Swords,
@@ -28,6 +33,7 @@ export const SECTION_ICONS = {
   appointments: Castle,
   messages: MessagesSquare,
   profile: UserRoundPen,
+  accountOverview: CircleUserRound,
 } as const;
 
 export type SectionKey = keyof typeof SECTION_ICONS;

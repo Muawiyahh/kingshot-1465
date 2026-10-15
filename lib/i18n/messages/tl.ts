@@ -23,6 +23,8 @@ const tl: Messages = {
     appointments: "Mga posisyon sa kastilyo",
     messages: "Mga mensahe",
     profile: "Profile",
+    adminNextKvk: "Susunod na KvK · Admin",
+    adminTransferMessages: "Mga transfer message · Admin",
   },
   nav: {
     home: "Home",
@@ -108,6 +110,7 @@ const tl: Messages = {
         sanctuary1: "Sanctuary 1",
         sanctuary2: "Sanctuary 2",
         vikings: "Vikings",
+        fortress: "Fortress",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const tl: Messages = {
       copied: "Nakopya",
       cta: "I-message ang transfer manager",
       message: "Mag-message",
+      showAll: "Ipakita lahat ng {n}",
+      showFewer: "Itago",
     },
     faq: {
       eyebrow: "Dapat malaman",
@@ -170,15 +175,19 @@ const tl: Messages = {
     nextKvk: "Susunod na KvK",
     noneScheduled: "wala pang naka-iskedyul",
     liveDay: "Araw {day} ng {days}",
-    countdownDays: "{d}a {h}o",
-    countdownHours: "{h}o {m}m",
-    countdownMinutes: "{m}m {s}s",
     serverTime: "Oras ng server",
     yourTime: "Oras mo {time}",
     serverAge: "Edad ng server",
     serverDay: "Araw {n}",
     since: "mula {date}",
     openDateNotSet: "hindi pa naka-set ang petsa ng pagbukas",
+    units: {
+      d: "araw",
+      h: "oras",
+      m: "min",
+      s: "seg",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "Mga posisyon sa kastilyo para sa KvK",
@@ -370,6 +379,8 @@ const tl: Messages = {
     kingdomNumber: "Ilagay ang numero ng kasalukuyang kaharian mo, halimbawa 1234.",
     alreadyInKingdom: "Nasa 1465 ka na. Gumawa na lang ng normal na account.",
     transferUnavailable: "Hindi pa naka-on ang mga transfer account. Subukan ulit mamaya.",
+    nextKvkDate: "Pumili ng tamang petsa at oras.",
+    nextKvkFailed: "Hindi na-save ang petsa. Kung hindi pa na-update ang database, patakbuhin ang 0009_next_kvk.sql.",
   },
   success: {
     applicationUpdated: "Na-update ang aplikasyon.",
@@ -392,6 +403,8 @@ const tl: Messages = {
       allianceEvents: "Alliance events",
       hallOfFame: "Hall of Fame",
       transfers: "Transfers",
+      nextKvk: "Susunod na KvK",
+      transferMessages: "Mga transfer message",
     },
     overview: {
       attention: "Kailangan ng iyong pansin",
@@ -405,6 +418,8 @@ const tl: Messages = {
         allianceEvents: "Itakda ang oras ng Bear Trap, Swordland, Tri-Alliance, Sanctuary at Vikings ng bawat alliance.",
         hallOfFame: "Pumili ng isang player mula sa bawat alliance kada linggo, kasama ang quote nila.",
         transfers: "Mga detalye ng kaharian, mga transfer manager, at ang pitch para sa mga gustong lumipat.",
+        nextKvk: "Itakda kung kailan magsisimula ang susunod na KvK. Magko-countdown ang homepage hanggang doon.",
+        transferMessages: "Basahin at sagutin ang mga player mula sa ibang kaharian na gustong lumipat sa 1465.",
       },
       welcome: "Maligayang pagdating, {name}",
       intro: "I-approve ang mga bagong player, buksan ang aplikasyon para sa susunod na KvK, tapos i-assign at i-publish ang mga posisyon sa kastilyo.",
@@ -506,6 +521,7 @@ const tl: Messages = {
         openDateHint: "Ang araw na nagbukas ang 1465. Dito binibilang ng homepage ang edad ng server.",
         save: "I-save ang petsa ng server",
       },
+      needsUpdate: "Kailangan nito ng database update. Patakbuhin ang {file} sa Supabase SQL Editor, pagkatapos ay i-reload ang page na ito.",
     },
     home: {
       events: {
@@ -553,6 +569,25 @@ const tl: Messages = {
         remove: "Alisin",
         save: "I-save ang transfers",
       },
+    },
+    nextKvk: {
+      title: "Susunod na KvK",
+      intro: "Kung kailan magsisimula ang susunod na KvK. Magko-countdown dito ang Susunod na KvK card sa homepage.",
+      date: "Petsa ng simula (UTC)",
+      time: "Oras ng simula",
+      save: "I-save ang petsa",
+      clear: "Burahin ang petsa",
+      current: "Nagko-countdown ang homepage hanggang {date}, {time} UTC.",
+      none: "Walang petsang nakatakda. Sa halip, magko-countdown ang homepage sa susunod na KvK event, kung mayroon.",
+      hint: "Ang oras ay sa UTC, ang server time ng laro. Habang may tumatakbong KvK event, ipinapakita ng card ang kasalukuyang araw.",
+    },
+    messages: {
+      intro: "Mga mensahe mula sa mga miyembro ng 1465 at ibang lider. Nasa Mga transfer message ang mga player mula sa ibang kaharian.",
+      empty: "Wala pang usapan.",
+    },
+    transferMessages: {
+      intro: "Mga mensahe mula sa mga player sa ibang kaharian na nag-iisip lumipat sa 1465.",
+      empty: "Wala pang transfer account na nag-message.",
     },
   },
   kvk: {

@@ -12,13 +12,13 @@ import { useMessages } from "./messages-context";
 
 /** WhatsApp-style list: banner avatar, name and role, last message, time and unread count. */
 export function ConversationList() {
-  const { contacts, activeId, open } = useMessages();
+  const { contacts, basePath, emptyText, activeId, open } = useMessages();
   const { locale, t, tag } = useI18n();
   const m = t.account.messages;
   const now = useNow(60_000);
 
   if (contacts.length === 0) {
-    return <p className="p-6 text-sm text-muted">{m.noContacts}</p>;
+    return <p className="p-6 text-sm text-muted">{emptyText}</p>;
   }
 
   return (
@@ -29,7 +29,7 @@ export function ConversationList() {
         return (
           <li key={c.partner_id}>
             <Link
-              href={localePath(locale, `/account/messages/${c.partner_id}`)}
+              href={localePath(locale, `${basePath}/${c.partner_id}`)}
               aria-current={active ? "page" : undefined}
               onClick={() => open(c.partner_id)}
               className={clsx(

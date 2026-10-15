@@ -145,12 +145,14 @@ export type HomeStats = {
   serverOpenedOn: string | null;
   /** The KvK that is running now, or the next one. */
   kvk: { title: string; startsOn: string; days: number } | null;
+  /** The next KvK's start as leaders set it in Admin → Next KvK (ISO, UTC), if they have. */
+  nextKvkAt: string | null;
 };
 
-/** Headline numbers for the homepage cards. */
-export async function getHomeStats(): Promise<HomeStats> {
+/** Headline numbers for the homepage cards (and the Transfer section's facts). Once per request. */
+export const getHomeStats = cache(async (): Promise<HomeStats> => {
   await connection();
-  const empty: HomeStats = { players: null, king: null, serverOpenedOn: null, kvk: null };
+  const empty: HomeStats = { players: null, king: null, serverOpenedOn: null, kvk: null, nextKvkAt: null };
   if (!supabaseConfigured) return empty;
 
   const today = new Date().toISOString().slice(0, 10);
@@ -179,5 +181,6 @@ export async function getHomeStats(): Promise<HomeStats> {
     king: settings?.king_name ? { name: settings.king_name, alliance: settings.king_alliance } : null,
     serverOpenedOn: settings?.server_opened_on ?? null,
     kvk,
+    nextKvkAt: settings?.next_kvk_at ?? null,
   };
-}
+});

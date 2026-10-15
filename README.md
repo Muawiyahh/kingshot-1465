@@ -21,6 +21,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0006_application_reapply.sql`
    - `0007_homepage_content.sql`
    - `0008_transfer_contacts.sql`
+   - `0009_next_kvk.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -38,6 +39,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 ## Customise
 
 - **King and server open date:** **Admin → Kingdom → Current King** and **Server**
+- **Next KvK date** (the homepage's countdown): **Admin → KvK → Next KvK**
 - **Alliance event times, Hall of Fame, and the Transfer section** (pitch, kingdom facts, transfer managers): **Admin → Homepage** (see **Homepage** below)
 - **Kingdom number and Discord link:** `lib/site.ts`
 - **Colours and fonts:** `app/globals.css`, documented in `design-system/MASTER.md`
@@ -54,12 +56,11 @@ The site is in English, German, Simplified and Traditional Chinese, French, Span
 
 The homepage is short and aimed at two kinds of visitor: members checking their alliance's times, and players from other kingdoms thinking of transferring. Applying for castle positions isn't on it; that lives in the account area.
 
-1. **Hero:** the kingdom's key facts (King, alliances, players, next KvK, server time and age), with buttons to the Transfer and Alliance events sections.
-2. **Languages:** a single row with one link per language.
-3. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary 1 and 2 and Vikings times. Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
-4. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
-5. **Transfer to 1465:** a short pitch, kingdom facts, three steps for contacting the kingdom, and the transfer managers. Each manager has a **Message** button (see **Transfer accounts** below) and a button that copies their game ID.
-6. **FAQ** and a sign-up box.
+1. **Hero:** the kingdom's key facts (King, alliances, players, server time and age), with buttons to the Transfer and Alliance events sections. The Next KvK card counts down (days, hours, minutes, seconds) to the date leaders set in **Admin → KvK → Next KvK**; without one it counts down to the next KvK event, and while an event runs it shows the day.
+2. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary 1 and 2 and Vikings times, plus Fortress for GGG, KNG, ERA and ALT (set in `lib/alliance-events.ts`). Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
+3. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
+4. **Transfer to 1465:** a short pitch, the kingdom at a glance (leaders' facts plus live numbers: server age, alliances, governors, King, next KvK), three steps for contacting the kingdom, and the transfer managers as compact rows with a **Message** button (see **Transfer accounts** below) and a tap-to-copy game ID. Past five managers, the rest fold behind **Show all**.
+5. **FAQ** and a sign-up box.
 
 Leaders set everything specific in **Admin → Homepage**:
 
@@ -109,7 +110,7 @@ Signed-in players have four sections under **Account**:
 - **Messages:** a WhatsApp-style chat with the kingdom's leaders and admins. Every approved leader and admin is listed; new messages arrive live, and the header shows a red dot when something is unread.
 - **Profile:** change in-game name and alliance. The game ID can't be changed.
 
-Leaders and admins answer players from the same **Messages** page, also linked from **Admin → Players → Messages**. Messaging rules live in the database (`0004_messages.sql`):
+Leaders and admins read their messages in the admin panel, in two inboxes: **Admin → Players → Messages** (members and other leaders) and **Transfer messages** (transfer accounts). Their own account pages (overview, castle appointments, profile) are under **Your account** in the same admin menu. Messaging rules live in the database (`0004_messages.sql`):
 
 - only the two people in a conversation can read it, and leaders can't read other people's chats;
 - players can write only to approved leaders and admins, and rejected accounts can't write at all;

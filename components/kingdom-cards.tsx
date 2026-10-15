@@ -84,44 +84,73 @@ function Tile({
 
 const dim = <span className="text-muted/50">—</span>;
 
-function kvkDisplay(kvk: HomeStats["kvk"], now: number | null, t: Messages): { value: ReactNode; sub: string } {
-  if (!kvk) return { value: dim, sub: t.cards.noneScheduled };
-  if (now === null) return { value: dim, sub: kvk.title };
-
-  const start = utcMidnight(kvk.startsOn);
-  const end = start + kvk.days * DAY;
-  if (now >= start && now < end) {
-    const day = Math.floor((now - start) / DAY) + 1;
-    return {
-      value: (
-        <span className="inline-flex items-center gap-2">
-          <LiveDot /> {t.common.live}
+/** Days, hours, minutes and seconds left, each over its unit. Ticks with the page's clock. */
+function Countdown({ ms, t }: { ms: number; t: Messages }) {
+  const u = t.cards.units;
+  const parts: [number, string][] = [
+    [Math.floor(ms / DAY), u.d],
+    [Math.floor((ms % DAY) / 3_600_000), u.h],
+    [Math.floor((ms % 3_600_000) / 60_000), u.m],
+    [Math.floor((ms % 60_000) / 1000), u.s],
+  ];
+  return (
+    <span role="timer" className="flex items-start gap-3 sm:gap-4">
+      {parts.map(([n, unit]) => (
+        <span key={unit} className="flex min-w-[2ch] flex-col items-center">
+          <span className="leading-none">{String(n).padStart(2, "0")}</span>
+          <span className="mt-1.5 font-mono text-[0.625rem] font-normal tracking-wider text-muted uppercase">{unit}</span>
         </span>
-      ),
-      sub: `${fmt(t.cards.liveDay, { day, days: kvk.days })} · ${kvk.title}`,
+      ))}
+    </span>
+  );
+}
+
+/**
+ * The Next KvK tile. A KvK event that is running shows its day; otherwise it counts down to the date
+ * leaders set in Admin → Next KvK, or else to the next KvK event. Shown once the clock is known, so
+ * the server and browser renders match.
+ */
+function kvkDisplay(stats: HomeStats | null, now: number | null, t: Messages, tag: string): { value: ReactNode; sub: string } {
+  const kvk = stats?.kvk ?? null;
+  const setAt = stats?.nextKvkAt ? Date.parse(stats.nextKvkAt) : null;
+  if (!kvk && setAt === null) return { value: dim, sub: t.cards.noneScheduled };
+  if (now === null) return { value: dim, sub: " " };
+
+  if (kvk) {
+    const start = utcMidnight(kvk.startsOn);
+    if (now >= start && now < start + kvk.days * DAY) {
+      const day = Math.floor((now - start) / DAY) + 1;
+      return {
+        value: (
+          <span className="inline-flex items-center gap-2">
+            <LiveDot /> {t.common.live}
+          </span>
+        ),
+        sub: `${fmt(t.cards.liveDay, { day, days: kvk.days })} · ${kvk.title}`,
+      };
+    }
+  }
+  if (setAt !== null && setAt > now) {
+    const d = new Date(setAt);
+    return {
+      value: <Countdown ms={setAt - now} t={t} />,
+      sub: fmt(t.cards.startsAt, {
+        date: d.toLocaleDateString(tag, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }),
+        time: d.toISOString().slice(11, 16),
+      }),
     };
   }
-
-  const ms = Math.max(0, start - now);
-  const d = Math.floor(ms / DAY);
-  const h = Math.floor((ms % DAY) / 3_600_000);
-  const m = Math.floor((ms % 3_600_000) / 60_000);
-  const s = Math.floor((ms % 60_000) / 1000);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const text =
-    d > 0
-      ? fmt(t.cards.countdownDays, { d, h: pad(h) })
-      : h > 0
-        ? fmt(t.cards.countdownHours, { h, m: pad(m) })
-        : fmt(t.cards.countdownMinutes, { m: pad(m), s: pad(s) });
-  return { value: text, sub: kvk.title };
+  if (kvk && utcMidnight(kvk.startsOn) > now) {
+    return { value: <Countdown ms={utcMidnight(kvk.startsOn) - now} t={t} />, sub: kvk.title };
+  }
+  return { value: dim, sub: t.cards.noneScheduled };
 }
 
 /** Six glass tiles with the kingdom's key facts, the King on a row of their own. */
 export function KingdomCards({ stats }: { stats: HomeStats | null }) {
   const { t, tag } = useI18n();
   const now = useNow(1000);
-  const kvk = kvkDisplay(stats?.kvk ?? null, now, t);
+  const kvk = kvkDisplay(stats, now, t, tag);
 
   // HH:MM in every language, matching the game and the slot times.
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -136,8 +165,9 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
   const opened = stats?.serverOpenedOn ? utcMidnight(stats.serverOpenedOn) : null;
   const serverDay = opened !== null && now !== null ? Math.max(1, Math.floor((now - opened) / DAY) + 1) : null;
 
-  // The King gets a full row so the name always fits. Phones (2 columns): King, 2 × 2, Server age.
-  // Wider screens (6 columns): King, three thirds, two halves.
+  // The King gets a full row so the name always fits. Wider screens (6 columns): King; Alliances,
+  // Governors, Server time as thirds; Server age and Next KvK as halves (the countdown needs the room).
+  // Phones (2 columns): King, 2 × 2, then Next KvK across the screen.
   const tiles: { key: string; tile: ReactNode; span: string }[] = [
     {
       key: "king",
@@ -200,15 +230,8 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
       ),
     },
     {
-      key: "kvk",
-      span: "sm:col-span-2",
-      tile: (
-        <Tile seed={3} icon={<Hourglass className="size-3.5" aria-hidden />} label={t.cards.nextKvk} value={kvk.value} sub={kvk.sub} />
-      ),
-    },
-    {
       key: "time",
-      span: "sm:col-span-3",
+      span: "sm:col-span-2",
       tile: (
         <Tile seed={4}
           icon={<Clock className="size-3.5" aria-hidden />}
@@ -225,7 +248,7 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
     },
     {
       key: "age",
-      span: "col-span-2 sm:col-span-3",
+      span: "sm:col-span-3",
       tile: (
         <Tile seed={5}
           icon={<CalendarDays className="size-3.5" aria-hidden />}
@@ -244,6 +267,13 @@ export function KingdomCards({ stats }: { stats: HomeStats | null }) {
               : t.cards.openDateNotSet
           }
         />
+      ),
+    },
+    {
+      key: "kvk",
+      span: "col-span-2 sm:col-span-3",
+      tile: (
+        <Tile seed={3} icon={<Hourglass className="size-3.5" aria-hidden />} label={t.cards.nextKvk} value={kvk.value} sub={kvk.sub} />
       ),
     },
   ];

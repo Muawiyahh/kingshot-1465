@@ -1,22 +1,73 @@
-import Link from "next/link";
-import { ArrowRight, MessageCircle } from "lucide-react";
-import { AllianceAvatar } from "@/components/alliance-banner";
-import { CopyGameId } from "@/components/home/copy-game-id";
+import { ArrowRight } from "lucide-react";
+import { ManagerList } from "@/components/home/manager-list";
 import { Bone } from "@/components/skeleton";
 import { ButtonLink, Card, Eyebrow } from "@/components/ui";
-import type { HomeContent } from "@/lib/data";
+import { ALLIANCES } from "@/lib/alliances";
+import type { HomeContent, HomeStats } from "@/lib/data";
 import { localePath, type Locale } from "@/lib/i18n/config";
+import { fmt } from "@/lib/i18n/format";
 import type { Messages } from "@/lib/i18n/messages";
 import { site } from "@/lib/site";
 
+const DAY = 86_400_000;
+
+/** Day number of the server today (day 1 is the opening day), or null without an opening date. */
+function serverDay(openedOn: string | null) {
+  if (!openedOn) return null;
+  return Math.max(1, Math.floor((Date.now() - Date.parse(`${openedOn}T00:00:00Z`)) / DAY) + 1);
+}
+
+/** When the next KvK starts, as a short date: the date leaders set, else a running or upcoming event. */
+function nextKvk(stats: HomeStats, t: Messages, tag: string) {
+  const short = (ms: number) => new Date(ms).toLocaleDateString(tag, { day: "numeric", month: "short", timeZone: "UTC" });
+  const now = Date.now();
+  const kvk = stats.kvk;
+  if (kvk) {
+    const start = Date.parse(`${kvk.startsOn}T00:00:00Z`);
+    if (now >= start && now < start + kvk.days * DAY) return t.common.live;
+  }
+  const setAt = stats.nextKvkAt ? Date.parse(stats.nextKvkAt) : null;
+  if (setAt !== null && setAt > now) return short(setAt);
+  if (kvk) return short(Date.parse(`${kvk.startsOn}T00:00:00Z`));
+  return null;
+}
+
+/** The leaders' own facts first, then live numbers about the kingdom. */
+function glance(content: HomeContent["transfer"], stats: HomeStats | null, t: Messages, tag: string) {
+  const facts: { label: string; value: string; leader?: boolean }[] = content.facts.map((f) => ({ ...f, leader: true }));
+  if (!stats) return facts;
+  const day = serverDay(stats.serverOpenedOn);
+  if (day !== null) facts.push({ label: t.cards.serverAge, value: fmt(t.cards.serverDay, { n: day.toLocaleString(tag) }) });
+  facts.push({ label: t.cards.alliances, value: String(ALLIANCES.length) });
+  if (stats.players !== null) facts.push({ label: t.cards.governors, value: stats.players.toLocaleString(tag) });
+  if (stats.king) {
+    facts.push({ label: t.cards.king, value: stats.king.alliance ? `${stats.king.name} [${stats.king.alliance}]` : stats.king.name });
+  }
+  const kvk = nextKvk(stats, t, tag);
+  if (kvk) facts.push({ label: t.cards.nextKvk, value: kvk });
+  return facts;
+}
+
 /**
- * Transfer to 1465: the pitch and kingdom facts beside a short guide and the transfer managers.
- * Visitors message the managers on the site through a transfer account (/transfer).
+ * Transfer to 1465: the pitch and the kingdom at a glance beside a short guide and the transfer
+ * managers. Visitors message the managers on the site through a transfer account (/transfer).
  * With `content` null it renders as its own loading placeholder.
  */
-export function TransferSection({ content, t, locale }: { content: HomeContent["transfer"] | null; t: Messages; locale: Locale }) {
+export function TransferSection({
+  content,
+  stats,
+  t,
+  locale,
+  tag,
+}: {
+  content: HomeContent["transfer"] | null;
+  stats: HomeStats | null;
+  t: Messages;
+  locale: Locale;
+  tag: string;
+}) {
   const tr = t.home.transfer;
-  const transfer = (to?: string) => localePath(locale, "/transfer") + (to ? `?to=${to}` : "");
+  const facts = content ? glance(content, stats, t, tag) : [];
   return (
     <div className="grid gap-10 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
       <div>
@@ -33,22 +84,37 @@ export function TransferSection({ content, t, locale }: { content: HomeContent["
             <Bone className="h-4 w-2/3" />
           </div>
         )}
-        <ButtonLink href={transfer()} size="lg" className="mt-8">
+        <ButtonLink href={localePath(locale, "/transfer")} size="lg" className="mt-8">
           {tr.cta}
           <ArrowRight className="size-4" aria-hidden />
         </ButtonLink>
-        {content && content.facts.length > 0 && (
-          <>
-            <h3 className="mt-10 font-mono text-xs tracking-[0.18em] text-gold uppercase">{tr.factsTitle}</h3>
-            <dl className="mt-4 grid grid-cols-2 gap-3">
-              {content.facts.map((f, i) => (
-                <div key={i} className="min-w-0 rounded-2xl bg-card px-4 py-3.5 shadow-[inset_0_0_0_1px_var(--border)]">
-                  <dt className="text-xs text-muted">{f.label}</dt>
-                  <dd className="mt-1 font-display text-lg font-semibold [overflow-wrap:anywhere]">{f.value}</dd>
-                </div>
-              ))}
-            </dl>
-          </>
+
+        <h3 className="mt-10 font-mono text-xs tracking-[0.18em] text-gold uppercase">{tr.factsTitle}</h3>
+        {content ? (
+          <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {facts.map((f, i) => (
+              // Leaders' own facts get a soft gold edge; the live numbers follow in plain tiles.
+              <div
+                key={i}
+                className={`min-w-0 rounded-2xl bg-card px-4 py-3.5 ${
+                  f.leader ? "shadow-[inset_0_0_0_1px_rgba(217,164,65,0.35)]" : "shadow-[inset_0_0_0_1px_var(--border)]"
+                }`}
+              >
+                <dt className="text-xs text-muted">{f.label}</dt>
+                <dd
+                  className={`mt-1 font-display text-lg leading-snug font-semibold [overflow-wrap:anywhere] ${f.leader ? "text-gold-soft" : ""}`}
+                >
+                  {f.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <Bone key={i} className="h-[4.5rem] rounded-2xl" />
+            ))}
+          </div>
         )}
       </div>
 
@@ -70,45 +136,22 @@ export function TransferSection({ content, t, locale }: { content: HomeContent["
           {tr.managersTitle}
         </h4>
         {!content ? (
-          <div className="mt-4 space-y-4" aria-hidden>
-            {[0, 1].map((i) => (
-              <div key={i} className="flex gap-3">
-                <Bone className="size-10 shrink-0 rounded-full" />
-                <span className="flex-1 space-y-2">
+          <div className="mt-3 space-y-3" aria-hidden>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3">
+                <Bone className="size-9 shrink-0 rounded-full" />
+                <span className="flex-1 space-y-1.5">
                   <Bone className="h-4 w-32" />
-                  <Bone className="h-8 w-40 rounded-full" />
+                  <Bone className="h-3 w-24" />
                 </span>
+                <Bone className="h-8 w-24 rounded-full" />
               </div>
             ))}
           </div>
         ) : content.managers.length === 0 ? (
           <p className="relative mt-4 text-sm text-muted">{tr.noManagers}</p>
         ) : (
-          <ul className="relative mt-2 divide-y divide-border/60">
-            {content.managers.map((m) => (
-              <li key={m.profileId} className="flex gap-3 py-4 last:pb-0">
-                <AllianceAvatar tag={m.alliance} size={40} />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium [overflow-wrap:anywhere]">
-                    {m.alliance && <span className="mr-1.5 font-mono text-xs text-gold">[{m.alliance}]</span>}
-                    {m.name}
-                  </p>
-                  {m.note && <p className="mt-0.5 text-xs text-muted">{m.note}</p>}
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Link
-                      href={transfer(m.profileId)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3.5 text-sm font-medium text-on-primary transition-colors hover:bg-primary-hover"
-                    >
-                      <MessageCircle className="size-3.5" aria-hidden />
-                      {tr.message}
-                      <span className="sr-only"> {m.name}</span>
-                    </Link>
-                    {m.gameId && <CopyGameId id={m.gameId} />}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <ManagerList managers={content.managers} />
         )}
 
         {site.discordUrl && (

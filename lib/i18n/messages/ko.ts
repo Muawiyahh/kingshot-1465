@@ -23,6 +23,8 @@ const ko: Messages = {
     appointments: "성 직위",
     messages: "메시지",
     profile: "프로필",
+    adminNextKvk: "다음 KvK · 관리자",
+    adminTransferMessages: "서버 이동 메시지 · 관리자",
   },
   nav: {
     home: "홈",
@@ -108,6 +110,7 @@ const ko: Messages = {
         sanctuary1: "성역 1",
         sanctuary2: "성역 2",
         vikings: "바이킹",
+        fortress: "요새",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const ko: Messages = {
       copied: "복사됨",
       cta: "서버 이동 담당자에게 메시지",
       message: "메시지",
+      showAll: "{n}명 모두 보기",
+      showFewer: "접기",
     },
     faq: {
       eyebrow: "알아 두세요",
@@ -170,15 +175,19 @@ const ko: Messages = {
     nextKvk: "다음 KvK",
     noneScheduled: "예정 없음",
     liveDay: "{days}일 중 {day}일 차",
-    countdownDays: "{d}일 {h}시간",
-    countdownHours: "{h}시간 {m}분",
-    countdownMinutes: "{m}분 {s}초",
     serverTime: "서버 시간",
     yourTime: "내 시간 {time}",
     serverAge: "서버 나이",
     serverDay: "{n}일 차",
     since: "{date} 오픈",
     openDateNotSet: "오픈일 미설정",
+    units: {
+      d: "일",
+      h: "시간",
+      m: "분",
+      s: "초",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "KvK 성 직위",
@@ -369,6 +378,8 @@ const ko: Messages = {
     kingdomNumber: "현재 왕국 번호를 입력하세요. 예: 1234",
     alreadyInKingdom: "이미 1465에 있습니다. 일반 계정을 만드세요.",
     transferUnavailable: "서버 이동 계정은 아직 열리지 않았습니다. 나중에 다시 시도하세요.",
+    nextKvkDate: "올바른 날짜와 시간을 고르세요.",
+    nextKvkFailed: "날짜를 저장하지 못했습니다. 데이터베이스를 아직 업데이트하지 않았다면 0009_next_kvk.sql을 실행하세요.",
   },
   success: {
     applicationUpdated: "신청이 수정되었습니다.",
@@ -391,6 +402,8 @@ const ko: Messages = {
       allianceEvents: "연맹 이벤트",
       hallOfFame: "명예의 전당",
       transfers: "서버 이동",
+      nextKvk: "다음 KvK",
+      transferMessages: "서버 이동 메시지",
     },
     overview: {
       attention: "확인이 필요한 항목",
@@ -404,6 +417,8 @@ const ko: Messages = {
         allianceEvents: "연맹별 곰 함정, 소드랜드, 삼연맹전, 성역, 바이킹 시간을 정합니다.",
         hallOfFame: "매주 연맹마다 플레이어 한 명과 그 문구를 고릅니다.",
         transfers: "왕국 정보, 서버 이동 담당자, 이동을 고민하는 플레이어를 위한 소개 글.",
+        nextKvk: "다음 KvK 시작 시간을 정합니다. 홈페이지에 카운트다운이 표시됩니다.",
+        transferMessages: "1465로 오고 싶어 하는 다른 왕국 플레이어의 메시지를 읽고 답장합니다.",
       },
       welcome: "환영합니다, {name}님",
       intro: "새 플레이어를 승인하고, 다음 KvK 신청을 연 뒤, 성 직위를 배정하고 게시하세요.",
@@ -505,6 +520,7 @@ const ko: Messages = {
         openDateHint: "1465가 열린 날입니다. 홈에서 이 날짜를 기준으로 서버 나이를 계산합니다.",
         save: "서버 날짜 저장",
       },
+      needsUpdate: "데이터베이스 업데이트가 필요합니다. Supabase SQL Editor에서 {file}을(를) 실행한 뒤 이 페이지를 새로 고치세요.",
     },
     home: {
       events: {
@@ -552,6 +568,25 @@ const ko: Messages = {
         remove: "삭제",
         save: "서버 이동 정보 저장",
       },
+    },
+    nextKvk: {
+      title: "다음 KvK",
+      intro: "다음 KvK가 시작되는 시간입니다. 홈페이지의 다음 KvK 카드가 이 시간까지 카운트다운합니다.",
+      date: "시작 날짜 (UTC)",
+      time: "시작 시간",
+      save: "날짜 저장",
+      clear: "날짜 지우기",
+      current: "홈페이지가 {date} {time} UTC까지 카운트다운합니다.",
+      none: "설정된 날짜가 없습니다. 대신 다음 KvK 이벤트가 있으면 그때까지 카운트다운합니다.",
+      hint: "시간은 게임 서버 시간인 UTC 기준입니다. KvK 이벤트가 진행 중일 때는 카드에 진행 중인 날이 표시됩니다.",
+    },
+    messages: {
+      intro: "1465 멤버와 다른 리더의 메시지입니다. 다른 왕국 플레이어는 서버 이동 메시지에 있습니다.",
+      empty: "아직 대화가 없습니다.",
+    },
+    transferMessages: {
+      intro: "1465로 이동을 고민하는 다른 왕국 플레이어의 메시지입니다.",
+      empty: "아직 메시지를 보낸 서버 이동 계정이 없습니다.",
     },
   },
   kvk: {

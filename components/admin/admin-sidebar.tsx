@@ -2,7 +2,7 @@ import { SectionNav, SectionNavView, type SectionNavGroup } from "@/components/s
 import { getUserId } from "@/lib/auth";
 import type { Locale } from "@/lib/i18n/config";
 import type { Messages } from "@/lib/i18n/messages/en";
-import { getUnreadCount } from "@/lib/messages";
+import { getUnreadByInbox } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
 /** The admin sections, grouped by what they manage. Shared with the overview page. */
@@ -10,13 +10,20 @@ export function adminGroups(t: Messages): SectionNavGroup[] {
   const n = t.admin.nav;
   return [
     { label: null, items: [{ key: "overview", href: "/admin", label: n.overview, exact: true }] },
-    { label: n.groups.kvk, items: [{ key: "events", href: "/admin/events", label: n.events, also: ["/admin/days"] }] },
+    {
+      label: n.groups.kvk,
+      items: [
+        { key: "events", href: "/admin/events", label: n.events, also: ["/admin/days"] },
+        { key: "nextKvk", href: "/admin/next-kvk", label: n.nextKvk },
+      ],
+    },
     {
       label: n.groups.players,
       items: [
         { key: "accounts", href: "/admin/accounts", label: n.accounts },
-        // Leaders read and answer players' messages in their own account area.
-        { key: "messages", href: "/account/messages", label: t.account.nav.messages },
+        // Members and transfer accounts (players still in another kingdom) are read apart.
+        { key: "messages", href: "/admin/messages", label: t.account.nav.messages },
+        { key: "transferMessages", href: "/admin/transfer-messages", label: n.transferMessages },
       ],
     },
     {
@@ -34,10 +41,19 @@ export function adminGroups(t: Messages): SectionNavGroup[] {
         { key: "transfers", href: "/admin/transfers", label: n.transfers },
       ],
     },
+    {
+      // The leader's own account pages, shown with this menu so everything stays in one panel.
+      label: t.account.eyebrow,
+      items: [
+        { key: "accountOverview", href: "/account", label: t.account.nav.overview, exact: true },
+        { key: "appointments", href: "/account/appointments", label: t.account.nav.appointments },
+        { key: "profile", href: "/account/profile", label: t.account.nav.profile },
+      ],
+    },
   ];
 }
 
-/** Admin menu with a count of what's waiting next to Accounts, KvK events and Messages. */
+/** Admin menu with a count of what's waiting next to Accounts, KvK events and both inboxes. */
 export async function AdminSidebar({ locale, t }: { locale: Locale; t: Messages }) {
   // getUserId reads the session token locally and marks this request-time, so all three counts
   // start together instead of waiting for a profile lookup first.
@@ -46,14 +62,19 @@ export async function AdminSidebar({ locale, t }: { locale: Locale; t: Messages 
   const [accounts, applications, unread] = await Promise.all([
     supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("applications").select("id", { count: "exact", head: true }).eq("status", "pending"),
-    me ? getUnreadCount(me) : 0,
+    me ? getUnreadByInbox() : { members: 0, transfers: 0 },
   ]);
   return (
     <SectionNav
       locale={locale}
       label={t.admin.navLabel}
       groups={adminGroups(t)}
-      badges={{ accounts: accounts.count ?? 0, events: applications.count ?? 0, messages: unread }}
+      badges={{
+        accounts: accounts.count ?? 0,
+        events: applications.count ?? 0,
+        messages: unread.members,
+        transferMessages: unread.transfers,
+      }}
     />
   );
 }

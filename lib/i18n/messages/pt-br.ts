@@ -23,6 +23,8 @@ const ptBR: Messages = {
     appointments: "Cargos do castelo",
     messages: "Mensagens",
     profile: "Perfil",
+    adminNextKvk: "Próximo KvK · Admin",
+    adminTransferMessages: "Mensagens de transferência · Admin",
   },
   nav: {
     home: "Início",
@@ -108,6 +110,7 @@ const ptBR: Messages = {
         sanctuary1: "Santuário 1",
         sanctuary2: "Santuário 2",
         vikings: "Vikings",
+        fortress: "Fortaleza",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const ptBR: Messages = {
       copied: "Copiado",
       cta: "Falar com um responsável por transferências",
       message: "Mensagem",
+      showAll: "Ver todos os {n}",
+      showFewer: "Ver menos",
     },
     faq: {
       eyebrow: "Bom saber",
@@ -170,15 +175,19 @@ const ptBR: Messages = {
     nextKvk: "Próximo KvK",
     noneScheduled: "nenhum agendado",
     liveDay: "Dia {day} de {days}",
-    countdownDays: "{d}d {h}h",
-    countdownHours: "{h}h {m}min",
-    countdownMinutes: "{m}min {s}s",
     serverTime: "Horário do servidor",
     yourTime: "Seu horário {time}",
     serverAge: "Idade do servidor",
     serverDay: "Dia {n}",
     since: "desde {date}",
     openDateNotSet: "data de abertura não definida",
+    units: {
+      d: "dias",
+      h: "hrs",
+      m: "min",
+      s: "seg",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "Cargos do castelo no KvK",
@@ -370,6 +379,8 @@ const ptBR: Messages = {
     kingdomNumber: "Digite o número do seu reino atual, por exemplo 1234.",
     alreadyInKingdom: "Você já está no 1465. Crie uma conta normal.",
     transferUnavailable: "As contas de transferência ainda não estão ativadas. Tente mais tarde.",
+    nextKvkDate: "Escolha uma data e um horário válidos.",
+    nextKvkFailed: "Não foi possível salvar a data. Se o banco de dados ainda não foi atualizado, execute 0009_next_kvk.sql.",
   },
   success: {
     applicationUpdated: "Candidatura atualizada.",
@@ -392,6 +403,8 @@ const ptBR: Messages = {
       allianceEvents: "Eventos de aliança",
       hallOfFame: "Hall da Fama",
       transfers: "Transferências",
+      nextKvk: "Próximo KvK",
+      transferMessages: "Mensagens de transferência",
     },
     overview: {
       attention: "Precisa da sua atenção",
@@ -405,6 +418,8 @@ const ptBR: Messages = {
         allianceEvents: "Defina os horários de Armadilha de Urso, Swordland, Tri-Aliança, Santuário e Vikings de cada aliança.",
         hallOfFame: "Escolha toda semana um jogador de cada aliança, com uma frase.",
         transfers: "Informações do reino, responsáveis por transferências e o texto para quem pensa em vir.",
+        nextKvk: "Defina quando começa o próximo KvK. A página inicial faz a contagem regressiva.",
+        transferMessages: "Leia e responda jogadores de outros reinos que querem vir para o 1465.",
       },
       welcome: "Bem-vindo, {name}",
       intro: "Aprove jogadores novos, abra as inscrições para o próximo KvK e depois distribua e publique os cargos do castelo.",
@@ -506,6 +521,7 @@ const ptBR: Messages = {
         openDateHint: "O dia em que o 1465 abriu. A página inicial calcula a idade do servidor a partir dele.",
         save: "Salvar data do servidor",
       },
+      needsUpdate: "Isso precisa de uma atualização do banco de dados. Execute {file} no SQL Editor do Supabase e recarregue esta página.",
     },
     home: {
       events: {
@@ -553,6 +569,25 @@ const ptBR: Messages = {
         remove: "Remover",
         save: "Salvar transferências",
       },
+    },
+    nextKvk: {
+      title: "Próximo KvK",
+      intro: "Quando começa o próximo KvK. O card Próximo KvK da página inicial faz a contagem regressiva.",
+      date: "Data de início (UTC)",
+      time: "Hora de início",
+      save: "Salvar data",
+      clear: "Limpar data",
+      current: "A página inicial faz a contagem regressiva até {date} às {time} UTC.",
+      none: "Nenhuma data definida. A página inicial conta até o próximo evento de KvK, se houver.",
+      hint: "Os horários estão em UTC, o horário do servidor do jogo. Durante um evento de KvK, o card mostra o dia em andamento.",
+    },
+    messages: {
+      intro: "Mensagens de membros do 1465 e de outros líderes. Jogadores de outros reinos ficam em Mensagens de transferência.",
+      empty: "Nenhuma conversa ainda.",
+    },
+    transferMessages: {
+      intro: "Mensagens de jogadores de outros reinos que pensam em vir para o 1465.",
+      empty: "Nenhuma conta de transferência escreveu ainda.",
     },
   },
   kvk: {

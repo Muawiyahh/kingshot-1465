@@ -23,6 +23,8 @@ const fr: Messages = {
     appointments: "Postes du château",
     messages: "Messages",
     profile: "Profil",
+    adminNextKvk: "Prochain KvK · Admin",
+    adminTransferMessages: "Messages de transfert · Admin",
   },
   nav: {
     home: "Accueil",
@@ -108,6 +110,7 @@ const fr: Messages = {
         sanctuary1: "Sanctuaire 1",
         sanctuary2: "Sanctuaire 2",
         vikings: "Vikings",
+        fortress: "Forteresse",
       },
     },
     hof: {
@@ -134,6 +137,8 @@ const fr: Messages = {
       copied: "Copié",
       cta: "Écrire à un responsable des transferts",
       message: "Écrire",
+      showAll: "Voir les {n}",
+      showFewer: "Voir moins",
     },
     faq: {
       eyebrow: "Bon à savoir",
@@ -170,15 +175,19 @@ const fr: Messages = {
     nextKvk: "Prochain KvK",
     noneScheduled: "aucun prévu",
     liveDay: "Jour {day} sur {days}",
-    countdownDays: "{d} j {h} h",
-    countdownHours: "{h} h {m} min",
-    countdownMinutes: "{m} min {s} s",
     serverTime: "Heure du serveur",
     yourTime: "Votre heure {time}",
     serverAge: "Âge du serveur",
     serverDay: "Jour {n}",
     since: "depuis le {date}",
     openDateNotSet: "date d'ouverture non définie",
+    units: {
+      d: "jours",
+      h: "h",
+      m: "min",
+      s: "s",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "Postes du château pour le KvK",
@@ -370,6 +379,8 @@ const fr: Messages = {
     kingdomNumber: "Saisissez le numéro de votre royaume actuel, par exemple 1234.",
     alreadyInKingdom: "Vous êtes déjà dans 1465. Créez plutôt un compte normal.",
     transferUnavailable: "Les comptes de transfert ne sont pas encore activés. Réessayez plus tard.",
+    nextKvkDate: "Choisissez une date et une heure valides.",
+    nextKvkFailed: "Impossible d'enregistrer la date. Si la base de données n'a pas encore été mise à jour, exécutez 0009_next_kvk.sql.",
   },
   success: {
     applicationUpdated: "Candidature mise à jour.",
@@ -392,6 +403,8 @@ const fr: Messages = {
       allianceEvents: "Événements d'alliance",
       hallOfFame: "Panthéon",
       transfers: "Transferts",
+      nextKvk: "Prochain KvK",
+      transferMessages: "Messages de transfert",
     },
     overview: {
       attention: "À traiter",
@@ -405,6 +418,8 @@ const fr: Messages = {
         allianceEvents: "Fixez les horaires de Piège à ours, Swordland, Tri-alliance, Sanctuaire et Vikings de chaque alliance.",
         hallOfFame: "Choisissez chaque semaine un joueur par alliance, avec sa citation.",
         transfers: "Infos sur le royaume, responsables des transferts et texte pour les joueurs qui pensent nous rejoindre.",
+        nextKvk: "Indiquez quand commence le prochain KvK. La page d'accueil affiche un compte à rebours.",
+        transferMessages: "Lisez les joueurs d'autres royaumes qui veulent rejoindre 1465 et répondez-leur.",
       },
       welcome: "Bienvenue, {name}",
       intro: "Validez les nouveaux joueurs, ouvrez les candidatures pour le prochain KvK, puis attribuez et publiez les postes du château.",
@@ -506,6 +521,7 @@ const fr: Messages = {
         openDateHint: "Le jour où 1465 a ouvert. La page d'accueil en déduit l'âge du serveur.",
         save: "Enregistrer la date",
       },
+      needsUpdate: "Une mise à jour de la base de données est nécessaire. Exécutez {file} dans l'éditeur SQL de Supabase, puis rechargez cette page.",
     },
     home: {
       events: {
@@ -553,6 +569,25 @@ const fr: Messages = {
         remove: "Retirer",
         save: "Enregistrer les transferts",
       },
+    },
+    nextKvk: {
+      title: "Prochain KvK",
+      intro: "Quand commence le prochain KvK. La carte Prochain KvK de la page d'accueil affiche un compte à rebours.",
+      date: "Date de début (UTC)",
+      time: "Heure de début",
+      save: "Enregistrer la date",
+      clear: "Effacer la date",
+      current: "La page d'accueil décompte jusqu'au {date} à {time} UTC.",
+      none: "Aucune date. La page d'accueil décompte alors jusqu'au prochain événement KvK, s'il y en a un.",
+      hint: "Les heures sont en UTC, l'heure du serveur du jeu. Pendant un événement KvK, la carte affiche plutôt le jour en cours.",
+    },
+    messages: {
+      intro: "Messages des membres de 1465 et des autres chefs. Les joueurs d'autres royaumes sont dans Messages de transfert.",
+      empty: "Pas encore de conversation.",
+    },
+    transferMessages: {
+      intro: "Messages de joueurs d'autres royaumes qui pensent rejoindre 1465.",
+      empty: "Aucun compte de transfert n'a encore écrit.",
     },
   },
   kvk: {

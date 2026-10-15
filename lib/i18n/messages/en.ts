@@ -25,6 +25,8 @@ const en = {
     appointments: "Castle appointments",
     messages: "Messages",
     profile: "Profile",
+    adminNextKvk: "Next KvK · Admin",
+    adminTransferMessages: "Transfer messages · Admin",
   },
   nav: {
     home: "Home",
@@ -111,6 +113,7 @@ const en = {
         sanctuary1: "Sanctuary 1",
         sanctuary2: "Sanctuary 2",
         vikings: "Vikings",
+        fortress: "Fortress",
       },
     },
     hof: {
@@ -137,6 +140,8 @@ const en = {
       copied: "Copied",
       cta: "Message a transfer manager",
       message: "Message",
+      showAll: "Show all {n}",
+      showFewer: "Show fewer",
     },
     faq: {
       eyebrow: "Good to know",
@@ -173,15 +178,19 @@ const en = {
     nextKvk: "Next KvK",
     noneScheduled: "none scheduled",
     liveDay: "Day {day} of {days}",
-    countdownDays: "{d}d {h}h",
-    countdownHours: "{h}h {m}m",
-    countdownMinutes: "{m}m {s}s",
     serverTime: "Server time",
     yourTime: "Your time {time}",
     serverAge: "Server age",
     serverDay: "Day {n}",
     since: "since {date}",
     openDateNotSet: "open date not set",
+    units: {
+      d: "days",
+      h: "hrs",
+      m: "min",
+      s: "sec",
+    },
+    startsAt: "{date} · {time} UTC",
   },
   positionsPage: {
     eyebrow: "KvK castle positions",
@@ -373,6 +382,8 @@ const en = {
     kingdomNumber: "Enter your current kingdom's number, for example 1234.",
     alreadyInKingdom: "You're already in 1465. Create a normal account instead.",
     transferUnavailable: "Transfer accounts aren't switched on yet. Try again later.",
+    nextKvkDate: "Pick a valid date and time.",
+    nextKvkFailed: "Couldn't save the date. If the database hasn't been updated yet, run 0009_next_kvk.sql.",
   },
   success: {
     applicationUpdated: "Application updated.",
@@ -395,6 +406,8 @@ const en = {
       allianceEvents: "Alliance events",
       hallOfFame: "Hall of Fame",
       transfers: "Transfers",
+      nextKvk: "Next KvK",
+      transferMessages: "Transfer messages",
     },
     overview: {
       attention: "Needs your attention",
@@ -408,6 +421,8 @@ const en = {
         allianceEvents: "Set each alliance's Bear Trap, Swordland, Tri-Alliance, Sanctuary and Vikings times.",
         hallOfFame: "Pick one player from each alliance every week, with their quote.",
         transfers: "Kingdom facts, transfer managers and the pitch for players thinking of joining.",
+        nextKvk: "Set when the next KvK starts. The homepage counts down to it.",
+        transferMessages: "Read and reply to players from other kingdoms who want to move to 1465.",
       },
       welcome: "Welcome, {name}",
       intro: "Approve new players, open applications for the next KvK, then assign and publish castle positions.",
@@ -509,6 +524,7 @@ const en = {
         openDateHint: "The day 1465 opened. The homepage counts the server's age from this.",
         save: "Save server date",
       },
+      needsUpdate: "This needs a database update. Run {file} in the Supabase SQL Editor, then reload this page.",
     },
     home: {
       events: {
@@ -556,6 +572,25 @@ const en = {
         remove: "Remove",
         save: "Save transfers",
       },
+    },
+    nextKvk: {
+      title: "Next KvK",
+      intro: "When the next KvK starts. The Next KvK card on the homepage counts down to it.",
+      date: "Start date (UTC)",
+      time: "Start time",
+      save: "Save date",
+      clear: "Clear date",
+      current: "The homepage counts down to {date} at {time} UTC.",
+      none: "No date set. The homepage counts down to the next KvK event instead, if there is one.",
+      hint: "Times are in UTC, the game's server time. While a KvK event is running, the card shows its live day instead.",
+    },
+    messages: {
+      intro: "Messages from members of 1465 and other leaders. Players from other kingdoms are under Transfer messages.",
+      empty: "No conversations yet.",
+    },
+    transferMessages: {
+      intro: "Messages from players in other kingdoms who are thinking of moving to 1465.",
+      empty: "No transfer accounts have written yet.",
     },
   },
   kvk: {

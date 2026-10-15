@@ -1,11 +1,35 @@
 /** Alliance events shown on the homepage, and helpers for their times. Safe for client and server. */
 
 /** In display order. The keys are stored in alliance_events.event and name the translations. */
-export const ALLIANCE_EVENTS = ["bear1", "bear2", "swordland", "tri_alliance", "sanctuary1", "sanctuary2", "vikings"] as const;
+export const ALLIANCE_EVENTS = [
+  "bear1",
+  "bear2",
+  "swordland",
+  "tri_alliance",
+  "sanctuary1",
+  "sanctuary2",
+  "vikings",
+  "fortress",
+] as const;
 export type AllianceEventKey = (typeof ALLIANCE_EVENTS)[number];
 
 export function isAllianceEvent(value: unknown): value is AllianceEventKey {
   return typeof value === "string" && (ALLIANCE_EVENTS as readonly string[]).includes(value);
+}
+
+/** Events only some alliances take part in. Every other event is for every alliance. */
+const ONLY_FOR: Partial<Record<AllianceEventKey, readonly string[]>> = {
+  fortress: ["GGG", "KNG", "ERA", "ALT"],
+};
+
+/** Does this alliance take part in this event? */
+export function allianceHasEvent(alliance: string, event: AllianceEventKey) {
+  return ONLY_FOR[event]?.includes(alliance) ?? true;
+}
+
+/** The events one alliance takes part in, in display order. */
+export function eventsFor(alliance: string): AllianceEventKey[] {
+  return ALLIANCE_EVENTS.filter((e) => allianceHasEvent(alliance, e));
 }
 
 export const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;

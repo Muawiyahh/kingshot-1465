@@ -6,6 +6,10 @@ import type { Contact } from "@/lib/types";
 
 type MessagesState = {
   contacts: Contact[];
+  /** Where this inbox lives: /account/messages, /admin/messages or /admin/transfer-messages. */
+  basePath: string;
+  /** Shown when the list is empty. */
+  emptyText: string;
   /** The conversation on screen, or the one just clicked while it loads. */
   activeId: string | null;
   /** True between a click and the new chat's page arriving. */
@@ -14,14 +18,31 @@ type MessagesState = {
   open: (partnerId: string | null) => void;
 };
 
-const MessagesContext = createContext<MessagesState>({ contacts: [], activeId: null, pending: false, open: () => {} });
+const MessagesContext = createContext<MessagesState>({
+  contacts: [],
+  basePath: "/account/messages",
+  emptyText: "",
+  activeId: null,
+  pending: false,
+  open: () => {},
+});
 
 export function useMessages() {
   return useContext(MessagesContext);
 }
 
 /** Shared by the list and the chat pane, which live in different route segments. */
-export function MessagesProvider({ contacts, children }: { contacts: Contact[]; children: ReactNode }) {
+export function MessagesProvider({
+  contacts,
+  basePath,
+  emptyText,
+  children,
+}: {
+  contacts: Contact[];
+  basePath: string;
+  emptyText: string;
+  children: ReactNode;
+}) {
   const segment = useSelectedLayoutSegment();
   // A click, remembered with the page it happened on. Once the URL moves on, the URL wins again.
   const [clicked, setClicked] = useState<{ id: string | null; from: string | null } | null>(null);
@@ -30,6 +51,8 @@ export function MessagesProvider({ contacts, children }: { contacts: Contact[]; 
   const pending = activeId !== segment;
 
   return (
-    <MessagesContext.Provider value={{ contacts, activeId, pending, open }}>{children}</MessagesContext.Provider>
+    <MessagesContext.Provider value={{ contacts, basePath, emptyText, activeId, pending, open }}>
+      {children}
+    </MessagesContext.Provider>
   );
 }
