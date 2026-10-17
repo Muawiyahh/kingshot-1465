@@ -22,6 +22,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0007_homepage_content.sql`
    - `0008_transfer_contacts.sql`
    - `0009_next_kvk.sql`
+   - `0010_notifications.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -48,7 +49,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 
 The site is in English, German, Simplified and Traditional Chinese, French, Spanish, Indonesian, Tagalog, Brazilian Portuguese and Korean. Each language has its own address, for example `/de/positions` or `/zh-tw/apply`.
 
-- **Choosing a language:** visitors get their browser's language automatically. On their first visit a language picker opens, with every language written in its own script, so nobody has to read English to find their language. They can switch later with the globe menu in the header. Players also pick a language when they sign up, and the site opens in it when they sign in.
+- **Choosing a language:** visitors get their browser's language automatically. On their first visit a language picker opens, with every language written in its own script, so nobody has to read English to find their language. They can switch later with the language picker at the bottom of every page. Players also pick a language when they sign up, and the site opens in it when they sign in.
 - **Editing translations:** each language is one file in `lib/i18n/messages/`, and `en.ts` is the source. Keep every `{placeholder}` exactly as written, but move it wherever the sentence needs it. TypeScript reports any key that's missing or added by mistake.
 - **What stays untranslated:** text that leaders or players type (event titles, custom position names, names, notes) is shown as entered. The five standard positions (Construction, Research, Training, Chief Minister, Noble Advisor) are translated automatically when stored in English.
 
@@ -121,6 +122,24 @@ Leaders and admins read their messages in the admin panel, in two inboxes: **Adm
 If `AZURE_TRANSLATOR_KEY` is set, every incoming message gets a **Translate** link under it. The first tap calls [Azure AI Translator](https://azure.microsoft.com/products/ai-services/ai-translator) and saves the result on the message (`0005_message_translations.sql`), so it's translated only once no matter how many times either side opens the chat; a second tap just switches back to the original. Without the key, the link doesn't appear and nothing changes.
 
 A **Free F0** Translator resource covers 2 million characters a month at no cost — far more than a kingdom's chat is likely to use. Regional resources (anything other than "Global") also need `AZURE_TRANSLATOR_REGION` set to the resource's region, lowercased with no spaces (e.g. "Central India" → `centralindia`); a Global resource can leave it empty.
+
+## Notifications
+
+Every signed-in account has a bell in the top bar. The red number counts what's new, and opening the bell marks it all read. Notifications arrive live, and each one links to the page it's about. They're written in the reader's own language.
+
+| Who | When |
+| --- | --- |
+| The player concerned | their account is approved or not approved; their role changes; their transfer account becomes a member account; a castle application is accepted or not accepted; they are given a slot when a schedule is published, or moved or taken off it afterwards; they are picked for the Hall of Fame (when their account has the same name and alliance) |
+| Members | applications open for a KvK event; its schedule is published; the next KvK date is set or changed; their own alliance's event times change |
+| Every approved account, transfer accounts included | a new Hall of Fame week; a new King |
+| Leaders and admins | a new sign-up waiting for approval, or a new transfer account. A sign-up leaves the bell once it has been approved or rejected |
+
+How it behaves:
+
+- **The database writes them**, with triggers in `0010_notifications.sql`, so a change made anywhere (the site or the SQL Editor) notifies people. Nobody can write or edit notifications directly.
+- **One per thing:** a later change to the same thing replaces its notification instead of adding another. For example, a rejected application that is later accepted leaves one notification. Undoing a decision removes it, and saving without changes doesn't notify again.
+- **Who sees what:** leaders don't get notified about changes they made themselves. New accounts don't see kingdom news from before they signed up. The bell shows the newest 30, and notifications older than six months are deleted.
+- **KvK slots** stay quiet while leaders work on the schedule; players hear about their slot when it's published.
 
 ## Security
 

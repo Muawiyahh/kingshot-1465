@@ -17,6 +17,8 @@ export type Profile = {
   transfer?: boolean;
   /** The kingdom a transfer account is coming from. */
   from_kingdom?: number | null;
+  /** When they last opened the bell (0010_notifications.sql). */
+  notifications_seen_at?: string | null;
   created_at: string;
 };
 
@@ -160,4 +162,16 @@ export type ChatMessage = {
   read_at: string | null;
   /** Cached Azure translations, keyed by locale (0005_message_translations.sql). */
   translations: Record<string, string> | null;
+};
+
+/**
+ * One entry in the bell (0010_notifications.sql). The database stores a kind plus its details, and
+ * the browser writes the sentence in the reader's language. Kinds the site doesn't know are skipped.
+ */
+export type AppNotification = {
+  id: string;
+  kind: string;
+  data: Record<string, unknown>;
+  created_at: string;
+  unread: boolean;
 };

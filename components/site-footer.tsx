@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Crest } from "@/components/crest";
 import { FlamingHeart } from "@/components/flaming-heart";
+import { LanguageSwitcher } from "@/components/language-switcher";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
 
-/** Kingdom name on the left, the site's credit in the middle, Discord (when set) on the right. */
+/** Kingdom name on the left, the site's credit in the middle, the language picker and Discord (when set) on the right. */
 export async function SiteFooter() {
   const { locale, t } = await getI18n();
   return (
@@ -23,8 +24,8 @@ export async function SiteFooter() {
             name: <span className="font-medium text-gold-soft">{site.creator}</span>,
           })}
         </p>
-        {/* Empty when there's no Discord link, so the credit stays centred */}
-        <nav aria-label={t.footer.label} className="flex justify-center text-sm text-muted sm:justify-end">
+        <nav aria-label={t.footer.label} className="flex items-center justify-center gap-4 text-sm text-muted sm:justify-end">
+          <LanguageSwitcher />
           {site.discordUrl && (
             <a href={site.discordUrl} className="hover:text-fg" target="_blank" rel="noreferrer">
               Discord

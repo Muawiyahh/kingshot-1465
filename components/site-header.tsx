@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { Crest } from "@/components/crest";
-import { LanguageSwitcher } from "@/components/language-switcher";
 import { UserNav } from "@/components/user-nav";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
@@ -9,8 +8,8 @@ import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
 
 /**
- * Minimal top bar: logo (home), then language and the account menu. Positions and appointments live
- * in the signed-in pages, not here.
+ * Minimal top bar: logo (home), then notifications and the account menu. Positions and appointments
+ * live in the signed-in pages, and the language picker is in the footer.
  */
 export async function SiteHeader() {
   const { locale, t } = await getI18n();
@@ -29,7 +28,6 @@ export async function SiteHeader() {
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
-          <LanguageSwitcher />
           <Suspense fallback={<span className="size-10 animate-pulse rounded-full bg-white/5" aria-hidden />}>
             <UserNav />
           </Suspense>

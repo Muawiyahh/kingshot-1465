@@ -1,17 +1,27 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { AccountMenu } from "@/components/account-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { buttonClass } from "@/components/ui";
 import { getProfile, getUserId, isLeader } from "@/lib/auth";
 import { localePath } from "@/lib/i18n/config";
 import { getI18n } from "@/lib/i18n/server";
 import { getUnreadCount } from "@/lib/messages";
+import { getNotifications } from "@/lib/notifications";
 
-/** Right side of the top bar: Sign in / Join, or the account menu (plus a quick Admin link for leaders). */
+/**
+ * Right side of the top bar: Sign in / Join, or the notifications bell and the account menu (plus a
+ * quick Admin link for leaders).
+ */
 export async function UserNav() {
-  // The unread count uses the ID from the session token, so it loads alongside the profile.
+  // The unread count and notifications use the ID from the session token, so they load alongside the profile.
   const me = await getUserId();
-  const [profile, { locale, t }, unread] = await Promise.all([getProfile(), getI18n(), me ? getUnreadCount(me) : 0]);
+  const [profile, { locale, t }, unread, notes] = await Promise.all([
+    getProfile(),
+    getI18n(),
+    me ? getUnreadCount(me) : 0,
+    me ? getNotifications() : null,
+  ]);
 
   if (!profile) {
     return (
@@ -40,6 +50,7 @@ export async function UserNav() {
           <ShieldCheck className="size-[1.125rem]" aria-hidden />
         </Link>
       )}
+      {notes && <NotificationBell me={profile.id} initial={notes.items} ready={notes.ready} leader={leader} />}
       <AccountMenu
         name={profile.ingame_name}
         tag={profile.alliance_tag}
