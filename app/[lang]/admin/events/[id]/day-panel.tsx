@@ -5,15 +5,20 @@ import { Sparkles } from "lucide-react";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { RunButton, RunResult, useRun } from "@/components/admin/kvk-buttons";
 import { useI18n } from "@/components/i18n-provider";
+import { SpeedupSummary } from "@/components/kvk/speedup-summary";
 import { Badge, Notice } from "@/components/ui";
 import { fmt } from "@/lib/i18n/format";
-import { slotCount, slotRanges, slotStartLabel } from "@/lib/kvk";
+import { pickSlot, slotCount, slotRanges, slotStartLabel } from "@/lib/kvk";
 import type { ApplicationStatus, WorkspaceDay } from "@/lib/types";
-import { autoFillDay, clearDay, reviewApplication } from "../../actions";
+import { acceptApplication, autoFillDay, clearDay, reviewApplication } from "../../actions";
 
 const ORDER: Record<ApplicationStatus, number> = { pending: 0, accepted: 1, rejected: 2 };
 
-/** One day's applications: review them, and auto-fill or clear the day. */
+/**
+ * One day's applications: review them, and auto-fill or clear the day. Accepting puts the player in
+ * their earliest free picked time (shown on the button); if none is free, the button opens their
+ * first time so the leader can choose another.
+ */
 export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (slot: number) => void }) {
   const { t } = useI18n();
   const d = t.admin.day;
@@ -70,6 +75,7 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
             {apps.map((a) => {
               const slot = held.get(a.profile_id);
               const name = a.profile?.ingame_name ?? d.unknownPlayer;
+              const target = a.status === "pending" ? pickSlot(a, day.slots) : null;
               return (
                 <li key={a.id} className={clsx("py-3 transition-opacity", a.status === "rejected" && "opacity-60", busy === a.id && "opacity-60")}>
                   <div className="flex items-start gap-3">
@@ -80,7 +86,7 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
                         {name}
                       </p>
                       <p className="text-xs text-muted">
-                        <span className="font-mono text-fg">{fmt(d.speedups, { n: Number(a.speedup_days) })}</span> ·{" "}
+                        <SpeedupSummary app={a} position={day.position} /> ·{" "}
                         <span className="font-mono">{a.anytime ? t.common.anyTime : slotRanges(a.preferred_slots, day.slot_minutes)}</span>
                       </p>
                       {a.note && <p className="mt-1 text-xs text-muted italic">“{a.note}”</p>}
@@ -98,9 +104,15 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
                   <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5">
                     {a.status === "pending" ? (
                       <>
-                        <RunButton tone="primary" busy={busy === a.id + ":a"} onClick={() => run(a.id + ":a", () => reviewApplication(a.id, "accepted"))}>
-                          {d.accept}
-                        </RunButton>
+                        {target ? (
+                          <RunButton tone="primary" busy={busy === a.id + ":a"} onClick={() => run(a.id + ":a", () => acceptApplication(a.id))}>
+                            {fmt(d.acceptAt, { time: slotStartLabel(target.slot_index, day.slot_minutes) })}
+                          </RunButton>
+                        ) : (
+                          <RunButton tone="primary" busy={false} onClick={() => onOpenSlot(a.preferred_slots[0] ?? 0)}>
+                            {d.pickTime} →
+                          </RunButton>
+                        )}
                         <RunButton busy={busy === a.id + ":r"} onClick={() => run(a.id + ":r", () => reviewApplication(a.id, "rejected"))}>
                           {d.reject}
                         </RunButton>

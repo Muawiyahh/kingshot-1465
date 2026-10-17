@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import clsx from "clsx";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/i18n-provider";
 import { SlotPicker } from "@/components/slot-picker";
@@ -9,7 +10,7 @@ import { PendingButton } from "@/components/pending-button";
 import { Badge, Field, Notice, inputClass } from "@/components/ui";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
-import { positionLabel, slotLabel, slotRanges } from "@/lib/kvk";
+import { positionLabel, slotLabel, slotRanges, speedupKinds } from "@/lib/kvk";
 import type { Application, ApplicationStatus, EventStatus, PlayerDay } from "@/lib/types";
 import { saveApplication, withdrawApplication } from "./actions";
 
@@ -51,10 +52,10 @@ export function ApplyPanel({
     <div className="space-y-5">
       {accountNotice && <Notice tone="warning">{accountNotice}</Notice>}
 
-      {eventStatus === "published" && (
-        <Notice tone={ownSlot ? "success" : "neutral"}>
-          {ownSlot ? fmt(p.yourSlot, { slot: slotLabel(ownSlot.slot_index, day.slot_minutes) }) : p.noSlot}
-        </Notice>
+      {ownSlot ? (
+        <Notice tone="success">{fmt(p.yourSlot, { slot: slotLabel(ownSlot.slot_index, day.slot_minutes) })}</Notice>
+      ) : (
+        eventStatus === "published" && <Notice tone="neutral">{p.noSlot}</Notice>
       )}
 
       {editable ? (
@@ -63,10 +64,10 @@ export function ApplyPanel({
         <ApplyForm day={day} app={app} tappedSlot={tappedSlot} onDone={onDone} />
       ) : (
         <>
-          {app?.status === "accepted" && eventStatus !== "published" && <Notice tone="success">{p.acceptedNote}</Notice>}
+          {app?.status === "accepted" && !ownSlot && <Notice tone="success">{p.acceptedNote}</Notice>}
           {app?.status === "rejected" && eventStatus === "open" && canApply === false && <Notice tone="neutral">{p.rejectedNote}</Notice>}
           {eventStatus === "closed" && app?.status !== "accepted" && <Notice>{p.closedNote}</Notice>}
-          {app ? <Summary app={app} slotMinutes={day.slot_minutes} /> : <p className="text-sm text-muted">{p.notApplied}</p>}
+          {app ? <Summary app={app} day={day} /> : <p className="text-sm text-muted">{p.notApplied}</p>}
           {app?.status === "accepted" && (
             <Link href={localePath(locale, "/account/messages")} className="inline-block text-sm text-gold-soft hover:underline">
               {p.askLeader} →
@@ -82,8 +83,11 @@ export function ApplyPanel({
 }
 
 /** The player's submitted answer, shown when it can't be edited. */
-function Summary({ app, slotMinutes }: { app: Application; slotMinutes: number }) {
+function Summary({ app, day }: { app: Application; day: PlayerDay }) {
   const { t, tag } = useI18n();
+  const slotMinutes = day.slot_minutes;
+  const kinds = speedupKinds(day.position);
+  const n = (v: number | undefined) => Number(v ?? 0).toLocaleString(tag);
   return (
     <dl className="space-y-3 rounded-2xl bg-bg-elevated p-4 text-sm shadow-[inset_0_0_0_1px_var(--border)]">
       <div className="flex items-center justify-between gap-3">
@@ -98,10 +102,19 @@ function Summary({ app, slotMinutes }: { app: Application; slotMinutes: number }
           {app.anytime ? t.common.anyTime : slotRanges(app.preferred_slots, slotMinutes) || "—"}
         </dd>
       </div>
-      <div className="flex justify-between gap-3">
-        <dt className="text-muted">{t.apply.speedups}</dt>
-        <dd className="font-mono">{Number(app.speedup_days).toLocaleString(tag)}</dd>
-      </div>
+      {kinds && app.speedups && kinds.some((k) => app.speedups?.[k] !== undefined) ? (
+        kinds.map((k) => (
+          <div key={k} className="flex justify-between gap-3">
+            <dt className="text-muted">{t.apply.speedupKinds[k]}</dt>
+            <dd className="font-mono">{n(app.speedups?.[k])}</dd>
+          </div>
+        ))
+      ) : (
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">{t.apply.speedups}</dt>
+          <dd className="font-mono">{n(app.speedup_days)}</dd>
+        </div>
+      )}
       {app.note && (
         <div>
           <dt className="text-muted">{t.apply.note}</dt>
@@ -133,6 +146,7 @@ function ApplyForm({
     return start;
   });
   const [anytime, setAnytime] = useState(app?.anytime ?? false);
+  const kinds = speedupKinds(day.position);
 
   // Report each successful result once (onDone closes the drawer and shows the message).
   const reported = useRef<unknown>(null);
@@ -176,7 +190,31 @@ function ApplyForm({
         <SlotPicker slotMinutes={day.slot_minutes} selected={slots} onChange={setSlots} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+      {kinds ? (
+        // Chief Minister and Noble Advisor: each kind of speedup that counts, in days. Leaders see them when reviewing.
+        <fieldset>
+          <legend className="font-medium">{fmt(t.apply.speedupsFor, { position: positionLabel(day.position, t) })}</legend>
+          <p className="mt-1 text-xs text-muted">{t.apply.speedupsKindsHint}</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {kinds.map((k) => (
+              <Field key={k} label={t.apply.speedupKinds[k]} htmlFor={`sp-${k}-${day.id}`}>
+                <input
+                  id={`sp-${k}-${day.id}`}
+                  name={`speedup-${k}`}
+                  type="number"
+                  inputMode="decimal"
+                  required
+                  min={0}
+                  step={0.1}
+                  placeholder="0"
+                  defaultValue={app?.speedups?.[k] ?? ""}
+                  className={inputClass}
+                />
+              </Field>
+            ))}
+          </div>
+        </fieldset>
+      ) : (
         <Field label={t.apply.speedups} htmlFor={`sp-${day.id}`} hint={fmt(t.apply.speedupsHint, { position: positionLabel(day.position, t) })}>
           <input
             id={`sp-${day.id}`}
@@ -186,13 +224,13 @@ function ApplyForm({
             min={0}
             step={0.1}
             defaultValue={app?.speedup_days ?? ""}
-            className={inputClass}
+            className={clsx(inputClass, "sm:max-w-[10rem]")}
           />
         </Field>
-        <Field label={`${t.apply.note} (${t.common.optional})`} htmlFor={`note-${day.id}`}>
-          <input id={`note-${day.id}`} name="note" maxLength={500} defaultValue={app?.note ?? ""} className={inputClass} />
-        </Field>
-      </div>
+      )}
+      <Field label={`${t.apply.note} (${t.common.optional})`} htmlFor={`note-${day.id}`}>
+        <input id={`note-${day.id}`} name="note" maxLength={500} defaultValue={app?.note ?? ""} className={inputClass} />
+      </Field>
 
       {(state?.error || withdrawState?.error) && <Notice tone="error">{state?.error ?? withdrawState?.error}</Notice>}
 

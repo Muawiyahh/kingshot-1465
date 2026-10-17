@@ -42,13 +42,11 @@ export function adminGroups(t: Messages): SectionNavGroup[] {
       ],
     },
     {
-      // The leader's own account pages, shown with this menu so everything stays in one panel.
+      // The leader's own profile, inside the admin panel so this menu stays put. Leaders don't need
+      // the players' account overview, castle appointments or schedule: the admin overview and the
+      // KvK workspace cover them.
       label: t.account.eyebrow,
-      items: [
-        { key: "accountOverview", href: "/account", label: t.account.nav.overview, exact: true },
-        { key: "appointments", href: "/account/appointments", label: t.account.nav.appointments },
-        { key: "profile", href: "/account/profile", label: t.account.nav.profile },
-      ],
+      items: [{ key: "profile", href: "/admin/profile", label: t.account.nav.profile }],
     },
   ];
 }

@@ -61,7 +61,7 @@ export function NotificationBell({
     setItems(initial);
   }
 
-  const known = items.filter((n) => describe(n, t, locale));
+  const known = items.filter((n) => describe(n, t, locale, leader));
   const unread = known.filter((n) => n.unread).length;
   const freshCount = known.filter((n) => fresh.has(n.id)).length;
 
@@ -212,7 +212,7 @@ export function NotificationBell({
           (known.length ? (
             <ul className="max-h-[min(70dvh,32rem)] overflow-y-auto overscroll-contain p-1.5">
               {known.map((n) => {
-                const info = describe(n, t, locale)!;
+                const info = describe(n, t, locale, leader)!;
                 const Icon = info.icon;
                 const isNew = fresh.has(n.id);
                 return (

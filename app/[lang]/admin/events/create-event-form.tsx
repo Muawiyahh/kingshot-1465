@@ -47,15 +47,13 @@ export function CreateEventForm() {
         <Field label={f.day1Date} htmlFor="startsOn">
           <input id="startsOn" name="startsOn" type="date" required className={inputClass} />
         </Field>
-        <Field label={f.slotLength} htmlFor="slotMinutes">
-          <select id="slotMinutes" name="slotMinutes" defaultValue="30" className={inputClass}>
-            {[15, 30, 60].map((n) => (
-              <option key={n} value={n}>
-                {fmt(f.minutes, { n })}
-              </option>
-            ))}
-          </select>
-        </Field>
+        {/* Always 30-minute appointments, the whole day (00:00–24:00 UTC). */}
+        <div>
+          <p className="mb-2 text-sm font-medium">{f.slotLength}</p>
+          <p className="flex min-h-11 items-center rounded-xl bg-bg-elevated px-3.5 py-2 text-sm text-muted shadow-[inset_0_0_0_1px_var(--border)]">
+            {f.slotFixed}
+          </p>
+        </div>
       </div>
 
       <fieldset>

@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { AllianceDot } from "@/components/alliance-banner";
 import { useI18n } from "@/components/i18n-provider";
 import { eventSlotMinutes, toColumns } from "@/components/kvk/columns";
 import { Drawer } from "@/components/kvk/drawer";
-import { KvkGrid, type GridCell, type GridColumn } from "@/components/kvk/kvk-grid";
+import { KvkGrid, type GridCell, type GridColumn, type GridHandle } from "@/components/kvk/kvk-grid";
+import { OwnSlots } from "@/components/kvk/own-slots";
 import { useGridSelection } from "@/components/kvk/use-grid-selection";
 import { EventStatusBadge } from "@/components/admin/event-status";
 import { Notice } from "@/components/ui";
@@ -21,8 +22,8 @@ import { ApplyPanel, StatusBadge } from "./apply-panel";
 /**
  * The player's KvK view: the current event as a day-by-day grid. While applications are open,
  * tapping a time opens the drawer to apply for that day; the grid shows where they applied
- * (amber pending, green accepted, red rejected). Once published, it shows everyone's slots with
- * the player's own ringed in gold.
+ * (amber pending, green accepted, red rejected), the times other players already hold, and the
+ * player's own slots ringed in gold, with buttons that jump to them.
  */
 export function PlayerGrid({
   events,
@@ -49,6 +50,7 @@ export function PlayerGrid({
     return (fromUrl ?? events[0]).id;
   });
   const [flash, setFlash] = useState<string | null>(null);
+  const grid = useRef<GridHandle>(null);
 
   const event = events.find((e) => e.id === eventId) ?? events[0];
   const columns = useMemo(() => toColumns(event.event_days), [event]);
@@ -64,18 +66,41 @@ export function PlayerGrid({
   const firstWanted = firstApplied?.applications[0]?.preferred_slots[0];
   const focus = ownSlot ?? (firstApplied && firstWanted !== undefined ? { dayId: firstApplied.id, slot: firstWanted } : null);
 
+  // The player's slots in this event, for the "Your slots" list.
+  const ownSlots = useMemo(
+    () =>
+      columns.flatMap((c) => {
+        const day = dayById.get(c.id)!;
+        return day.slots.map((s) => ({
+          dayId: day.id,
+          dayNumber: day.day_number,
+          position: day.position,
+          date: day.date,
+          slot: s.slot_index,
+          slotMinutes: day.slot_minutes,
+        }));
+      }),
+    [columns, dayById],
+  );
+
   function getCell(col: GridColumn, slot: number): GridCell {
     const day = dayById.get(col.id)!;
     const app = day.applications[0];
-    const mine = day.slots.some((s) => s.slot_index === slot);
-    if (event.status === "published") {
-      const r = names.get(`${col.id}:${slot}`);
-      if (!r?.ingame_name) return { tone: "empty", label: t.kvk.grid.legendOpen };
+    if (day.slots.some((s) => s.slot_index === slot)) {
       return {
         tone: "taken",
-        own: mine,
+        own: true,
+        label: t.kvk.grid.yours,
+        content: <span className="truncate font-medium text-gold-soft">★ {t.kvk.grid.yours}</span>,
+      };
+    }
+    // Someone else holds this time.
+    const r = names.get(`${col.id}:${slot}`);
+    if (r?.ingame_name) {
+      return {
+        tone: "taken",
         locked: r.locked,
-        label: mine ? t.kvk.grid.yours : r.ingame_name,
+        label: r.ingame_name,
         content: (
           <>
             <AllianceDot tag={r.alliance_tag} />
@@ -86,7 +111,9 @@ export function PlayerGrid({
         ),
       };
     }
-    const wants = app && (app.preferred_slots.includes(slot) || (app.anytime && app.preferred_slots.length === 0));
+    // Once they hold a slot that day, the other times they picked no longer matter.
+    const placed = day.slots.length > 0;
+    const wants = !placed && app && (app.preferred_slots.includes(slot) || (app.anytime && app.preferred_slots.length === 0));
     if (!wants) return { tone: "empty", label: t.kvk.grid.legendOpen };
     const statusText =
       app.status === "accepted"
@@ -141,9 +168,13 @@ export function PlayerGrid({
       {accountNotice && <Notice tone="warning">{accountNotice}</Notice>}
       {flash && <Notice tone="success">{flash}</Notice>}
 
-      <Legend published={event.status === "published"} />
+      <OwnSlots slots={ownSlots} onJump={(o) => grid.current?.jumpTo(o.dayId, o.slot)} />
+
+      <Legend />
 
       <KvkGrid
+        ref={grid}
+        hideJumpToFocus={ownSlots.length > 0}
         columns={columns}
         slotMinutes={slotMinutes}
         getCell={getCell}
@@ -162,7 +193,7 @@ export function PlayerGrid({
           const day = dayById.get(col.id)!;
           const app = day.applications[0];
           const own = day.slots[0];
-          if (event.status === "published" && own)
+          if (own)
             return (
               <span className={clsx("block font-mono text-[0.625rem] text-gold-soft", variant === "header" && "mt-1")}>
                 ★ {slotStartLabel(own.slot_index, day.slot_minutes)}
@@ -177,11 +208,9 @@ export function PlayerGrid({
         }}
       />
 
-      {event.status === "published" && (
-        <Link href={localePath(locale, "/positions")} className="inline-block text-sm text-gold-soft hover:underline">
-          {p.publicSchedule} →
-        </Link>
-      )}
+      <Link href={localePath(locale, "/account/schedule")} className="inline-block text-sm text-gold-soft hover:underline">
+        {p.publicSchedule} →
+      </Link>
 
       {openDay && (
         <Drawer
@@ -212,15 +241,15 @@ export function PlayerGrid({
   );
 }
 
-function Legend({ published }: { published: boolean }) {
+function Legend() {
   const { t } = useI18n();
-  const items = published
-    ? [{ cls: "bg-gold/10 shadow-[inset_0_0_0_2px_var(--gold)]", label: t.kvk.grid.yours }, { cls: "bg-white/[0.06]", label: t.kvk.grid.legendTaken }]
-    : [
-        { cls: "bg-warning/25", label: t.status.application.pendingShort },
-        { cls: "bg-success/25", label: t.status.application.accepted },
-        { cls: "bg-danger/20", label: t.status.application.rejected },
-      ];
+  const items = [
+    { cls: "bg-gold/10 shadow-[inset_0_0_0_2px_var(--gold)]", label: t.kvk.grid.yours },
+    { cls: "bg-white/[0.06]", label: t.kvk.grid.legendTaken },
+    { cls: "bg-warning/25", label: t.status.application.pendingShort },
+    { cls: "bg-success/25", label: t.status.application.accepted },
+    { cls: "bg-danger/20", label: t.status.application.rejected },
+  ];
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
       {items.map((i) => (

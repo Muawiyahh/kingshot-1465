@@ -5,15 +5,18 @@ import { Lock, LockOpen, Star } from "lucide-react";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { RunButton, RunResult, useRun } from "@/components/admin/kvk-buttons";
 import { useI18n } from "@/components/i18n-provider";
+import { SpeedupSummary } from "@/components/kvk/speedup-summary";
+import { Badge } from "@/components/ui";
 import { fmt } from "@/lib/i18n/format";
 import { slotStartLabel } from "@/lib/kvk";
 import type { WorkspaceDay } from "@/lib/types";
-import { assignSlot, toggleSlotLock } from "../../actions";
+import { acceptApplication, assignSlot, toggleSlotLock } from "../../actions";
 
 /**
- * One time slot: who holds it, lock/unlock, remove, and the accepted players to put there. Players
- * who asked for this time come first (★), then by speedups. Picking someone who holds another slot
- * that day moves them.
+ * One time slot: who holds it, lock/unlock, remove, and the players to put there: everyone who
+ * applied for the day and isn't rejected. Players who asked for this time come first (★), then by
+ * speedups. Picking a waiting applicant accepts them into this time; picking someone who holds
+ * another slot that day moves them.
  */
 export function SlotPanel({ day, slotIndex, onOpenDay }: { day: WorkspaceDay; slotIndex: number; onOpenDay: () => void }) {
   const { t } = useI18n();
@@ -25,7 +28,7 @@ export function SlotPanel({ day, slotIndex, onOpenDay }: { day: WorkspaceDay; sl
 
   const held = new Map(day.slots.flatMap((s) => (s.profile_id ? [[s.profile_id, s] as const] : [])));
   const candidates = day.applications
-    .filter((a) => a.status === "accepted")
+    .filter((a) => a.status !== "rejected")
     .map((a) => ({ ...a, wants: a.anytime || a.preferred_slots.includes(slotIndex) }))
     .sort((a, b) => Number(b.wants) - Number(a.wants) || Number(b.speedup_days) - Number(a.speedup_days));
   const holder = slot.profile_id ? (slot.profile ?? null) : null;
@@ -85,7 +88,11 @@ export function SlotPanel({ day, slotIndex, onOpenDay }: { day: WorkspaceDay; sl
                     type="button"
                     disabled={here || slot.locked || busy !== null}
                     aria-busy={busy === c.profile_id || undefined}
-                    onClick={() => run(c.profile_id, () => assignSlot(slot.id, c.profile_id))}
+                    onClick={() =>
+                      run(c.profile_id, () =>
+                        c.status === "pending" ? acceptApplication(c.id, slotIndex) : assignSlot(slot.id, c.profile_id),
+                      )
+                    }
                     className={clsx(
                       "flex w-full cursor-pointer items-center gap-3 rounded-2xl p-2.5 text-left transition-colors disabled:cursor-default",
                       here ? "bg-gold/10 shadow-[inset_0_0_0_1.5px_var(--gold)]" : "bg-bg-elevated hover:bg-card-hover disabled:opacity-60",
@@ -102,7 +109,7 @@ export function SlotPanel({ day, slotIndex, onOpenDay }: { day: WorkspaceDay; sl
                         </span>
                       </span>
                       <span className="block text-xs text-muted">
-                        <span className="font-mono">{fmt(d.speedups, { n: Number(c.speedup_days) })}</span>
+                        <SpeedupSummary app={c} position={day.position} />
                         {c.anytime && <> · {t.common.anyTime}</>}
                         {current && !here && (
                           <>
@@ -113,6 +120,7 @@ export function SlotPanel({ day, slotIndex, onOpenDay }: { day: WorkspaceDay; sl
                         )}
                       </span>
                     </span>
+                    {c.status === "pending" && <Badge tone="amber">{l.acceptHere}</Badge>}
                   </button>
                 </li>
               );

@@ -1,9 +1,9 @@
 import {
   ArrowLeftRight,
   CalendarClock,
+  CalendarDays,
   CalendarRange,
   Castle,
-  CircleUserRound,
   Crown,
   LayoutDashboard,
   MessageSquareShare,
@@ -31,9 +31,9 @@ export const SECTION_ICONS = {
   hallOfFame: Trophy,
   transfers: ArrowLeftRight,
   appointments: Castle,
+  schedule: CalendarDays,
   messages: MessagesSquare,
   profile: UserRoundPen,
-  accountOverview: CircleUserRound,
 } as const;
 
 export type SectionKey = keyof typeof SECTION_ICONS;

@@ -3,13 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import clsx from "clsx";
-import { Check } from "lucide-react";
+import { Check, EyeOff } from "lucide-react";
 import { ConfirmButton } from "@/components/admin/confirm-button";
 import { EventStatusBadge } from "@/components/admin/event-status";
 import { GridSkeleton } from "@/components/kvk/grid-skeleton";
 import { PendingButton } from "@/components/pending-button";
 import { Bone, HeaderSkeleton } from "@/components/skeleton";
-import { Card, PageHeader } from "@/components/ui";
+import { Card, Notice, PageHeader } from "@/components/ui";
 import { requireLeader } from "@/lib/auth-guards";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
@@ -25,13 +25,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t.meta.adminEvent };
 }
 
-const STEPS: EventStatus[] = ["draft", "open", "closed", "published"];
+// Accepted players appear on the schedule straight away, so there's no separate publish step. Events
+// published before that show as closed.
+const STEPS: EventStatus[] = ["draft", "open", "closed"];
 
 /** Everything the workspace shows, in one request: days, every slot and its holder, every application. */
 const WORKSPACE_SELECT =
   "*, event_days(id, event_id, day_number, date, position, slot_minutes, " +
   "slots(id, slot_index, locked, profile_id, profile:profiles(ingame_name, alliance_tag)), " +
-  "applications(id, profile_id, preferred_slots, anytime, speedup_days, note, status, created_at, " +
+  // Every column (*), so the speedups by kind come along once 0011 has added them.
+  "applications(*, " +
   "profile:profiles!applications_profile_id_fkey(ingame_name, alliance_tag, game_id)))";
 
 export default async function EventPage({ params }: PageProps<"/[lang]/admin/events/[id]">) {
@@ -50,14 +53,14 @@ export default async function EventPage({ params }: PageProps<"/[lang]/admin/eve
   );
 }
 
-/** Shaped like the page: header, the four stage buttons, then the grid. */
+/** Shaped like the page: header, the three stage buttons, then the grid. */
 function EventSkeleton() {
   return (
     <>
       <HeaderSkeleton />
       <Card className="mb-8 p-4" aria-hidden>
-        <div className="grid gap-2 sm:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
+        <div className="grid gap-2 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
             <Bone key={i} className="h-14 rounded-2xl" />
           ))}
         </div>
@@ -76,7 +79,8 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
   ]);
   if (!data) notFound();
   const event = data as unknown as WorkspaceEvent;
-  const currentStep = STEPS.indexOf(event.status);
+  const shown: EventStatus = event.status === "published" ? "closed" : event.status;
+  const currentStep = STEPS.indexOf(shown);
   const e = t.admin.event;
 
   return (
@@ -88,9 +92,9 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
 
       <Card className="mb-8 p-4">
         <p className="mb-3 text-sm font-medium">{e.stage}</p>
-        <ol className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        <ol className="grid gap-2 sm:grid-cols-3">
           {STEPS.map((status, i) => {
-            const active = status === event.status;
+            const active = status === shown;
             return (
               <li key={status}>
                 <form action={setEventStatus}>
@@ -122,6 +126,16 @@ async function EventContent({ params }: { params: PageProps<"/[lang]/admin/event
             );
           })}
         </ol>
+        {shown === "draft" && (
+          <div className="mt-3">
+            <Notice tone="warning">
+              <span className="flex items-start gap-2">
+                <EyeOff className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {e.draftNotice}
+              </span>
+            </Notice>
+          </div>
+        )}
       </Card>
 
       <Workspace event={event} />

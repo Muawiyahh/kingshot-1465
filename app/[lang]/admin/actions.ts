@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { planAutofill, type FillSlot } from "@/lib/autofill";
-import { addDays, positionLabel, slotCount } from "@/lib/kvk";
+import { addDays, pickSlot, positionLabel, slotCount } from "@/lib/kvk";
 import { TIME_RE, eventsFor, isMonday } from "@/lib/alliance-events";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
@@ -305,7 +305,8 @@ export async function createEvent(_prev: ActionState, formData: FormData): Promi
     title: formData.get("title"),
     season: formData.get("season") || undefined,
     startsOn: formData.get("startsOn"),
-    slotMinutes: formData.get("slotMinutes") || 30,
+    // Every appointment is 30 minutes: 48 slots from 00:00 to 24:00 UTC.
+    slotMinutes: 30,
     days: dayNums.map((d, i) => ({ day: d, position: positions[i] })).filter((r) => String(r.position ?? "").trim()),
   });
   if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
@@ -380,13 +381,72 @@ export async function deleteEvent(formData: FormData) {
 // ---------------------------------------------------------------------------
 
 const reviewStatus = z.enum(["pending", "accepted", "rejected"]);
+const slotIndex = z.number().int().min(0).max(95);
 
 /**
- * Accepts, rejects, or undoes a review (back to pending). Anyone who stops being accepted loses
- * their slot that day, unless it's locked: then nothing changes and the leader is told to unlock it.
- * Undo clears the reviewer so the player can edit their application again.
+ * Accepts an application and puts the player in a slot that day: `slot` if given (tapping a time),
+ * else the one they already hold, else their earliest free picked time (or, for "any time", the
+ * earliest free time). If none is free, nothing changes and the leader is told to pick a time.
+ * Accepting someone into a slot notifies them with the time (0011_appointments.sql).
+ */
+export async function acceptApplication(applicationId: string, slot: number | null = null): Promise<ActionState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  const id = uuid.safeParse(applicationId);
+  const wanted = slot === null ? null : slotIndex.safeParse(slot);
+  if (!id.success || (wanted && !wanted.success)) return { error: t.errors.reviewFailed };
+
+  const { data: app } = await supabase
+    .from("applications")
+    .select("id, profile_id, day_id, preferred_slots, anytime, status")
+    .eq("id", id.data)
+    .maybeSingle();
+  if (!app) return { error: t.errors.reviewFailed };
+  const { data: daySlots } = await supabase.from("slots").select("id, slot_index, profile_id, locked").eq("day_id", app.day_id);
+  const slots = daySlots ?? [];
+  const held = slots.find((s) => s.profile_id === app.profile_id) ?? null;
+
+  const target = wanted?.success ? (slots.find((s) => s.slot_index === wanted.data) ?? null) : pickSlot(app, slots);
+  if (!target) return { error: wanted ? t.errors.slotNotFound : t.errors.noFreeTime };
+  if (target.profile_id && target.profile_id !== app.profile_id) return { error: t.errors.slotTaken };
+  if (target.id !== held?.id && target.locked) return { error: t.errors.unlockFirst };
+  if (held && held.id !== target.id && held.locked) return { error: t.errors.playerLocked };
+
+  // Accept first, then place: the slot's notification then carries the acceptance and the time.
+  const wasPending = app.status !== "accepted";
+  if (wasPending) {
+    const { error } = await supabase.from("applications").update({ status: "accepted", reviewed_by: profile.id }).eq("id", app.id);
+    if (error) return { error: t.errors.reviewFailed };
+  }
+  if (target.id !== held?.id) {
+    if (held) await supabase.from("slots").update({ profile_id: null }).eq("id", held.id).eq("locked", false);
+    // Only an empty, unlocked slot: if another leader filled it a moment ago, this changes nothing.
+    const { data: placed } = await supabase
+      .from("slots")
+      .update({ profile_id: app.profile_id })
+      .eq("id", target.id)
+      .is("profile_id", null)
+      .eq("locked", false)
+      .select("id");
+    if (!placed?.length) {
+      if (wasPending) await supabase.from("applications").update({ status: app.status, reviewed_by: null }).eq("id", app.id);
+      refresh();
+      return { error: t.errors.slotTaken };
+    }
+  }
+
+  await audit("application.review", app.id, { status: "accepted", slot: target.slot_index });
+  refresh();
+  return { ok: true };
+}
+
+/**
+ * Rejects, or undoes a review (back to pending); accepting goes through acceptApplication. Anyone
+ * who stops being accepted loses their slot that day, unless it's locked: then nothing changes and
+ * the leader is told to unlock it. Undo clears the reviewer so the player can edit their
+ * application again.
  */
 export async function reviewApplication(applicationId: string, nextStatus: ApplicationStatus): Promise<ActionState> {
+  if (nextStatus === "accepted") return acceptApplication(applicationId);
   const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
   const id = uuid.safeParse(applicationId);
   const status = reviewStatus.safeParse(nextStatus);

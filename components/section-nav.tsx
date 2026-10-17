@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import clsx from "clsx";
 import { SECTION_ICONS, type SectionKey } from "@/components/section-icons";
 import { localePath, splitLocale, type Locale } from "@/lib/i18n/config";
@@ -81,21 +81,41 @@ export function SectionNavView({ locale, label, groups, badges = {}, isActive = 
   );
 }
 
+/** Whether a path (without the locale) belongs to a menu item. */
+function belongs(item: SectionNavItem, path: string) {
+  if (item.exact) return path === item.href;
+  return [item.href, ...(item.also ?? [])].some((p) => path === p || path.startsWith(`${p}/`));
+}
+
 /**
  * Side menu for the admin and account areas: vertical on desktop, one wrapped row per group on
- * phones. The clicked section lights up immediately, before its page has loaded.
+ * phones. The section being opened lights up immediately, before its page has loaded, whether the
+ * click came from this menu or from any other link to it (an overview card, the avatar menu).
  */
 export function SectionNav(props: Omit<ViewProps, "isActive" | "onNavigate">) {
   const { rest } = splitLocale(usePathname());
   // A click, remembered with the page it happened on. Once the URL moves on, the URL wins again.
   const [clicked, setClicked] = useState<{ key: SectionKey; from: string } | null>(null);
   const pendingKey = clicked && clicked.from === rest ? clicked.key : null;
+  const isActive = (item: SectionNavItem) => (pendingKey ? item.key === pendingKey : belongs(item, rest));
 
-  const matches = (item: SectionNavItem) => {
-    if (item.exact) return rest === item.href;
-    return [item.href, ...(item.also ?? [])].some((p) => rest === p || rest.startsWith(`${p}/`));
-  };
-  const isActive = (item: SectionNavItem) => (pendingKey ? item.key === pendingKey : matches(item));
+  const { groups } = props;
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      // Plain clicks only (a modified click opens a new tab). Links cancel the browser's own
+      // navigation, so this listens before they do, in the capture phase.
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const link = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!link || link.target === "_blank") return;
+      const url = new URL(link.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      const to = splitLocale(url.pathname).rest;
+      const item = groups.flatMap((g) => g.items).find((i) => belongs(i, to));
+      if (item) setClicked({ key: item.key, from: rest });
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [groups, rest]);
 
-  return <SectionNavView {...props} isActive={isActive} onNavigate={(item) => setClicked({ key: item.key, from: rest })} />;
+  return <SectionNavView {...props} isActive={isActive} />;
 }

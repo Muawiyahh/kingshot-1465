@@ -19,6 +19,21 @@ const POSITION_KEYS: Record<string, keyof Messages["positionNames"]> = {
   "noble advisor": "nobleAdvisor",
 };
 
+/** The kinds of speedup an application records, in days. */
+export const SPEEDUP_KINDS = ["construction", "research", "training", "general"] as const;
+export type SpeedupKind = (typeof SPEEDUP_KINDS)[number];
+
+/**
+ * Which speedups a position asks for: construction and research for Chief Minister, troop training
+ * and general for Noble Advisor. Other positions ask for one total (null).
+ */
+export function speedupKinds(position: string): readonly SpeedupKind[] | null {
+  const key = POSITION_KEYS[position.trim().toLowerCase()];
+  if (key === "chiefMinister") return ["construction", "research"];
+  if (key === "nobleAdvisor") return ["training", "general"];
+  return null;
+}
+
 /** Translates standard position names; custom names typed by leaders are shown as-is. */
 export function positionLabel(position: string, t: Messages) {
   const key = POSITION_KEYS[position.trim().toLowerCase()];
@@ -99,4 +114,20 @@ export function quarterBlocks(slotMinutes: number) {
     from: Math.ceil((q * 360) / slotMinutes),
     to: q === 3 ? count : Math.ceil(((q + 1) * 360) / slotMinutes),
   }));
+}
+
+type PickApplication = { profile_id: string; preferred_slots: number[]; anytime: boolean };
+type PickSlot = { slot_index: number; profile_id: string | null; locked: boolean };
+
+/**
+ * The slot an application is accepted into: the one the player already holds that day, else the
+ * earliest free time they picked, else (for "any time") the earliest free time of the day. Null when
+ * none of their times is free.
+ */
+export function pickSlot<S extends PickSlot>(app: PickApplication, slots: S[]): S | null {
+  const held = slots.find((s) => s.profile_id === app.profile_id);
+  if (held) return held;
+  const free = slots.filter((s) => !s.profile_id && !s.locked).sort((a, b) => a.slot_index - b.slot_index);
+  const wanted = new Set(app.preferred_slots);
+  return free.find((s) => wanted.has(s.slot_index)) ?? (app.anytime ? (free[0] ?? null) : null);
 }

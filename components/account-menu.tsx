@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { ChevronDown, LogOut, ShieldCheck } from "lucide-react";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { useI18n } from "@/components/i18n-provider";
-import { SECTION_ICONS } from "@/components/section-icons";
+import { SECTION_ICONS, type SectionKey } from "@/components/section-icons";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { signOut } from "@/app/[lang]/(auth)/actions";
@@ -56,12 +56,20 @@ export function AccountMenu({
     };
   }, [open]);
 
-  const items = [
-    { key: "overview" as const, path: "/account", label: t.account.nav.label },
-    { key: "appointments" as const, path: "/account/appointments", label: t.account.nav.appointments },
+  // Leaders don't use the players' overview, castle appointments or schedule: Admin covers them.
+  type Item = { key: SectionKey; path: string; label: string; count?: number };
+  const playerOnly: Item[] = leader
+    ? []
+    : [
+        { key: "overview" as const, path: "/account", label: t.account.nav.label },
+        { key: "appointments" as const, path: "/account/appointments", label: t.account.nav.appointments },
+        { key: "schedule" as const, path: "/account/schedule", label: t.account.nav.schedule },
+      ];
+  const items: Item[] = [
+    ...playerOnly,
     // Leaders read messages in the admin panel, where members and transfer accounts are apart.
     { key: "messages" as const, path: leader ? "/admin/messages" : "/account/messages", label: t.account.nav.messages, count: unread },
-    { key: "profile" as const, path: "/account/profile", label: t.account.nav.profile },
+    { key: "profile" as const, path: leader ? "/admin/profile" : "/account/profile", label: t.account.nav.profile },
   ];
   const itemClass =
     "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-muted transition-colors hover:bg-white/5 hover:text-fg";

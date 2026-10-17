@@ -10,7 +10,6 @@ import type {
   AllianceEventRow,
   HallOfFameRow,
   KingdomSettings,
-  PublicScheduleRow,
   TransferFact,
   TransferManager,
 } from "@/lib/types";
@@ -20,40 +19,6 @@ function publicClient() {
   return createSupabase(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
-}
-
-/** All slots of the latest published event, with assigned players' public names. */
-export async function getLatestPublishedSchedule(): Promise<PublicScheduleRow[]> {
-  await connection();
-  if (!supabaseConfigured) return [];
-  const supabase = publicClient();
-  const { data: latest } = await supabase
-    .from("kvk_events")
-    .select("id")
-    .eq("status", "published")
-    .order("starts_on", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!latest) return [];
-
-  // Supabase returns at most 1000 rows per request; a big event (7 days × 2 positions × 96 slots)
-  // has more, so read it in pages.
-  const PAGE = 1000;
-  const rows: PublicScheduleRow[] = [];
-  for (let from = 0; ; from += PAGE) {
-    const { data } = await supabase
-      .from("public_schedule")
-      .select("*")
-      .eq("event_id", latest.id)
-      .order("day_number")
-      .order("position")
-      .order("slot_index")
-      .range(from, from + PAGE - 1);
-    const page = (data as PublicScheduleRow[] | null) ?? [];
-    rows.push(...page);
-    if (page.length < PAGE) break;
-  }
-  return rows;
 }
 
 /**

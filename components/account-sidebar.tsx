@@ -6,9 +6,10 @@ import { getUnreadCount } from "@/lib/messages";
 
 /**
  * The account sections. Shared with the account overview page. Transfer accounts (players still in
- * another kingdom) have no castle appointments.
+ * another kingdom) have no castle appointments or KvK schedule, and leaders and admins don't apply
+ * for positions (they run them from Admin → KvK events).
  */
-export function accountGroups(t: Messages, { transfer = false } = {}): SectionNavGroup[] {
+export function accountGroups(t: Messages, { transfer = false, leader = false } = {}): SectionNavGroup[] {
   const n = t.account.nav;
   return [
     {
@@ -16,9 +17,12 @@ export function accountGroups(t: Messages, { transfer = false } = {}): SectionNa
       items: [
         { key: "overview" as const, href: "/account", label: n.overview, exact: true },
         { key: "appointments" as const, href: "/account/appointments", label: n.appointments },
+        { key: "schedule" as const, href: "/account/schedule", label: n.schedule },
         { key: "messages" as const, href: "/account/messages", label: n.messages },
         { key: "profile" as const, href: "/account/profile", label: n.profile },
-      ].filter((item) => !(transfer && item.key === "appointments")),
+      ].filter(
+        (item) => !(transfer && (item.key === "appointments" || item.key === "schedule")) && !(leader && item.key === "appointments"),
+      ),
     },
   ];
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { cache, Suspense } from "react";
 import { ArrowLeftRight, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { accountGroups } from "@/components/account-sidebar";
@@ -6,12 +7,12 @@ import { AllianceBanner } from "@/components/alliance-banner";
 import { SectionCards } from "@/components/section-cards";
 import { Bone } from "@/components/skeleton";
 import { ButtonLink, Card, Eyebrow, Notice } from "@/components/ui";
-import { getUserId } from "@/lib/auth";
+import { getUserId, isLeader } from "@/lib/auth";
 import { requireProfile } from "@/lib/auth-guards";
 import { localePath, type Locale } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import type { Messages } from "@/lib/i18n/messages";
-import { getI18n } from "@/lib/i18n/server";
+import { getI18n, getLocale } from "@/lib/i18n/server";
 import { getUnreadCount } from "@/lib/messages";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,6 +34,8 @@ const loadAccount = cache(async () => {
       : Promise.resolve({ count: 0 }),
     me ? getUnreadCount(me) : 0,
   ]);
+  // Leaders' overview is the admin one (their profile is a card there).
+  if (isLeader(profile)) redirect(localePath(await getLocale(), "/admin"));
   return { profile, applications: applications.count ?? 0, unread };
 });
 
@@ -137,7 +140,7 @@ async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/acc
             <p className="font-semibold">{t.status.account[profile.status]}</p>
             <p className="text-sm text-muted">{statusBody}</p>
           </div>
-          {profile.status === "approved" && (
+          {profile.status === "approved" && !isLeader(profile) && (
             <ButtonLink href={localePath(locale, "/account/appointments")}>{t.account.applyCta}</ButtonLink>
           )}
         </Card>
@@ -147,8 +150,13 @@ async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/acc
 }
 
 /** One card per account section, with what it currently holds when known. */
-function sectionCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}, transfer = false) {
-  return accountGroups(t, { transfer })
+function sectionCards(
+  locale: Locale,
+  t: Messages,
+  current: Partial<Record<string, string>> = {},
+  { transfer = false, leader = false } = {},
+) {
+  return accountGroups(t, { transfer, leader })
     .flatMap((g) => g.items)
     .filter((item) => item.key !== "overview")
     .map((item) => ({
@@ -168,7 +176,7 @@ async function Sections() {
         appointments: fmt(t.account.applicationsChip, { n: applications }),
         messages: unread > 0 ? fmt(t.account.messages.unread, { n: unread }) : undefined,
         profile: `${profile.ingame_name}${profile.alliance_tag ? ` [${profile.alliance_tag}]` : ""}`,
-      }, Boolean(profile.transfer))}
+      }, { transfer: Boolean(profile.transfer), leader: isLeader(profile) })}
     />
   );
 }

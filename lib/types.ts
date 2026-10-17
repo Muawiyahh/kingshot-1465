@@ -1,3 +1,5 @@
+import type { SpeedupKind } from "@/lib/kvk";
+
 export type UserRole = "player" | "leader" | "admin";
 export type AccountStatus = "pending" | "approved" | "rejected";
 export type EventStatus = "draft" | "open" | "closed" | "published";
@@ -54,7 +56,13 @@ export type Application = {
   day_id: string;
   preferred_slots: number[];
   anytime: boolean;
+  /** Total speedups in days; sorting and auto-fill use it. */
   speedup_days: number;
+  /**
+   * Days of each kind (construction, research, training, general) for Chief Minister and Noble
+   * Advisor. Missing until 0011_appointments.sql has been run.
+   */
+  speedups?: Partial<Record<SpeedupKind, number>> | null;
   note: string | null;
   status: ApplicationStatus;
   created_at: string;
@@ -125,7 +133,7 @@ export type FillState = { ok?: boolean; error?: string; message?: string; report
 /** One day/position of an event as the leaders' workspace loads it (one nested query). */
 export type WorkspaceDay = EventDay & {
   slots: { id: string; slot_index: number; locked: boolean; profile_id: string | null; profile: { ingame_name: string; alliance_tag: string | null } | null }[];
-  applications: (Pick<Application, "id" | "profile_id" | "preferred_slots" | "anytime" | "speedup_days" | "note" | "status" | "created_at"> & {
+  applications: (Pick<Application, "id" | "profile_id" | "preferred_slots" | "anytime" | "speedup_days" | "speedups" | "note" | "status" | "created_at"> & {
     profile: { ingame_name: string; alliance_tag: string | null; game_id: string } | null;
   })[];
 };

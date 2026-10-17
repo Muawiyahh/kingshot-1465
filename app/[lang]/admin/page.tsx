@@ -131,25 +131,29 @@ async function Stats() {
   );
 }
 
-/** One card per admin section, with what it currently holds when known. */
+/** One card per admin section, with what it currently holds when known; the leader's profile comes last. */
 function manageCards(locale: Locale, t: Messages, current: Partial<Record<string, string>> = {}) {
   return adminGroups(t)
     .flatMap((group) => group.items.map((item) => ({ ...item, group: group.label })))
-    // Admin sections only: the leader's own account pages aren't managed here.
-    .filter((item) => item.group && item.href.startsWith("/admin"))
+    // Not the overview itself.
+    .filter((item) => item.group)
     .map((item) => ({
       key: item.key,
       href: localePath(locale, item.href),
       label: item.label,
       group: item.group,
-      description: t.admin.overview.cards[item.key as keyof typeof t.admin.overview.cards],
+      description:
+        item.key === "profile"
+          ? t.account.cards.profile
+          : t.admin.overview.cards[item.key as keyof typeof t.admin.overview.cards],
       current: current[item.key],
     }));
 }
 
 async function ManageCards() {
-  const [{ kingdom, unread }, { locale, t, tag }] = await Promise.all([loadOverview(), getI18n()]);
+  const [{ kingdom, unread, leader }, { locale, t, tag }] = await Promise.all([loadOverview(), getI18n()]);
   const current = {
+    profile: `${leader.ingame_name}${leader.alliance_tag ? ` [${leader.alliance_tag}]` : ""}`,
     messages: unread.members > 0 ? fmt(t.account.messages.unread, { n: unread.members }) : undefined,
     transferMessages: unread.transfers > 0 ? fmt(t.account.messages.unread, { n: unread.transfers }) : undefined,
     nextKvk: kingdom?.next_kvk_at

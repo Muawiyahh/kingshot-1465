@@ -195,9 +195,11 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   if (error || !data.user) return { error: t.errors.badLogin };
 
   // Open the site in the player's saved language.
-  const { data: profile } = await supabase.from("profiles").select("language").eq("id", data.user.id).maybeSingle();
+  const { data: profile } = await supabase.from("profiles").select("language, role, status").eq("id", data.user.id).maybeSingle();
   const preferred = isLocale(profile?.language) ? profile.language : locale;
-  const next = safeNext(formData.get("next"), localePath(locale, "/account"));
+  // Leaders and admins start in Admin, players in their account.
+  const home = profile?.status === "approved" && (profile.role === "leader" || profile.role === "admin") ? "/admin" : "/account";
+  const next = safeNext(formData.get("next"), localePath(locale, home));
   await rememberLanguageChosen();
   redirect(switchLocale(next, preferred));
 }

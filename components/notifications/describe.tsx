@@ -46,15 +46,22 @@ function slotName(data: Record<string, unknown>, t: Messages) {
   return `${fmt(t.common.day, { n: num(data.day) })} · ${positionLabel(str(data.position), t)}`;
 }
 
+/** The schedule, opened at the player's slot when the notification knows it. */
+function scheduleLink(data: Record<string, unknown>) {
+  const day = str(data.day_id);
+  return day && data.slot !== undefined ? `/account/schedule?day=${day}&slot=${num(data.slot)}` : "/account/schedule";
+}
+
 function nameWithTag(name: string, tag: string) {
   return tag ? `${name} [${tag}]` : name;
 }
 
 /**
  * The sentence, icon and link for a notification, in the reader's language, or null for a kind
- * this version of the site doesn't know.
+ * this version of the site doesn't know. Leaders' KvK links go to Admin → KvK events, since they
+ * don't apply for positions themselves.
  */
-export function describe(n: AppNotification, t: Messages, locale: Locale): Described | null {
+export function describe(n: AppNotification, t: Messages, locale: Locale, leader = false): Described | null {
   const k = t.notifications.kinds;
   const d = n.data ?? {};
   const tag = LOCALE_INFO[locale].tag;
@@ -86,7 +93,15 @@ export function describe(n: AppNotification, t: Messages, locale: Locale): Descr
         href: "/account",
       };
     case "application_accepted":
-      return { icon: CalendarCheck, tone: "success", text: rich(k.applicationAccepted, { slot, event }), href: "/account/appointments" };
+      // With a time once they've been put in a slot (0011_appointments.sql).
+      return d.time
+        ? {
+            icon: CalendarCheck,
+            tone: "success",
+            text: rich(k.applicationAcceptedAt, { slot, event, time: <Strong>{str(d.time)}</Strong> }),
+            href: scheduleLink(d),
+          }
+        : { icon: CalendarCheck, tone: "success", text: rich(k.applicationAccepted, { slot, event }), href: "/account/appointments" };
     case "application_rejected":
       return { icon: CalendarX, tone: "muted", text: rich(k.applicationRejected, { slot, event }), href: "/account/appointments" };
     case "slot_assigned":
@@ -94,14 +109,14 @@ export function describe(n: AppNotification, t: Messages, locale: Locale): Descr
         icon: Clock,
         tone: "primary",
         text: rich(k.slotAssigned, { event, slot, time: <Strong>{str(d.time)}</Strong> }),
-        href: "/account/appointments",
+        href: scheduleLink(d),
       };
     case "slot_removed":
       return { icon: CalendarMinus, tone: "muted", text: rich(k.slotRemoved, { event, slot }), href: "/account/appointments" };
     case "kvk_open":
-      return { icon: Megaphone, tone: "primary", text: rich(k.kvkOpen, { event }), href: "/account/appointments" };
+      return { icon: Megaphone, tone: "primary", text: rich(k.kvkOpen, { event }), href: leader ? "/admin/events" : "/account/appointments" };
     case "kvk_published":
-      return { icon: CalendarRange, tone: "primary", text: rich(k.kvkPublished, { event }), href: "/positions" };
+      return { icon: CalendarRange, tone: "primary", text: rich(k.kvkPublished, { event }), href: leader ? "/admin/events" : "/account/schedule" };
     case "next_kvk": {
       const at = new Date(str(d.at));
       if (Number.isNaN(at.getTime())) return null;

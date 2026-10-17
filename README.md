@@ -23,6 +23,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0008_transfer_contacts.sql`
    - `0009_next_kvk.sql`
    - `0010_notifications.sql`
+   - `0011_appointments.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -47,7 +48,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
 
 ## Languages
 
-The site is in English, German, Simplified and Traditional Chinese, French, Spanish, Indonesian, Tagalog, Brazilian Portuguese and Korean. Each language has its own address, for example `/de/positions` or `/zh-tw/apply`.
+The site is in English, German, Simplified and Traditional Chinese, French, Spanish, Indonesian, Tagalog, Brazilian Portuguese and Korean. Each language has its own address, for example `/de/account/schedule` or `/zh-tw/transfer`.
 
 - **Choosing a language:** visitors get their browser's language automatically. On their first visit a language picker opens, with every language written in its own script, so nobody has to read English to find their language. They can switch later with the language picker at the bottom of every page. Players also pick a language when they sign up, and the site opens in it when they sign in.
 - **Editing translations:** each language is one file in `lib/i18n/messages/`, and `en.ts` is the source. Keep every `{placeholder}` exactly as written, but move it wherever the sentence needs it. TypeScript reports any key that's missing or added by mistake.
@@ -83,35 +84,41 @@ The database enforces all of this (`0007_homepage_content.sql` and `0008_transfe
 
 1. **Players sign up** with their game ID, in-game name and a password. New accounts are *pending*.
 2. **Leaders approve accounts** in **Admin → Accounts**, after checking the game ID in-game.
-3. **Leaders create an event** in **Admin → KvK events**: the Day 1 date, slot length, and one row per day and position (e.g. Day 1 · Construction). The site generates the time slots, which are UTC.
-4. **Leaders open applications.** Approved players apply in **Account → Castle appointments** (see **The KvK grid** below): tap a time, pick every slot that works (or "any time"), add speedups and a note.
-5. **Leaders review and assign** in the event's workspace (**Admin → KvK events → the event**):
-   - tap a day's header to review its applications: Accept, Reject, or Undo a decision;
-   - tap a slot to assign it. Accepted players who asked for that time come first (★), then the highest speedups;
-   - press **Auto-fill** for one day, or **Auto-fill all days**. The highest speedups get their earliest free preferred slot, "any time" players fill the gaps, and the report names anyone who couldn't be placed;
+3. **Leaders create an event** in **Admin → KvK events**: the Day 1 date and one row per day and position (e.g. Day 1 · Chief Minister). Every day has 48 appointments of 30 minutes, from 00:00 to 24:00 UTC.
+4. **Leaders open applications.** Approved players apply in **Account → Castle appointments** (see **The KvK grid** below): tap a time, pick every slot that works (or "any time"), and add a note. Each position asks for the speedups that matter for it, in days:
+   - **Chief Minister:** construction and research speedups;
+   - **Noble Advisor:** troop training and general speedups;
+   - **any other position:** one total.
+5. **Leaders accept players into slots** in the event's workspace (**Admin → KvK events → the event**). Accepting puts the player's name in a time slot straight away, and the player gets a notification with their time:
+   - tap a day's header to see its applications, with each kind of speedup. **Accept · 14:00** puts the player in their earliest free picked time (or the earliest free time for "any time"). When none of their times is free, the button reads **Pick a time** and opens their first one;
+   - tap a time to see everyone who applied for that day. Picking a waiting applicant accepts them into that time (**Accept here**); picking an accepted player moves them there;
+   - **Reject** or **Undo** takes the player off the schedule again;
+   - **Auto-fill** places accepted players who don't have a time yet, highest speedups first;
    - lock a slot to protect it from auto-fill and changes. A player holding a locked slot can't be rejected until it's unlocked.
-6. **Leaders publish.** The schedule appears on **/positions** and updates live for everyone viewing it. Signed-in players see their own slot ringed in gold there and under **Account → Castle appointments**.
+6. **Players check the schedule** under **Account → KvK schedule**, whether or not they applied or were accepted. Signed-in members see it, including accounts still waiting for approval; visitors, transfer accounts and rejected accounts can't. The old **/positions** address now leads there.
 
-Each event moves through four stages: Draft → Applications open → Applications closed → Published. Leaders can move it back to an earlier stage at any time.
+Each event moves through three stages: Draft (only leaders see it) → Applications open → Applications closed. Accepted players appear on the schedule from the moment applications open, so there's no separate publish step. Leaders can move an event back to an earlier stage at any time. Events published before this change count as closed.
 
 ### The KvK grid
 
-Players, leaders and the public schedule all share one layout: a grid with a column for each day and position and a row for each UTC slot. The current time is highlighted while the event runs. Tapping a cell or a column header opens a side panel (a bottom sheet on phones), and the browser's back button closes it. On phones the grid shows one column at a time; the strip of chips above it switches between them.
+Players, leaders and the KvK schedule all share one layout: a grid with a column for each day and position and a row for each UTC slot. The current time is highlighted while the event runs. Tapping a cell or a column header opens a side panel (a bottom sheet on phones), and the browser's back button closes it. On phones the grid shows one column at a time; the strip of chips above it switches between them.
 
-- **Players:** amber cells are pending times, green accepted, red rejected. A pending or rejected application can be changed or withdrawn; changing a rejected one re-applies, sending it back to leaders as pending. Accepted applications are locked.
+- **Players:** your own slot is ringed in gold, and times other players hold show their names. Amber cells are your pending times, green accepted, red rejected. A pending or rejected application can be changed or withdrawn; changing a rejected one re-applies, sending it back to leaders as pending. Accepted applications are locked.
+- **Your slots:** above the grid on **Castle appointments** and **KvK schedule**, each of your slots has a **Show in table** button that scrolls straight to it (on phones it switches to that day first) and highlights it, so nobody has to scroll through 48 rows.
 - **Leaders:** each cell shows who holds the slot, or how many applicants want it (the deeper the red, the more demand). Column headers count the applications still to review and the slots filled. Everything updates live, so several leaders can work at once.
-- **Links:** `?day=…&slot=…` in the address opens that panel directly. Old **Assign slots** links (`/admin/days/…`) redirect to the workspace with that day open.
+- **Links:** `?day=…&slot=…` in the address opens that panel directly; on **KvK schedule** it jumps to that cell, which is where a notification about your slot takes you. Old **Assign slots** links (`/admin/days/…`) redirect to the workspace with that day open.
 
 ## Player account
 
-Signed-in players have four sections under **Account**:
+Signed-in players have five sections under **Account**:
 
 - **Overview:** account status and a card for each section.
-- **Castle appointments:** the KvK grid. Apply for open positions, follow each application's status, and see your slot once it's published.
+- **Castle appointments:** the KvK grid. Apply for open positions, follow each application's status, and see your slot as soon as you're accepted.
+- **KvK schedule:** the schedule on its own, read-only: who holds each slot, a search box, and your slots with a jump button. For members, including accounts still waiting for approval (`0011_appointments.sql`).
 - **Messages:** a WhatsApp-style chat with the kingdom's leaders and admins. Every approved leader and admin is listed; new messages arrive live, and the header shows a red dot when something is unread.
 - **Profile:** change in-game name and alliance. The game ID can't be changed.
 
-Leaders and admins read their messages in the admin panel, in two inboxes: **Admin → Players → Messages** (members and other leaders) and **Transfer messages** (transfer accounts). Their own account pages (overview, castle appointments, profile) are under **Your account** in the same admin menu. Messaging rules live in the database (`0004_messages.sql`):
+Leaders and admins read their messages in the admin panel, in two inboxes: **Admin → Players → Messages** (members and other leaders) and **Transfer messages** (transfer accounts). Their own profile is under **Your account** in the same admin menu (`/admin/profile`, inside the admin panel so the menu stays put), and is the last card on the admin overview. Leaders and admins sign in to the admin overview. They don't apply for castle positions or need the players' pages, so they have no account overview, **Castle appointments** or **KvK schedule**: those addresses take them to the admin overview or **Admin → KvK events**. Messaging rules live in the database (`0004_messages.sql`):
 
 - only the two people in a conversation can read it, and leaders can't read other people's chats;
 - players can write only to approved leaders and admins, and rejected accounts can't write at all;
@@ -129,8 +136,8 @@ Every signed-in account has a bell in the top bar. The red number counts what's 
 
 | Who | When |
 | --- | --- |
-| The player concerned | their account is approved or not approved; their role changes; their transfer account becomes a member account; a castle application is accepted or not accepted; they are given a slot when a schedule is published, or moved or taken off it afterwards; they are picked for the Hall of Fame (when their account has the same name and alliance) |
-| Members | applications open for a KvK event; its schedule is published; the next KvK date is set or changed; their own alliance's event times change |
+| The player concerned | their account is approved or not approved; their role changes; their transfer account becomes a member account; a castle application is accepted (with their time) or not accepted; they're moved to another time or taken off the schedule; they are picked for the Hall of Fame (when their account has the same name and alliance) |
+| Members | applications open for a KvK event; the next KvK date is set or changed; their own alliance's event times change |
 | Every approved account, transfer accounts included | a new Hall of Fame week; a new King |
 | Leaders and admins | a new sign-up waiting for approval, or a new transfer account. A sign-up leaves the bell once it has been approved or rejected |
 
@@ -139,7 +146,7 @@ How it behaves:
 - **The database writes them**, with triggers in `0010_notifications.sql`, so a change made anywhere (the site or the SQL Editor) notifies people. Nobody can write or edit notifications directly.
 - **One per thing:** a later change to the same thing replaces its notification instead of adding another. For example, a rejected application that is later accepted leaves one notification. Undoing a decision removes it, and saving without changes doesn't notify again.
 - **Who sees what:** leaders don't get notified about changes they made themselves. New accounts don't see kingdom news from before they signed up. The bell shows the newest 30, and notifications older than six months are deleted.
-- **KvK slots** stay quiet while leaders work on the schedule; players hear about their slot when it's published.
+- **KvK slots:** being accepted into a slot is one notification with the time, and it opens the schedule at that slot. Nothing is sent while an event is still a draft.
 
 ## Security
 
@@ -149,7 +156,7 @@ How it behaves:
   - players can change or withdraw only their own pending or rejected applications, and can't accept their own;
   - only leaders can assign slots;
   - only admins can grant roles;
-  - nothing is public until it's published.
+  - the KvK schedule is for members (approved or waiting for approval) and leaders only, and drafts for leaders only.
 - Every leader action is written to `audit_log`.
 - Logins use the game ID with a site-specific password. Players should never reuse their game account password.
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type Ref } from "react";
 import clsx from "clsx";
 import { Crosshair, Lock } from "lucide-react";
 import { useI18n } from "@/components/i18n-provider";
@@ -41,6 +41,9 @@ const TONE: Record<CellTone, string> = {
   heat3: "bg-primary/35 text-fg",
 };
 
+/** Lets a page bring one cell into view, e.g. the "Your slots" buttons. */
+export type GridHandle = { jumpTo: (dayId: string, slot: number) => void };
+
 type Props = {
   columns: GridColumn[];
   slotMinutes: number;
@@ -54,6 +57,9 @@ type Props = {
   /** Where to scroll when the event isn't running today, e.g. the viewer's own slot. */
   focus?: { dayId: string; slot: number } | null;
   ariaLabel: string;
+  /** Hides the built-in "Jump to my slot" button, for pages that list the viewer's slots themselves. */
+  hideJumpToFocus?: boolean;
+  ref?: Ref<GridHandle>;
 };
 
 /**
@@ -61,7 +67,19 @@ type Props = {
  * every column scrolls together inside the card; on phones a strip of chips picks one column.
  * Used read-only (public schedule) and interactive (players apply, leaders assign).
  */
-export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellClick, onHeaderClick, selected, focus, ariaLabel }: Props) {
+export function KvkGrid({
+  columns,
+  slotMinutes,
+  getCell,
+  renderHeader,
+  onCellClick,
+  onHeaderClick,
+  selected,
+  focus,
+  ariaLabel,
+  hideJumpToFocus = false,
+  ref,
+}: Props) {
   const { t, tag } = useI18n();
   const g = t.kvk.grid;
   const count = slotCount(slotMinutes);
@@ -106,6 +124,29 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
     setPicked(target.dayId);
     requestAnimationFrame(() => rowEl(target.slot)?.scrollIntoView({ block: "center", behavior: "smooth" }));
   }
+
+  // Brings a cell into view (on phones, switching to its column first) and rings it for a moment.
+  const [flash, setFlash] = useState<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+  }, []);
+  useImperativeHandle(ref, () => ({
+    jumpTo(dayId: string, slot: number) {
+      setPicked(dayId);
+      setFlash(`${dayId}:${slot}`);
+      if (flashTimer.current) clearTimeout(flashTimer.current);
+      flashTimer.current = setTimeout(() => setFlash(null), 2400);
+      const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() =>
+          grid.current
+            ?.querySelector<HTMLElement>(`[data-at="${dayId}:${slot}"]`)
+            ?.scrollIntoView({ block: "center", inline: "center", behavior: smooth ? "smooth" : "auto" }),
+        ),
+      );
+    },
+  }));
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-cell]");
@@ -168,7 +209,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
         })}
       </div>
 
-      {target && (
+      {target && (liveCol || !hideJumpToFocus) && (
         <div className="mb-3 flex justify-end">
           <button
             type="button"
@@ -276,6 +317,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
                   const cell = getCell(c, slot);
                   const isSelected = selected?.dayId === c.id && selected.slot === slot;
                   const isLive = live && c.date === today;
+                  const isFlash = flash === `${c.id}:${slot}`;
                   const label = `${fmt(t.common.day, { n: c.dayNumber })} · ${positionLabel(c.position, t)}, ${time} UTC: ${cell.label}`;
                   const body = (
                     <>
@@ -287,6 +329,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
                     <div
                       key={c.id}
                       role="gridcell"
+                      data-at={`${c.id}:${slot}`}
                       aria-selected={isSelected || undefined}
                       style={place(slot + 2, i + 2)}
                       className={clsx(
@@ -299,6 +342,7 @@ export function KvkGrid({ columns, slotMinutes, getCell, renderHeader, onCellCli
                         cell.dim && "opacity-35",
                         isLive && "bg-primary/10",
                         isSelected && "z-[5] outline-2 -outline-offset-2 outline-gold",
+                        isFlash && "z-[6] animate-pulse outline-2 -outline-offset-2 outline-gold",
                       )}
                     >
                       {isLive && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-primary" />}
