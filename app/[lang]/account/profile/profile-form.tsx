@@ -28,8 +28,17 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           className={inputClass}
         />
       </Field>
-      {/* Keyed by the saved tag so the picker shows it again after React resets the form. */}
-      <AlliancePicker key={profile.alliance_tag ?? ""} defaultValue={profile.alliance_tag} />
+      {profile.transfer ? (
+        // Transfer accounts aren't in an alliance yet: they pick one once leaders mark them as joined.
+        profile.from_kingdom && (
+          <Field label={t.auth.transfer.kingdom} htmlFor="fromKingdom">
+            <input id="fromKingdom" value={profile.from_kingdom} readOnly className={`${inputClass} font-mono text-muted sm:w-64`} />
+          </Field>
+        )
+      ) : (
+        // Keyed by the saved tag so the picker shows it again after React resets the form.
+        <AlliancePicker key={profile.alliance_tag ?? ""} defaultValue={profile.alliance_tag} />
+      )}
 
       {state?.error && <Notice tone="error">{state.error}</Notice>}
       {state?.ok && <Notice tone="success">{state.message}</Notice>}

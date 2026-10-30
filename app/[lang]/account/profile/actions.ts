@@ -21,7 +21,10 @@ const schema = z.object({
   alliance: z.union([z.enum(ALLIANCE_TAGS), z.literal("")], { message: "alliance" satisfies ErrorKey }),
 });
 
-/** Players can change their in-game name and alliance. RLS and the guard trigger stop anything else changing. */
+/**
+ * Players can change their in-game name and alliance (transfer accounts only their name). RLS and
+ * the guard trigger stop anything else changing.
+ */
 export async function updateProfile(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const { t } = await getActionI18n();
   const profile = await getProfile();
@@ -33,10 +36,14 @@ export async function updateProfile(_prev: ActionState, formData: FormData): Pro
     return { error: key in t.errors ? t.errors[key as ErrorKey] : t.errors.generic };
   }
 
+  // Transfer accounts can't choose an alliance until leaders mark them as joined 1465.
+  const changes = profile.transfer
+    ? { ingame_name: parsed.data.name }
+    : { ingame_name: parsed.data.name, alliance_tag: parsed.data.alliance || null };
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .update({ ingame_name: parsed.data.name, alliance_tag: parsed.data.alliance || null })
+    .update(changes)
     .eq("id", profile.id)
     .select("id");
   if (error || !data?.length) return { error: t.errors.profileFailed };

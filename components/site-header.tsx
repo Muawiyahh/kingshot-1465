@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { Crest } from "@/components/crest";
+import { HomeLink } from "@/components/home-link";
 import { UserNav } from "@/components/user-nav";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
@@ -16,7 +16,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg/75 backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:gap-8 sm:px-6 lg:px-8">
-        <Link
+        <HomeLink
           href={localePath(locale, "/")}
           className="flex shrink-0 items-center gap-2 rounded-lg sm:gap-2.5"
           aria-label={fmt(t.nav.homeLabel, { name: fmt(t.common.kingdomName, { n: site.kingdom }) })}
@@ -26,7 +26,7 @@ export async function SiteHeader() {
             <span className="text-gold-soft">#</span>
             {site.kingdom}
           </span>
-        </Link>
+        </HomeLink>
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <Suspense fallback={<span className="size-10 animate-pulse rounded-full bg-white/5" aria-hidden />}>
             <UserNav />
