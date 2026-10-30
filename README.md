@@ -59,7 +59,7 @@ The site is in English, German, Simplified and Traditional Chinese, French, Span
 The homepage is short and aimed at two kinds of visitor: members checking their alliance's times, and players from other kingdoms thinking of transferring. Applying for castle positions isn't on it; that lives in the account area.
 
 1. **Hero:** the kingdom's key facts (King, alliances, players, server time and age), with buttons to the Transfer and Alliance events sections. The Next KvK card counts down (days, hours, minutes, seconds) to the date leaders set in **Admin → KvK → Next KvK**; without one it counts down to the next KvK event, and while an event runs it shows the day.
-2. **Alliance events:** each alliance's Bear Trap 1 and 2, Swordland, Tri-Alliance, Sanctuary 1 and 2 and Vikings times, plus Fortress for GGG, KNG, ERA and ALT (set in `lib/alliance-events.ts`). Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
+2. **Alliance events:** each alliance's times, in this order: Bear Trap 1 and 2, Swordland (Legion 1 and 2), Tri-Alliance (Legion 1 and 2), Vikings (Day 1 and 2), Sanctuary 1 and 2, and Fortress last, for GGG, KNG, ERA and ALT only (set in `lib/alliance-events.ts`). The two runs of Swordland, Tri-Alliance and Vikings share a heading in the table; times saved before the split count as Legion 1 / Day 1. Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
 3. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
 4. **Transfer to 1465:** a short pitch, the kingdom at a glance (leaders' facts plus live numbers: server age, alliances, governors, King, next KvK), three steps for contacting the kingdom, and the transfer managers as compact rows with a **Message** button (see **Transfer accounts** below) and a tap-to-copy game ID. Past five managers, the rest fold behind **Show all**.
 5. **FAQ** and a sign-up box.
@@ -85,13 +85,14 @@ The database enforces all of this (`0007_homepage_content.sql` and `0008_transfe
 1. **Players sign up** with their game ID, in-game name and a password. New accounts are *pending*.
 2. **Leaders approve accounts** in **Admin → Accounts**, after checking the game ID in-game.
 3. **Leaders create an event** in **Admin → KvK events**: the Day 1 date and one row per day and position (e.g. Day 1 · Chief Minister). Every day has 48 appointments of 30 minutes, from 00:00 to 24:00 UTC.
-4. **Leaders open applications.** Approved players apply in **Account → Castle appointments** (see **The KvK grid** below): tap a time, pick every slot that works (or "any time"), and add a note. Each position asks for the speedups that matter for it, in days:
+4. **Leaders open applications.** Approved players apply in **Account → Castle appointments** (see **The KvK grid** below): tap a time, pick every slot that works (or "any time"), and add a note. Players can apply for as many positions as they like, including two on the same day (e.g. Chief Minister and Noble Advisor on day 4); the form then mentions the other one. Each position asks for the speedups that matter for it, in days:
    - **Chief Minister:** construction and research speedups;
    - **Noble Advisor:** troop training and general speedups;
    - **any other position:** one total.
 5. **Leaders accept players into slots** in the event's workspace (**Admin → KvK events → the event**). Accepting puts the player's name in a time slot straight away, and the player gets a notification with their time:
    - tap a day's header to see its applications, with each kind of speedup. **Accept · 14:00** puts the player in their earliest free picked time (or the earliest free time for "any time"). When none of their times is free, the button reads **Pick a time** and opens their first one;
-   - tap a time to see everyone who applied for that day. Picking a waiting applicant accepts them into that time (**Accept here**); picking an accepted player moves them there;
+   - tap a time to see everyone who applied for that day, with every time they asked for. Picking a waiting applicant accepts them into that time (**Accept here**); picking an accepted player moves them there;
+   - **same day:** each applicant also shows their other positions on that date: the time they hold (a link to that slot), or all the times they applied for if they haven't been placed yet. Accepting and auto-fill never put a player at a time they already hold in another position that day; picking such a time by hand shows a warning;
    - **Reject** or **Undo** takes the player off the schedule again;
    - **Auto-fill** places accepted players who don't have a time yet, highest speedups first;
    - lock a slot to protect it from auto-fill and changes. A player holding a locked slot can't be rejected until it's unlocked.
@@ -101,7 +102,7 @@ Each event moves through three stages: Draft (only leaders see it) → Applicati
 
 ### The KvK grid
 
-Players, leaders and the KvK schedule all share one layout: a grid with a column for each day and position and a row for each UTC slot. The current time is highlighted while the event runs. Tapping a cell or a column header opens a side panel (a bottom sheet on phones), and the browser's back button closes it. On phones the grid shows one column at a time; the strip of chips above it switches between them.
+Players, leaders and the KvK schedule all share one layout: a grid with a column for each day and position and a row for each UTC slot. It's kept plain: names sit in soft chips, empty times stay blank, and only full hours get a line. The current time is marked while the event runs. Tapping a cell or a column header opens a side panel (a bottom sheet on phones), and the browser's back button closes it. On phones the grid shows one column at a time; the strip of chips above it switches between them.
 
 - **Players:** your own slot is ringed in gold, and times other players hold show their names. Amber cells are your pending times, green accepted, red rejected. A pending or rejected application can be changed or withdrawn; changing a rejected one re-applies, sending it back to leaders as pending. Accepted applications are locked.
 - **Your slots:** above the grid on **Castle appointments** and **KvK schedule**, each of your slots has a **Show in table** button that scrolls straight to it (on phones it switches to that day first) and highlights it, so nobody has to scroll through 48 rows.

@@ -112,6 +112,7 @@ const id: Messages = {
         vikings: "Viking",
         fortress: "Benteng",
       },
+      legion: "Legiun {n}",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -665,7 +666,7 @@ const id: Messages = {
     },
     player: {
       eventsLabel: "Event KvK",
-      stateOpen: "Pendaftaran dibuka. Ketuk jam di hari mana pun untuk mendaftar.",
+      stateOpen: "Pendaftaran dibuka. Ketuk jam di hari mana pun untuk mendaftar. Kamu bisa mendaftar untuk lebih dari satu posisi.",
       stateClosed: "Pendaftaran ditutup selagi pemimpin membagikan slot.",
       statePublished: "Jadwal sudah diterbitkan. Slotmu diberi garis tepi emas.",
       rejectedNote: "Pemimpin menolak pendaftaran ini. Kamu bisa mengubahnya lalu mendaftar lagi.",
@@ -680,6 +681,8 @@ const id: Messages = {
       pickHint: "Ketuk jam untuk menambah atau menghapusnya, atau seret melewati beberapa jam.",
       publicSchedule: "Buka jadwal KvK",
       yourApplicationLabel: "Pendaftaranmu",
+      sameDayHolds: "Di hari yang sama kamu {position} pukul {time} UTC. Pilih jam lain di sini.",
+      sameDayApplied: "Di hari yang sama kamu juga mendaftar {position} ({times}). Leader melihat keduanya.",
     },
     leader: {
       title: "Jadwal",
@@ -700,6 +703,10 @@ const id: Messages = {
       lockHint: "Slot terkunci dilewati oleh isi otomatis dan Kosongkan.",
       applicationsCount: "Pendaftaran: {n}",
       acceptHere: "Terima di sini",
+      sameDayHolds: "Juga {position} pukul {time}",
+      sameDayApplied: "Juga mendaftar {position}: {times}",
+      sameDayAccepted: "Juga diterima untuk {position}, belum ada jam",
+      clash: "Bentrok dengan jam {position}-nya",
     },
   },
   notFound: {

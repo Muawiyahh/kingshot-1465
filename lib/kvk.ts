@@ -116,18 +116,34 @@ export function quarterBlocks(slotMinutes: number) {
   }));
 }
 
+/**
+ * The slots of a day (slotMinutes long) that overlap any of these times on the same date, e.g. the
+ * times a player already holds in another position that day.
+ */
+export function clashingSlots(times: { slot_index: number; slot_minutes: number }[], slotMinutes: number): Set<number> {
+  const out = new Set<number>();
+  for (const t of times) {
+    const start = t.slot_index * t.slot_minutes;
+    const end = start + t.slot_minutes;
+    for (let i = Math.floor(start / slotMinutes); i * slotMinutes < end; i++) out.add(i);
+  }
+  return out;
+}
+
 type PickApplication = { profile_id: string; preferred_slots: number[]; anytime: boolean };
 type PickSlot = { slot_index: number; profile_id: string | null; locked: boolean };
 
 /**
  * The slot an application is accepted into: the one the player already holds that day, else the
- * earliest free time they picked, else (for "any time") the earliest free time of the day. Null when
- * none of their times is free.
+ * earliest free time they picked, else (for "any time") the earliest free time of the day. Times in
+ * `avoid` (when they hold another position that day) are skipped. Null when none of their times is free.
  */
-export function pickSlot<S extends PickSlot>(app: PickApplication, slots: S[]): S | null {
+export function pickSlot<S extends PickSlot>(app: PickApplication, slots: S[], avoid: Set<number> = new Set()): S | null {
   const held = slots.find((s) => s.profile_id === app.profile_id);
   if (held) return held;
-  const free = slots.filter((s) => !s.profile_id && !s.locked).sort((a, b) => a.slot_index - b.slot_index);
+  const free = slots
+    .filter((s) => !s.profile_id && !s.locked && !avoid.has(s.slot_index))
+    .sort((a, b) => a.slot_index - b.slot_index);
   const wanted = new Set(app.preferred_slots);
   return free.find((s) => wanted.has(s.slot_index)) ?? (app.anytime ? (free[0] ?? null) : null);
 }

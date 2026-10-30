@@ -112,6 +112,7 @@ const fr: Messages = {
         vikings: "Vikings",
         fortress: "Forteresse",
       },
+      legion: "Légion {n}",
     },
     hof: {
       eyebrow: "Panthéon",
@@ -665,7 +666,7 @@ const fr: Messages = {
     },
     player: {
       eventsLabel: "Événements KvK",
-      stateOpen: "Les candidatures sont ouvertes. Touchez une heure de n'importe quel jour pour postuler.",
+      stateOpen: "Les candidatures sont ouvertes. Touchez une heure de n'importe quel jour pour postuler. Vous pouvez postuler à plusieurs postes.",
       stateClosed: "Les candidatures sont fermées pendant que les chefs attribuent les créneaux.",
       statePublished: "Le planning est publié. Vos créneaux ont un contour doré.",
       rejectedNote: "Les chefs ont refusé cette candidature. Vous pouvez la modifier et postuler à nouveau.",
@@ -680,6 +681,8 @@ const fr: Messages = {
       pickHint: "Touchez des heures pour les ajouter ou les retirer, ou faites glisser sur plusieurs.",
       publicSchedule: "Ouvrir le planning du KvK",
       yourApplicationLabel: "Votre candidature",
+      sameDayHolds: "Le même jour, vous êtes {position} à {time} UTC. Choisissez une autre heure ici.",
+      sameDayApplied: "Le même jour, vous avez aussi postulé pour {position} ({times}). Les leaders voient les deux.",
     },
     leader: {
       title: "Planning",
@@ -700,6 +703,10 @@ const fr: Messages = {
       lockHint: "Les créneaux verrouillés sont ignorés par le remplissage automatique et par Vider.",
       applicationsCount: "Candidatures : {n}",
       acceptHere: "Accepter ici",
+      sameDayHolds: "Aussi {position} à {time}",
+      sameDayApplied: "A aussi postulé pour {position} : {times}",
+      sameDayAccepted: "Aussi accepté pour {position}, sans heure pour l'instant",
+      clash: "Chevauche son créneau de {position}",
     },
   },
   notFound: {

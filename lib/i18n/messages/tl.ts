@@ -112,6 +112,7 @@ const tl: Messages = {
         vikings: "Vikings",
         fortress: "Fortress",
       },
+      legion: "Legion {n}",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -665,7 +666,7 @@ const tl: Messages = {
     },
     player: {
       eventsLabel: "Mga KvK event",
-      stateOpen: "Bukas na ang mga aplikasyon. I-tap ang oras sa kahit anong araw para mag-apply.",
+      stateOpen: "Bukas na ang mga aplikasyon. I-tap ang oras sa kahit anong araw para mag-apply. Puwede kang mag-apply sa higit sa isang posisyon.",
       stateClosed: "Sarado ang mga aplikasyon habang itinatalaga ng mga lider ang mga slot.",
       statePublished: "Na-publish na ang iskedyul. May gintong gilid ang mga slot mo.",
       rejectedNote: "Tinanggihan ng mga lider ang aplikasyong ito. Puwede mo itong baguhin at mag-apply ulit.",
@@ -680,6 +681,8 @@ const tl: Messages = {
       pickHint: "I-tap ang mga oras para idagdag o alisin, o i-drag sa ilang oras.",
       publicSchedule: "Buksan ang iskedyul ng KvK",
       yourApplicationLabel: "Iyong aplikasyon",
+      sameDayHolds: "Sa parehong araw, ikaw ang {position} nang {time} UTC. Pumili ng ibang oras dito.",
+      sameDayApplied: "Sa parehong araw, nag-apply ka rin sa {position} ({times}). Nakikita ng mga leader ang dalawa.",
     },
     leader: {
       title: "Iskedyul",
@@ -700,6 +703,10 @@ const tl: Messages = {
       lockHint: "Nilalaktawan ng Auto-fill at I-clear ang mga naka-lock na slot.",
       applicationsCount: "Mga aplikasyon: {n}",
       acceptHere: "Tanggapin dito",
+      sameDayHolds: "{position} din nang {time}",
+      sameDayApplied: "Nag-apply din sa {position}: {times}",
+      sameDayAccepted: "Tinanggap din sa {position}, wala pang oras",
+      clash: "Kasabay ng oras niya bilang {position}",
     },
   },
   notFound: {

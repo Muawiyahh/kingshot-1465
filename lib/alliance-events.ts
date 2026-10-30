@@ -1,17 +1,64 @@
 /** Alliance events shown on the homepage, and helpers for their times. Safe for client and server. */
 
-/** In display order. The keys are stored in alliance_events.event and name the translations. */
+import { fmt } from "@/lib/i18n/format";
+import type { Messages } from "@/lib/i18n/messages/en";
+
+/**
+ * In display order, with Sanctuary 1, Sanctuary 2 and Fortress last. The keys are stored in
+ * alliance_events.event. Swordland and Tri-Alliance run twice per alliance (Legion 1 and 2), and
+ * Vikings on two days: the original key is the first run, so times saved before the split stay put.
+ */
 export const ALLIANCE_EVENTS = [
   "bear1",
   "bear2",
   "swordland",
+  "swordland2",
   "tri_alliance",
+  "tri_alliance2",
+  "vikings",
+  "vikings2",
   "sanctuary1",
   "sanctuary2",
-  "vikings",
   "fortress",
 ] as const;
 export type AllianceEventKey = (typeof ALLIANCE_EVENTS)[number];
+
+/** The events that have a name of their own in t.home.events.names. */
+type EventNameKey = Exclude<AllianceEventKey, "swordland2" | "tri_alliance2" | "vikings2">;
+
+/** The two runs of a split event: which event they belong to, and Legion 1/2 or Day 1/2. */
+const PARTS: Partial<Record<AllianceEventKey, { group: EventNameKey; kind: "legion" | "day"; n: 1 | 2 }>> = {
+  swordland: { group: "swordland", kind: "legion", n: 1 },
+  swordland2: { group: "swordland", kind: "legion", n: 2 },
+  tri_alliance: { group: "tri_alliance", kind: "legion", n: 1 },
+  tri_alliance2: { group: "tri_alliance", kind: "legion", n: 2 },
+  vikings: { group: "vikings", kind: "day", n: 1 },
+  vikings2: { group: "vikings", kind: "day", n: 2 },
+};
+
+/** An event's translated name, and for a split event which run it is ("Swordland", "Legion 2"). */
+export function eventLabel(event: AllianceEventKey, t: Messages): { name: string; part: string | null; full: string } {
+  const p = PARTS[event];
+  if (!p) {
+    const name = t.home.events.names[event as EventNameKey];
+    return { name, part: null, full: name };
+  }
+  const name = t.home.events.names[p.group];
+  const part = fmt(p.kind === "legion" ? t.home.events.legion : t.common.day, { n: p.n });
+  return { name, part, full: `${name} · ${part}` };
+}
+
+/** Consecutive events under one heading: both runs of a split event, or a single event. */
+export function eventGroups(events: readonly AllianceEventKey[] = ALLIANCE_EVENTS) {
+  const groups: { group: string; events: AllianceEventKey[] }[] = [];
+  for (const e of events) {
+    const group = PARTS[e]?.group ?? e;
+    const last = groups.at(-1);
+    if (last?.group === group) last.events.push(e);
+    else groups.push({ group, events: [e] });
+  }
+  return groups;
+}
 
 export function isAllianceEvent(value: unknown): value is AllianceEventKey {
   return typeof value === "string" && (ALLIANCE_EVENTS as readonly string[]).includes(value);

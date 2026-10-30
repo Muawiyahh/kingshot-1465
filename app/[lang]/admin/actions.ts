@@ -7,7 +7,7 @@ import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { planAutofill, type FillSlot } from "@/lib/autofill";
-import { addDays, pickSlot, positionLabel, slotCount } from "@/lib/kvk";
+import { addDays, clashingSlots, pickSlot, positionLabel, slotCount } from "@/lib/kvk";
 import { TIME_RE, eventsFor, isMonday } from "@/lib/alliance-events";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
@@ -401,11 +401,15 @@ export async function acceptApplication(applicationId: string, slot: number | nu
     .eq("id", id.data)
     .maybeSingle();
   if (!app) return { error: t.errors.reviewFailed };
-  const { data: daySlots } = await supabase.from("slots").select("id, slot_index, profile_id, locked").eq("day_id", app.day_id);
+  const [{ data: daySlots }, avoid] = await Promise.all([
+    supabase.from("slots").select("id, slot_index, profile_id, locked").eq("day_id", app.day_id),
+    // A time the leader picked is theirs to choose; only the automatic pick steers around clashes.
+    wanted ? new Set<number>() : sameDateClashes(supabase, app.day_id, app.profile_id),
+  ]);
   const slots = daySlots ?? [];
   const held = slots.find((s) => s.profile_id === app.profile_id) ?? null;
 
-  const target = wanted?.success ? (slots.find((s) => s.slot_index === wanted.data) ?? null) : pickSlot(app, slots);
+  const target = wanted?.success ? (slots.find((s) => s.slot_index === wanted.data) ?? null) : pickSlot(app, slots, avoid);
   if (!target) return { error: wanted ? t.errors.slotNotFound : t.errors.noFreeTime };
   if (target.profile_id && target.profile_id !== app.profile_id) return { error: t.errors.slotTaken };
   if (target.id !== held?.id && target.locked) return { error: t.errors.unlockFirst };
@@ -437,6 +441,27 @@ export async function acceptApplication(applicationId: string, slot: number | nu
   await audit("application.review", app.id, { status: "accepted", slot: target.slot_index });
   refresh();
   return { ok: true };
+}
+
+/**
+ * The times of a day that overlap a slot this player holds in another position on the same date
+ * (e.g. Chief Minister and Noble Advisor on day 4), so nobody is booked twice at once.
+ */
+async function sameDateClashes(supabase: Awaited<ReturnType<typeof createClient>>, dayId: string, profileId: string) {
+  const { data: day } = await supabase.from("event_days").select("event_id, date, slot_minutes").eq("id", dayId).maybeSingle();
+  if (!day) return new Set<number>();
+  const { data: held } = await supabase
+    .from("slots")
+    .select("slot_index, day:event_days!inner(slot_minutes, event_id, date)")
+    .eq("profile_id", profileId)
+    .neq("day_id", dayId)
+    .eq("day.event_id", day.event_id)
+    .eq("day.date", day.date);
+  const times = ((held ?? []) as unknown as { slot_index: number; day: { slot_minutes: number } }[]).map((s) => ({
+    slot_index: s.slot_index,
+    slot_minutes: s.day.slot_minutes,
+  }));
+  return clashingSlots(times, day.slot_minutes as number);
 }
 
 /**
@@ -528,7 +553,10 @@ export async function toggleSlotLock(slotId: string): Promise<ActionState> {
 
 type DayForFill = {
   id: string;
+  event_id: string;
   day_number: number;
+  date: string;
+  slot_minutes: number;
   position: string;
   slots: FillSlot[];
   applications: {
@@ -543,26 +571,43 @@ type DayForFill = {
 };
 
 const FILL_SELECT =
-  "id, day_number, position, slots(id, slot_index, profile_id, locked), applications(profile_id, preferred_slots, anytime, speedup_days, created_at, status, profile:profiles!applications_profile_id_fkey(ingame_name))";
+  "id, event_id, day_number, date, slot_minutes, position, slots(id, slot_index, profile_id, locked), applications(profile_id, preferred_slots, anytime, speedup_days, created_at, status, profile:profiles!applications_profile_id_fkey(ingame_name))";
+
+type HeldTime = { slot_index: number; slot_minutes: number };
 
 /**
  * Plans and saves auto-fill for some days. Each write only fills a slot that is still empty and
  * unlocked, so if another leader changes something at the same moment the report stays truthful.
+ * `others` are the remaining days on the same dates: nobody is placed at a time they already hold
+ * in another position that day, including places this fill has just planned.
  */
 async function fill(
   supabase: Awaited<ReturnType<typeof createClient>>,
   days: DayForFill[],
   label: (d: DayForFill) => string | null,
+  others: Pick<DayForFill, "date" | "slot_minutes" | "slots">[] = [],
 ) {
   const report: FillReport = { placed: 0, skipped: [] };
   const writes: Promise<void>[] = [];
+  // date → player → the times they hold that date, in any position.
+  const held = new Map<string, Map<string, HeldTime[]>>();
+  const hold = (date: string, profileId: string, time: HeldTime) => {
+    const byPlayer = held.get(date) ?? new Map<string, HeldTime[]>();
+    held.set(date, byPlayer);
+    byPlayer.set(profileId, [...(byPlayer.get(profileId) ?? []), time]);
+  };
+  for (const d of [...days, ...others])
+    for (const s of d.slots) if (s.profile_id) hold(d.date, s.profile_id, { slot_index: s.slot_index, slot_minutes: d.slot_minutes });
+
   for (const day of days) {
     const plan = planAutofill(
       day.slots,
       day.applications
         .filter((a) => a.status === "accepted")
         .map((a) => ({ ...a, name: a.profile?.ingame_name ?? "?" })),
+      (profileId) => clashingSlots(held.get(day.date)?.get(profileId) ?? [], day.slot_minutes),
     );
+    for (const u of plan.updates) hold(day.date, u.profileId, { slot_index: u.slotIndex, slot_minutes: day.slot_minutes });
     const where = label(day);
     const tag = (name: string) => (where ? `${name} (${where})` : name);
     report.skipped.push(...plan.skipped.map(tag));
@@ -597,7 +642,15 @@ export async function autoFillDay(dayId: string): Promise<FillState> {
   if (!id.success) return { error: t.errors.generic };
   const { data } = await supabase.from("event_days").select(FILL_SELECT).eq("id", id.data).maybeSingle();
   if (!data) return { error: t.errors.generic };
-  const report = await fill(supabase, [data as unknown as DayForFill], () => null);
+  const day = data as unknown as DayForFill;
+  // The other positions on the same date, so players aren't booked into two at once.
+  const { data: others } = await supabase
+    .from("event_days")
+    .select("date, slot_minutes, slots(id, slot_index, profile_id, locked)")
+    .eq("event_id", day.event_id)
+    .eq("date", day.date)
+    .neq("id", day.id);
+  const report = await fill(supabase, [day], () => null, (others ?? []) as Pick<DayForFill, "date" | "slot_minutes" | "slots">[]);
   await audit("day.autofill", id.data, report);
   refresh();
   return { ok: true, message: fillMessage(t, report), report };

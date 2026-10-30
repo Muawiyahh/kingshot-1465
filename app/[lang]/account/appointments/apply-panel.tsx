@@ -27,6 +27,7 @@ export function StatusBadge({ status }: { status: ApplicationStatus }) {
  */
 export function ApplyPanel({
   day,
+  sameDay,
   eventStatus,
   canApply,
   accountNotice,
@@ -34,6 +35,8 @@ export function ApplyPanel({
   onDone,
 }: {
   day: PlayerDay;
+  /** The other positions on the same date that the player holds or applied for. */
+  sameDay: PlayerDay[];
   eventStatus: EventStatus;
   canApply: boolean;
   /** Why the player can't apply (account pending or rejected), if that's the case. */
@@ -57,6 +60,18 @@ export function ApplyPanel({
       ) : (
         eventStatus === "published" && <Notice tone="neutral">{p.noSlot}</Notice>
       )}
+
+      {sameDay.map((other) => {
+        const position = positionLabel(other.position, t);
+        const held = other.slots[0];
+        const applied = other.applications[0];
+        if (held)
+          return <Notice key={other.id}>{fmt(p.sameDayHolds, { position, time: slotLabel(held.slot_index, other.slot_minutes) })}</Notice>;
+        if (!applied || applied.status === "rejected") return null;
+        const ranges = slotRanges(applied.preferred_slots, other.slot_minutes);
+        const times = applied.anytime ? (ranges ? `${ranges} · ${t.common.anyTime}` : t.common.anyTime) : ranges;
+        return <Notice key={other.id}>{fmt(p.sameDayApplied, { position, times })}</Notice>;
+      })}
 
       {editable ? (
         // Not keyed on the application: saving creates or changes it, and a remount would lose the

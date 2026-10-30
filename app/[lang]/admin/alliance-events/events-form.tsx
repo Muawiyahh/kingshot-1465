@@ -7,7 +7,7 @@ import { useI18n } from "@/components/i18n-provider";
 import { Notice, inputClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { UtcTimeField } from "@/components/utc-time-field";
-import { ALLIANCE_EVENTS, WEEKDAYS_MON_FIRST, eventsFor, type AllianceEventKey } from "@/lib/alliance-events";
+import { ALLIANCE_EVENTS, WEEKDAYS_MON_FIRST, eventLabel, eventsFor, type AllianceEventKey } from "@/lib/alliance-events";
 import { fmt } from "@/lib/i18n/format";
 import type { AllianceEventRow } from "@/lib/types";
 import { saveAllianceEvents } from "../actions";
@@ -67,12 +67,15 @@ export function AllianceEventsForm({
       <ul className="-mt-2 divide-y divide-border">
         {eventsFor(alliance).map((e) => {
           const entry = entries[e];
-          const name = t.home.events.names[e];
+          const { name: title, part, full: name } = eventLabel(e, t);
           const filled = entry.time || entry.note || entry.days.length > 0;
           return (
             <li key={e} className={clsx("py-4 xl:grid xl:items-center xl:py-2", columns)}>
               <div className="flex min-h-9 items-center gap-3 xl:contents">
-                <h3 className="flex-1 font-display text-base font-semibold xl:text-sm">{name}</h3>
+                <h3 className="flex-1 font-display text-base font-semibold xl:text-sm">
+                  {title}
+                  {part && <> <span className="block font-sans text-xs font-normal text-muted max-xl:inline">{part}</span></>}
+                </h3>
                 {filled ? (
                   <button
                     type="button"

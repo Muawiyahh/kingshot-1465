@@ -112,6 +112,7 @@ const es: Messages = {
         vikings: "Vikingos",
         fortress: "Fortaleza",
       },
+      legion: "Legión {n}",
     },
     hof: {
       eyebrow: "Salón de la Fama",
@@ -665,7 +666,7 @@ const es: Messages = {
     },
     player: {
       eventsLabel: "Eventos de KvK",
-      stateOpen: "Las solicitudes están abiertas. Toca una hora de cualquier día para solicitarla.",
+      stateOpen: "Las solicitudes están abiertas. Toca una hora de cualquier día para solicitarla. Puedes solicitar más de un puesto.",
       stateClosed: "Las solicitudes están cerradas mientras los líderes asignan los turnos.",
       statePublished: "El horario está publicado. Tus turnos tienen un borde dorado.",
       rejectedNote: "Los líderes rechazaron esta solicitud. Puedes cambiarla y volver a solicitar.",
@@ -680,6 +681,8 @@ const es: Messages = {
       pickHint: "Toca horas para añadirlas o quitarlas, o arrastra sobre varias.",
       publicSchedule: "Abrir el horario de KvK",
       yourApplicationLabel: "Tu solicitud",
+      sameDayHolds: "Ese mismo día eres {position} a las {time} UTC. Elige otra hora aquí.",
+      sameDayApplied: "Ese mismo día también solicitaste {position} ({times}). Los líderes ven ambas.",
     },
     leader: {
       title: "Horario",
@@ -700,6 +703,10 @@ const es: Messages = {
       lockHint: "El autorrelleno y Vaciar se saltan los turnos bloqueados.",
       applicationsCount: "Solicitudes: {n}",
       acceptHere: "Aceptar aquí",
+      sameDayHolds: "También {position} a las {time}",
+      sameDayApplied: "También solicitó {position}: {times}",
+      sameDayAccepted: "También aceptado para {position}, aún sin hora",
+      clash: "Coincide con su hora de {position}",
     },
   },
   notFound: {

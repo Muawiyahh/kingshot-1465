@@ -82,6 +82,9 @@ export function Workspace({ event }: { event: WorkspaceEvent }) {
   }
 
   const openDay = selection.day ? index.days.get(selection.day) : undefined;
+  // The other positions on the open day's date (e.g. Chief Minister and Noble Advisor on day 4).
+  const siblings = openDay ? event.event_days.filter((d) => d.date === openDay.date && d.id !== openDay.id) : [];
+  const openAt = (dayId: string, slot: number) => selection.open(dayId, slot);
   const dayIndex = openDay ? columns.findIndex((c) => c.id === openDay.id) : -1;
   const slotOpen = openDay && selection.slot !== null && selection.slot < total ? selection.slot : null;
 
@@ -116,13 +119,14 @@ export function Workspace({ event }: { event: WorkspaceEvent }) {
           const pending = d.applications.filter((a) => a.status === "pending").length;
           const filled = d.slots.filter((s) => s.profile_id).length;
           return (
-            <span className={clsx("flex flex-wrap items-center gap-x-2 gap-y-0.5 font-mono text-[0.625rem]", variant === "header" ? "mt-1.5" : "mt-1")}>
+            <span className={clsx("flex flex-wrap items-center gap-x-1.5 text-[0.6875rem]", variant === "header" ? "mt-1" : "mt-0.5")}>
               {pending > 0 && (
-                <span className={clsx("rounded-full px-1.5", variant === "chip" ? "bg-black/20" : "bg-warning/15 text-warning")}>
-                  {fmt(l.headerReview, { n: pending })}
-                </span>
+                <>
+                  <span className="text-warning">{fmt(l.headerReview, { n: pending })}</span>
+                  <span aria-hidden className="text-muted">·</span>
+                </>
               )}
-              <span className={variant === "chip" ? "opacity-80" : "text-muted"}>{fmt(l.headerFilled, { filled, total })}</span>
+              <span className="text-muted">{fmt(l.headerFilled, { filled, total })}</span>
             </span>
           );
         }}
@@ -162,9 +166,22 @@ export function Workspace({ event }: { event: WorkspaceEvent }) {
           }
         >
           {slotOpen !== null ? (
-            <SlotPanel key={`${openDay.id}:${slotOpen}`} day={openDay} slotIndex={slotOpen} onOpenDay={() => selection.open(openDay.id)} />
+            <SlotPanel
+              key={`${openDay.id}:${slotOpen}`}
+              day={openDay}
+              slotIndex={slotOpen}
+              siblings={siblings}
+              onOpenDay={() => selection.open(openDay.id)}
+              onOpen={openAt}
+            />
           ) : (
-            <DayPanel key={openDay.id} day={openDay} onOpenSlot={(slot) => selection.open(openDay.id, slot)} />
+            <DayPanel
+              key={openDay.id}
+              day={openDay}
+              siblings={siblings}
+              onOpenSlot={(slot) => selection.open(openDay.id, slot)}
+              onOpen={openAt}
+            />
           )}
         </Drawer>
       )}

@@ -112,6 +112,7 @@ const zhTW: Messages = {
         vikings: "維京",
         fortress: "要塞",
       },
+      legion: "軍團 {n}",
     },
     hof: {
       eyebrow: "名人堂",
@@ -665,7 +666,7 @@ const zhTW: Messages = {
     },
     player: {
       eventsLabel: "KvK 活動",
-      stateOpen: "申請已開放。點任意一天的時間即可申請。",
+      stateOpen: "申請已開放。點任意一天的時間即可申請。你可以申請多個職位。",
       stateClosed: "申請已關閉，領袖正在分配時段。",
       statePublished: "時間表已發布。你的時段帶有金色邊框。",
       rejectedNote: "領袖拒絕了這份申請。你可以修改後重新申請。",
@@ -680,6 +681,8 @@ const zhTW: Messages = {
       pickHint: "點時間可新增或移除，也可以拖曳一次選多個。",
       publicSchedule: "開啟 KvK 排班表",
       yourApplicationLabel: "你的申請",
+      sameDayHolds: "同一天你在 {time} UTC 擔任{position}。這裡請選別的時間。",
+      sameDayApplied: "同一天你也申請了{position}（{times}）。領導能看到兩份申請。",
     },
     leader: {
       title: "時間表",
@@ -700,6 +703,10 @@ const zhTW: Messages = {
       lockHint: "已鎖定的時段不會被自動填入或清空。",
       applicationsCount: "申請：{n}",
       acceptHere: "在此接受",
+      sameDayHolds: "同時擔任{position}，{time}",
+      sameDayApplied: "也申請了{position}：{times}",
+      sameDayAccepted: "也已通過{position}，時間待定",
+      clash: "與其{position}時間衝突",
     },
   },
   notFound: {

@@ -17,7 +17,7 @@ import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
 import { formatDay, positionLabel, slotStartLabel } from "@/lib/kvk";
 import type { PlayerEvent, PublicScheduleRow } from "@/lib/types";
-import { ApplyPanel, StatusBadge } from "./apply-panel";
+import { ApplyPanel } from "./apply-panel";
 
 /**
  * The player's KvK view: the current event as a day-by-day grid. While applications are open,
@@ -126,6 +126,10 @@ export function PlayerGrid({
 
   const openDay = selection.day ? dayById.get(selection.day) : undefined;
   const dayIndex = openDay ? columns.findIndex((c) => c.id === openDay.id) : -1;
+  // The player's other positions on the open day's date (e.g. Chief Minister and Noble Advisor).
+  const sameDay = openDay
+    ? event.event_days.filter((d) => d.date === openDay.date && d.id !== openDay.id && (d.slots.length > 0 || d.applications.length > 0))
+    : [];
   const done = useCallback(
     (message: string) => {
       setFlash(message);
@@ -193,18 +197,21 @@ export function PlayerGrid({
           const day = dayById.get(col.id)!;
           const app = day.applications[0];
           const own = day.slots[0];
+          const gap = variant === "header" ? "mt-1" : "mt-0.5";
           if (own)
             return (
-              <span className={clsx("block font-mono text-[0.625rem] text-gold-soft", variant === "header" && "mt-1")}>
+              <span className={clsx("block font-mono text-[0.6875rem] text-gold-soft", gap)}>
                 ★ {slotStartLabel(own.slot_index, day.slot_minutes)}
               </span>
             );
-          if (!app) return variant === "header" && event.status === "open" ? <span className="mt-1 block text-[0.6875rem] text-muted">{t.apply.notApplied}</span> : null;
-          return (
-            <span className={clsx("block", variant === "header" ? "mt-1.5" : "mt-1")}>
-              <StatusBadge status={app.status} />
-            </span>
-          );
+          if (!app) return variant === "header" && event.status === "open" ? <span className={clsx("block text-[0.6875rem] text-muted", gap)}>{t.apply.notApplied}</span> : null;
+          const [tone, text] =
+            app.status === "accepted"
+              ? ["text-success", t.status.application.accepted]
+              : app.status === "rejected"
+                ? ["text-danger", t.status.application.rejected]
+                : ["text-warning", t.status.application.pendingShort];
+          return <span className={clsx("block text-[0.6875rem]", tone, gap)}>{text}</span>;
         }}
       />
 
@@ -229,6 +236,7 @@ export function PlayerGrid({
           <ApplyPanel
             key={openDay.id}
             day={openDay}
+            sameDay={sameDay}
             eventStatus={event.status}
             canApply={canApply}
             accountNotice={accountNotice}
@@ -244,8 +252,8 @@ export function PlayerGrid({
 function Legend() {
   const { t } = useI18n();
   const items = [
-    { cls: "bg-gold/10 shadow-[inset_0_0_0_2px_var(--gold)]", label: t.kvk.grid.yours },
-    { cls: "bg-white/[0.06]", label: t.kvk.grid.legendTaken },
+    { cls: "bg-gold/20 shadow-[inset_0_0_0_1px_rgba(233,196,106,0.6)]", label: t.kvk.grid.yours },
+    { cls: "bg-white/10", label: t.kvk.grid.legendTaken },
     { cls: "bg-warning/25", label: t.status.application.pendingShort },
     { cls: "bg-success/25", label: t.status.application.accepted },
     { cls: "bg-danger/20", label: t.status.application.rejected },
@@ -254,7 +262,7 @@ function Legend() {
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
       {items.map((i) => (
         <li key={i.label} className="flex items-center gap-1.5">
-          <span aria-hidden className={clsx("inline-block size-3 rounded-sm", i.cls)} />
+          <span aria-hidden className={clsx("inline-block size-3 rounded-[4px]", i.cls)} />
           {i.label}
         </li>
       ))}

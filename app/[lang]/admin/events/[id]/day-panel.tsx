@@ -11,15 +11,27 @@ import { fmt } from "@/lib/i18n/format";
 import { pickSlot, slotCount, slotRanges, slotStartLabel } from "@/lib/kvk";
 import type { ApplicationStatus, WorkspaceDay } from "@/lib/types";
 import { acceptApplication, autoFillDay, clearDay, reviewApplication } from "../../actions";
+import { SameDay, sameDayClashes, sameDayEntries } from "./same-day";
 
 const ORDER: Record<ApplicationStatus, number> = { pending: 0, accepted: 1, rejected: 2 };
 
 /**
  * One day's applications: review them, and auto-fill or clear the day. Accepting puts the player in
- * their earliest free picked time (shown on the button); if none is free, the button opens their
- * first time so the leader can choose another.
+ * their earliest free picked time (shown on the button), skipping times they hold in another
+ * position that day; if none is free, the button opens their first time so the leader can choose
+ * another. Each applicant also shows their other positions on the same date (`siblings`).
  */
-export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (slot: number) => void }) {
+export function DayPanel({
+  day,
+  siblings,
+  onOpenSlot,
+  onOpen,
+}: {
+  day: WorkspaceDay;
+  siblings: WorkspaceDay[];
+  onOpenSlot: (slot: number) => void;
+  onOpen: (dayId: string, slot: number) => void;
+}) {
   const { t } = useI18n();
   const d = t.admin.day;
   const l = t.kvk.leader;
@@ -75,7 +87,8 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
             {apps.map((a) => {
               const slot = held.get(a.profile_id);
               const name = a.profile?.ingame_name ?? d.unknownPlayer;
-              const target = a.status === "pending" ? pickSlot(a, day.slots) : null;
+              const others = sameDayEntries(a.profile_id, siblings);
+              const target = a.status === "pending" ? pickSlot(a, day.slots, sameDayClashes(others, day)) : null;
               return (
                 <li key={a.id} className={clsx("py-3 transition-opacity", a.status === "rejected" && "opacity-60", busy === a.id && "opacity-60")}>
                   <div className="flex items-start gap-3">
@@ -89,6 +102,7 @@ export function DayPanel({ day, onOpenSlot }: { day: WorkspaceDay; onOpenSlot: (
                         <SpeedupSummary app={a} position={day.position} /> ·{" "}
                         <span className="font-mono">{a.anytime ? t.common.anyTime : slotRanges(a.preferred_slots, day.slot_minutes)}</span>
                       </p>
+                      <SameDay entries={others} onOpen={onOpen} />
                       {a.note && <p className="mt-1 text-xs text-muted italic">“{a.note}”</p>}
                       {slot !== undefined && (
                         <button

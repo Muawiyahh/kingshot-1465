@@ -112,6 +112,7 @@ const ko: Messages = {
         vikings: "바이킹",
         fortress: "요새",
       },
+      legion: "군단 {n}",
     },
     hof: {
       eyebrow: "명예의 전당",
@@ -665,7 +666,7 @@ const ko: Messages = {
     },
     player: {
       eventsLabel: "KvK 이벤트",
-      stateOpen: "신청이 열렸습니다. 아무 날짜의 시간을 눌러 신청하세요.",
+      stateOpen: "신청이 열렸습니다. 아무 날짜의 시간을 눌러 신청하세요. 여러 직책에 신청할 수 있습니다.",
       stateClosed: "리더가 시간대를 배정하는 동안 신청이 닫혀 있습니다.",
       statePublished: "일정이 게시되었습니다. 내 시간대에는 금색 테두리가 있습니다.",
       rejectedNote: "리더가 이 신청을 거절했습니다. 수정해서 다시 신청할 수 있습니다.",
@@ -680,6 +681,8 @@ const ko: Messages = {
       pickHint: "시간을 눌러 추가하거나 빼고, 드래그해서 여러 개를 한 번에 고를 수 있습니다.",
       publicSchedule: "KvK 일정 열기",
       yourApplicationLabel: "내 신청",
+      sameDayHolds: "같은 날 {time} UTC에 {position}입니다. 여기서는 다른 시간을 고르세요.",
+      sameDayApplied: "같은 날 {position}에도 신청했습니다 ({times}). 리더는 둘 다 봅니다.",
     },
     leader: {
       title: "일정",
@@ -700,6 +703,10 @@ const ko: Messages = {
       lockHint: "잠긴 시간대는 자동 채우기와 비우기에서 제외됩니다.",
       applicationsCount: "신청: {n}",
       acceptHere: "여기로 수락",
+      sameDayHolds: "{time}에 {position}도 맡음",
+      sameDayApplied: "{position}에도 신청: {times}",
+      sameDayAccepted: "{position}에도 수락됨, 아직 시간 없음",
+      clash: "{position} 시간과 겹칩니다",
     },
   },
   notFound: {

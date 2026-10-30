@@ -115,6 +115,7 @@ const en = {
         vikings: "Vikings",
         fortress: "Fortress",
       },
+      legion: "Legion {n}",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -668,7 +669,7 @@ const en = {
     },
     player: {
       eventsLabel: "KvK events",
-      stateOpen: "Applications are open. Tap a time on any day to apply.",
+      stateOpen: "Applications are open. Tap a time on any day to apply. You can apply for more than one position.",
       stateClosed: "Applications are closed while leaders assign the slots.",
       statePublished: "The schedule is published. Your slots have a gold outline.",
       rejectedNote: "Leaders rejected this application. You can change it and re-apply.",
@@ -683,6 +684,8 @@ const en = {
       pickHint: "Tap times to add or remove them, or drag across several.",
       publicSchedule: "Open the KvK schedule",
       yourApplicationLabel: "Your application",
+      sameDayHolds: "Same day: you're {position} at {time} UTC. Pick a different time here.",
+      sameDayApplied: "Same day: you also applied for {position} ({times}). Leaders see both.",
     },
     leader: {
       title: "Schedule",
@@ -703,6 +706,10 @@ const en = {
       lockHint: "Locked slots are skipped by Auto-fill and Clear.",
       applicationsCount: "Applications: {n}",
       acceptHere: "Accept here",
+      sameDayHolds: "Also {position} at {time}",
+      sameDayApplied: "Also applied for {position}: {times}",
+      sameDayAccepted: "Also accepted for {position}, no time yet",
+      clash: "Clashes with their {position} time",
     },
   },
   notFound: {

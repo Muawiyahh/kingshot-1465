@@ -26,9 +26,14 @@ export type FillPlan = {
  * - Specific-time applicants get their earliest preferred free slot.
  * - "Any time" applicants try their preferred slots first, then take the free slot that the
  *   specific-time applicants still waiting want least (earliest on a tie), so they don't block them.
- * Locked slots and slots that already have someone are never touched.
+ * Locked slots and slots that already have someone are never touched, and nobody is given a time
+ * in `blocked` for them (the times they hold in another position that day).
  */
-export function planAutofill(slots: FillSlot[], applicants: FillApplicant[]): FillPlan {
+export function planAutofill(
+  slots: FillSlot[],
+  applicants: FillApplicant[],
+  blocked: (profileId: string) => Set<number> = () => new Set(),
+): FillPlan {
   const assigned = new Set(slots.flatMap((s) => (s.profile_id ? [s.profile_id] : [])));
   const free = new Map(slots.filter((s) => !s.profile_id && !s.locked).map((s) => [s.slot_index, s.id]));
 
@@ -41,15 +46,17 @@ export function planAutofill(slots: FillSlot[], applicants: FillApplicant[]): Fi
   const skipped: string[] = [];
 
   queue.forEach((a, position) => {
-    let pick = a.preferred.find((i) => free.has(i));
-    if (pick === undefined && a.anytime && free.size > 0) {
+    const busy = blocked(a.profile_id);
+    const open = (i: number) => free.has(i) && !busy.has(i);
+    let pick = a.preferred.find(open);
+    if (pick === undefined && a.anytime) {
       // How many specific-time applicants still waiting want each free slot.
       const demand = new Map<number, number>();
       for (const later of queue.slice(position + 1)) {
         if (later.anytime) continue;
         for (const i of later.preferred) if (free.has(i)) demand.set(i, (demand.get(i) ?? 0) + 1);
       }
-      pick = [...free.keys()].sort((x, y) => (demand.get(x) ?? 0) - (demand.get(y) ?? 0) || x - y)[0];
+      pick = [...free.keys()].filter(open).sort((x, y) => (demand.get(x) ?? 0) - (demand.get(y) ?? 0) || x - y)[0];
     }
     if (pick === undefined) {
       skipped.push(a.name);

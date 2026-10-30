@@ -13,7 +13,6 @@ import { Badge, Card, LiveDot, inputClass } from "@/components/ui";
 import { useRealtimeRefresh } from "@/components/use-realtime-refresh";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
-import { slotCount } from "@/lib/kvk";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import type { EventStatus, PublicScheduleRow } from "@/lib/types";
 
@@ -64,19 +63,17 @@ export function ScheduleView({
   });
   const event = events.find((e) => e.id === eventId) ?? events[0];
 
-  const { columns, cells, slotMinutes, filled } = useMemo(() => {
+  const { columns, cells, slotMinutes } = useMemo(() => {
     const byDay = new Map<string, GridColumn>();
     const cells = new Map<string, PublicScheduleRow>();
-    const filled = new Map<string, number>();
     for (const r of rows) {
       if (r.event_id !== event?.id) continue;
       if (!byDay.has(r.day_id)) byDay.set(r.day_id, { id: r.day_id, dayNumber: r.day_number, date: r.date, position: r.position });
       cells.set(`${r.day_id}:${r.slot_index}`, r);
-      if (r.ingame_name) filled.set(r.day_id, (filled.get(r.day_id) ?? 0) + 1);
     }
     const columns = [...byDay.values()].sort((a, b) => a.dayNumber - b.dayNumber || a.position.localeCompare(b.position));
     const minutes = rows.find((r) => r.event_id === event?.id)?.slot_minutes ?? 30;
-    return { columns, cells, slotMinutes: minutes, filled };
+    return { columns, cells, slotMinutes: minutes };
   }, [rows, event?.id]);
 
   // A jump into another event's table (or from the link) waits until that table is on screen.
@@ -137,7 +134,6 @@ export function ScheduleView({
     };
   }
 
-  const total = slotCount(slotMinutes);
   const s = t.account.schedule;
 
   return (
@@ -207,11 +203,6 @@ export function ScheduleView({
         focus={jump && columns.some((c) => c.id === jump.dayId) ? jump : firstOwn ? { dayId: firstOwn.dayId, slot: firstOwn.slot } : null}
         hideJumpToFocus
         ariaLabel={t.kvk.grid.label}
-        renderHeader={(col, variant) => (
-          <span className={clsx("block font-mono text-[0.625rem] text-muted", variant === "chip" ? "opacity-80" : "mt-1")}>
-            {fmt(t.kvk.leader.headerFilled, { filled: filled.get(col.id) ?? 0, total })}
-          </span>
-        )}
       />
     </div>
   );

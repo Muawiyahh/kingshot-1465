@@ -30,16 +30,18 @@ export type GridCell = {
 /** Row heights in px [phone, desktop] by slot length; shorter slots get denser rows. */
 const ROW_HEIGHT: Record<number, [number, number]> = { 60: [52, 44], 30: [44, 36], 15: [44, 28] };
 
+// Filled cells are soft chips inset in their cell; empty cells stay blank.
 const TONE: Record<CellTone, string> = {
   empty: "",
-  taken: "bg-white/[0.035] text-fg",
-  pending: "bg-warning/15 text-warning shadow-[inset_3px_0_0_var(--warning)]",
-  accepted: "bg-success/15 text-success shadow-[inset_3px_0_0_var(--success)]",
+  taken: "bg-white/[0.05] text-fg",
+  pending: "bg-warning/[0.12] text-warning",
+  accepted: "bg-success/[0.12] text-success",
   rejected: "bg-danger/10 text-danger",
-  heat1: "bg-primary/10 text-fg",
-  heat2: "bg-primary/20 text-fg",
-  heat3: "bg-primary/35 text-fg",
+  heat1: "bg-primary/[0.08] text-fg",
+  heat2: "bg-primary/[0.16] text-fg",
+  heat3: "bg-primary/25 text-fg",
 };
+const OWN = "bg-gold/[0.14] text-gold-soft shadow-[inset_0_0_0_1px_rgba(233,196,106,0.5)]";
 
 /** Lets a page bring one cell into view, e.g. the "Your slots" buttons. */
 export type GridHandle = { jumpTo: (dayId: string, slot: number) => void };
@@ -197,12 +199,12 @@ export function KvkGrid({
               aria-selected={on}
               onClick={() => setPicked(c.id)}
               className={clsx(
-                "shrink-0 cursor-pointer rounded-2xl px-3 py-2 text-left transition-colors",
-                on ? "bg-primary text-on-primary" : "bg-card text-muted shadow-[inset_0_0_0_1px_var(--border)]",
+                "flex shrink-0 cursor-pointer flex-col justify-start rounded-2xl px-3 py-2 text-left transition-colors",
+                on ? "bg-primary/15 text-fg shadow-[inset_0_0_0_1px_var(--primary)]" : "bg-card text-muted shadow-[inset_0_0_0_1px_var(--border)]",
               )}
             >
-              <span className="block font-mono text-[0.625rem] uppercase opacity-80">{fmt(t.common.day, { n: c.dayNumber })}</span>
               <span className="block max-w-[9rem] truncate text-sm font-semibold">{positionLabel(c.position, t)}</span>
+              <span className="block text-[0.6875rem] opacity-80">{fmt(t.common.day, { n: c.dayNumber })}</span>
               {renderHeader?.(c, "chip")}
             </button>
           );
@@ -240,7 +242,7 @@ export function KvkGrid({
           <div role="row" className="contents">
             <div
               role="columnheader"
-              className="z-30 flex items-end border-r border-b border-border bg-card px-2 pb-2 font-mono text-[0.625rem] text-muted [grid-column:1] [grid-row:1] md:sticky md:top-0 md:left-0"
+              className="z-30 flex items-end border-b border-border bg-card px-3 pb-3 font-mono text-[0.625rem] text-muted/70 [grid-column:1] [grid-row:1] md:sticky md:top-0 md:left-0"
             >
               {g.utc}
             </div>
@@ -248,16 +250,17 @@ export function KvkGrid({
               const isSelected = selected?.dayId === c.id && selected.slot === null;
               const inner = (
                 <>
-                  <span className="flex flex-wrap items-center gap-x-1.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-muted">
+                  <span className="line-clamp-2 text-sm font-semibold text-fg" title={positionLabel(c.position, t)}>
+                    {positionLabel(c.position, t)}
+                  </span>
+                  <span className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[0.6875rem] text-muted">
                     {fmt(t.common.day, { n: c.dayNumber })} · {formatDay(c.date, tag)}
                     {c.date === today && (
-                      <span className="rounded-full bg-primary px-1.5 font-sans text-[0.625rem] leading-4 tracking-normal text-on-primary normal-case">
+                      <span className="inline-flex items-center gap-1 text-fg">
+                        <span aria-hidden className="size-1.5 rounded-full bg-primary" />
                         {g.today}
                       </span>
                     )}
-                  </span>
-                  <span className="mt-0.5 line-clamp-2 text-sm font-semibold text-fg" title={positionLabel(c.position, t)}>
-                    {positionLabel(c.position, t)}
                   </span>
                   {renderHeader?.(c, "header")}
                 </>
@@ -267,11 +270,7 @@ export function KvkGrid({
                   key={c.id}
                   role="columnheader"
                   style={place(1, i + 2)}
-                  className={clsx(
-                    "relative z-20 border-r border-b border-border bg-card [grid-row:1] md:sticky md:top-0",
-                    colClass(c.id),
-                    c.date === today && "shadow-[inset_0_-2px_0_var(--primary)]",
-                  )}
+                  className={clsx("relative z-20 border-b border-border bg-card [grid-row:1] md:sticky md:top-0", colClass(c.id))}
                 >
                   {onHeaderClick ? (
                     <button
@@ -279,14 +278,14 @@ export function KvkGrid({
                       onClick={() => onHeaderClick(c)}
                       aria-pressed={isSelected}
                       className={clsx(
-                        "size-full cursor-pointer p-2.5 text-left transition-colors hover:bg-white/5",
-                        isSelected && "bg-primary/10",
+                        "flex size-full cursor-pointer flex-col justify-start px-3 py-3 text-left transition-colors hover:bg-white/[0.03]",
+                        isSelected && "bg-white/[0.05]",
                       )}
                     >
                       {inner}
                     </button>
                   ) : (
-                    <div className="p-2.5">{inner}</div>
+                    <div className="px-3 py-3">{inner}</div>
                   )}
                 </div>
               );
@@ -305,10 +304,9 @@ export function KvkGrid({
                   data-row={slot}
                   style={place(slot + 2, null)}
                   className={clsx(
-                    "z-10 flex items-center border-r border-border bg-card px-2 font-mono tabular-nums [grid-column:1] [grid-row:var(--gr)] md:sticky md:left-0",
-                    hourEnd ? "border-b border-b-border-strong" : "border-b border-b-border/50",
-                    onHour || slotMinutes >= 30 ? "text-xs text-muted" : "text-[0.625rem] text-muted/60",
-                    live && "bg-primary/15 text-fg shadow-[inset_3px_0_0_var(--primary)]",
+                    "z-10 flex items-center bg-card px-3 font-mono text-[0.6875rem] tabular-nums [grid-column:1] [grid-row:var(--gr)] md:sticky md:left-0",
+                    hourEnd && "border-b border-border/60",
+                    live ? "text-fg shadow-[inset_2px_0_0_var(--primary)]" : onHour ? "text-muted" : "text-muted/45",
                   )}
                 >
                   {time}
@@ -319,11 +317,22 @@ export function KvkGrid({
                   const isLive = live && c.date === today;
                   const isFlash = flash === `${c.id}:${slot}`;
                   const label = `${fmt(t.common.day, { n: c.dayNumber })} · ${positionLabel(c.position, t)}, ${time} UTC: ${cell.label}`;
-                  const body = (
-                    <>
+                  const blank = cell.tone === "empty" && !cell.own;
+                  const chip = (
+                    <span
+                      className={clsx(
+                        "flex size-full min-w-0 items-center gap-1.5 rounded-lg px-2 transition-colors",
+                        TONE[cell.tone],
+                        cell.own && OWN,
+                        cell.match && "shadow-[inset_0_0_0_1.5px_var(--primary)]",
+                        onCellClick && blank && "group-hover:bg-white/[0.04]",
+                        (isSelected || isFlash) && "outline-2 -outline-offset-2 outline-gold",
+                        isFlash && "animate-pulse",
+                      )}
+                    >
                       {cell.content}
-                      {cell.locked && <Lock className="absolute top-1 right-1 size-3 text-muted" aria-hidden />}
-                    </>
+                      {cell.locked && <Lock className="ml-auto size-3 shrink-0 text-muted" aria-hidden />}
+                    </span>
                   );
                   return (
                     <div
@@ -333,19 +342,13 @@ export function KvkGrid({
                       aria-selected={isSelected || undefined}
                       style={place(slot + 2, i + 2)}
                       className={clsx(
-                        "relative min-w-0 border-r border-border/60 text-xs [grid-row:var(--gr)]",
-                        hourEnd ? "border-b border-b-border-strong" : "border-b border-b-border/50",
+                        "relative min-w-0 p-[3px] text-xs [grid-row:var(--gr)]",
+                        hourEnd && "border-b border-border/60",
                         colClass(c.id),
-                        TONE[cell.tone],
-                        cell.own && "bg-gold/10 shadow-[inset_0_0_0_2px_var(--gold)]",
-                        cell.match && "shadow-[inset_0_0_0_2px_var(--primary)]",
-                        cell.dim && "opacity-35",
-                        isLive && "bg-primary/10",
-                        isSelected && "z-[5] outline-2 -outline-offset-2 outline-gold",
-                        isFlash && "z-[6] animate-pulse outline-2 -outline-offset-2 outline-gold",
+                        cell.dim && "opacity-30",
                       )}
                     >
-                      {isLive && <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-primary" />}
+                      {isLive && <span aria-hidden className="pointer-events-none absolute inset-x-1 top-0 h-px bg-primary" />}
                       {onCellClick ? (
                         <button
                           type="button"
@@ -356,13 +359,13 @@ export function KvkGrid({
                           aria-label={label}
                           onFocus={() => setActive({ col: i, slot })}
                           onClick={() => onCellClick(c, slot)}
-                          className="flex size-full cursor-pointer items-center gap-1.5 px-2 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-offset-[-3px]"
+                          className="group flex size-full cursor-pointer rounded-lg text-left focus-visible:outline-offset-[-2px]"
                         >
-                          {body}
+                          {chip}
                         </button>
                       ) : (
-                        <span aria-label={label} className="flex size-full items-center gap-1.5 px-2">
-                          {body}
+                        <span aria-label={label} className="flex size-full">
+                          {chip}
                         </span>
                       )}
                     </div>

@@ -112,6 +112,7 @@ const ptBR: Messages = {
         vikings: "Vikings",
         fortress: "Fortaleza",
       },
+      legion: "Legião {n}",
     },
     hof: {
       eyebrow: "Hall da Fama",
@@ -665,7 +666,7 @@ const ptBR: Messages = {
     },
     player: {
       eventsLabel: "Eventos de KvK",
-      stateOpen: "As candidaturas estão abertas. Toque em um horário de qualquer dia para se candidatar.",
+      stateOpen: "As candidaturas estão abertas. Toque em um horário de qualquer dia para se candidatar. Você pode se candidatar a mais de uma posição.",
       stateClosed: "As candidaturas estão fechadas enquanto os líderes distribuem os horários.",
       statePublished: "A agenda foi publicada. Seus horários têm contorno dourado.",
       rejectedNote: "Os líderes recusaram esta candidatura. Você pode alterá-la e se candidatar de novo.",
@@ -680,6 +681,8 @@ const ptBR: Messages = {
       pickHint: "Toque nos horários para adicionar ou remover, ou arraste sobre vários.",
       publicSchedule: "Abrir a escala do KvK",
       yourApplicationLabel: "Sua candidatura",
+      sameDayHolds: "No mesmo dia você é {position} às {time} UTC. Escolha outro horário aqui.",
+      sameDayApplied: "No mesmo dia você também se candidatou a {position} ({times}). Os líderes veem as duas.",
     },
     leader: {
       title: "Agenda",
@@ -700,6 +703,10 @@ const ptBR: Messages = {
       lockHint: "O preenchimento automático e Limpar pulam horários bloqueados.",
       applicationsCount: "Candidaturas: {n}",
       acceptHere: "Aceitar aqui",
+      sameDayHolds: "Também {position} às {time}",
+      sameDayApplied: "Também se candidatou a {position}: {times}",
+      sameDayAccepted: "Também aceito para {position}, ainda sem horário",
+      clash: "Coincide com o horário de {position}",
     },
   },
   notFound: {

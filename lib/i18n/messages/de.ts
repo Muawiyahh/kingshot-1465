@@ -112,6 +112,7 @@ const de: Messages = {
         vikings: "Wikinger",
         fortress: "Festung",
       },
+      legion: "Legion {n}",
     },
     hof: {
       eyebrow: "Ruhmeshalle",
@@ -665,7 +666,7 @@ const de: Messages = {
     },
     player: {
       eventsLabel: "KvK-Events",
-      stateOpen: "Bewerbungen sind offen. Tippe an einem beliebigen Tag auf eine Zeit, um dich zu bewerben.",
+      stateOpen: "Bewerbungen sind offen. Tippe an einem beliebigen Tag auf eine Zeit, um dich zu bewerben. Du kannst dich für mehrere Positionen bewerben.",
       stateClosed: "Bewerbungen sind geschlossen, während die Leiter die Slots vergeben.",
       statePublished: "Der Zeitplan ist veröffentlicht. Deine Slots sind golden umrandet.",
       rejectedNote: "Die Leiter haben diese Bewerbung abgelehnt. Du kannst sie ändern und dich erneut bewerben.",
@@ -680,6 +681,8 @@ const de: Messages = {
       pickHint: "Tippe auf Zeiten, um sie hinzuzufügen oder zu entfernen, oder ziehe über mehrere.",
       publicSchedule: "KvK-Zeitplan öffnen",
       yourApplicationLabel: "Deine Bewerbung",
+      sameDayHolds: "Am selben Tag bist du {position} um {time} UTC. Wähle hier eine andere Zeit.",
+      sameDayApplied: "Am selben Tag hast du dich auch für {position} beworben ({times}). Die Leader sehen beides.",
     },
     leader: {
       title: "Zeitplan",
@@ -700,6 +703,10 @@ const de: Messages = {
       lockHint: "Gesperrte Slots werden von Auto-Fill und Leeren übersprungen.",
       applicationsCount: "Bewerbungen: {n}",
       acceptHere: "Hier annehmen",
+      sameDayHolds: "Auch {position} um {time}",
+      sameDayApplied: "Auch beworben für {position}: {times}",
+      sameDayAccepted: "Auch für {position} angenommen, noch ohne Zeit",
+      clash: "Überschneidet sich mit der Zeit als {position}",
     },
   },
   notFound: {
