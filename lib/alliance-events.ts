@@ -48,16 +48,34 @@ export function eventLabel(event: AllianceEventKey, t: Messages): { name: string
   return { name, part, full: `${name} · ${part}` };
 }
 
-/** Consecutive events under one heading: both runs of a split event, or a single event. */
-export function eventGroups(events: readonly AllianceEventKey[] = ALLIANCE_EVENTS) {
-  const groups: { group: string; events: AllianceEventKey[] }[] = [];
-  for (const e of events) {
-    const group = PARTS[e]?.group ?? e;
-    const last = groups.at(-1);
-    if (last?.group === group) last.events.push(e);
-    else groups.push({ group, events: [e] });
-  }
-  return groups;
+type RowKey = "bear" | "swordland" | "tri_alliance" | "vikings" | "sanctuary" | "fortress";
+/** One run of an event on the homepage: Bear Trap #1, Swordland Legion 2, Vikings Day 1… */
+export type EventRun = { event: AllianceEventKey; label: "number" | "legion" | "day" | null; n: number };
+
+/**
+ * The homepage rows, top to bottom (the order of ALLIANCE_EVENTS): each event once, with its two
+ * runs side by side. Sanctuary and Fortress stay last.
+ */
+export const EVENT_ROWS: { row: RowKey; runs: EventRun[] }[] = [
+  { row: "bear", runs: [{ event: "bear1", label: "number", n: 1 }, { event: "bear2", label: "number", n: 2 }] },
+  { row: "swordland", runs: [{ event: "swordland", label: "legion", n: 1 }, { event: "swordland2", label: "legion", n: 2 }] },
+  { row: "tri_alliance", runs: [{ event: "tri_alliance", label: "legion", n: 1 }, { event: "tri_alliance2", label: "legion", n: 2 }] },
+  { row: "vikings", runs: [{ event: "vikings", label: "day", n: 1 }, { event: "vikings2", label: "day", n: 2 }] },
+  { row: "sanctuary", runs: [{ event: "sanctuary1", label: "number", n: 1 }, { event: "sanctuary2", label: "number", n: 2 }] },
+  { row: "fortress", runs: [{ event: "fortress", label: null, n: 1 }] },
+];
+
+/** A row's translated name: "Bear Trap", "Swordland"… */
+export function rowName(row: RowKey, t: Messages) {
+  return row === "bear" || row === "sanctuary" ? t.home.events.groups[row] : t.home.events.names[row];
+}
+
+/** A run's short label: "#1", "Legion 2", "Day 1", or none for a single-run event. */
+export function runLabel(run: EventRun, t: Messages) {
+  if (run.label === "number") return `#${run.n}`;
+  if (run.label === "legion") return fmt(t.home.events.legion, { n: run.n });
+  if (run.label === "day") return fmt(t.common.day, { n: run.n });
+  return null;
 }
 
 export function isAllianceEvent(value: unknown): value is AllianceEventKey {

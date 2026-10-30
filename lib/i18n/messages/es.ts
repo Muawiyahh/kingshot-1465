@@ -25,6 +25,7 @@ const es: Messages = {
     adminNextKvk: "Próximo KvK · Admin",
     adminTransferMessages: "Mensajes de traslado · Admin",
     schedule: "Horario de KvK",
+    newPassword: "Elige una contraseña nueva",
   },
   nav: {
     home: "Inicio",
@@ -113,6 +114,11 @@ const es: Messages = {
         fortress: "Fortaleza",
       },
       legion: "Legión {n}",
+      groups: {
+        bear: "Trampa de oso",
+        sanctuary: "Santuario",
+      },
+      noneSet: "Aún no hay horarios.",
     },
     hof: {
       eyebrow: "Salón de la Fama",
@@ -266,6 +272,12 @@ const es: Messages = {
       openMessages: "Abrir mensajes",
       prompt: "¿Vienes de otro reino?",
       link: "Crea una cuenta de traslado",
+    },
+    newPassword: {
+      title: "Elige una contraseña nueva",
+      subtitle: "Un admin restableció tu contraseña. Elige una nueva para seguir usando el sitio.",
+      label: "Contraseña nueva",
+      save: "Guardar y continuar",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const es: Messages = {
     speedupsRequired: "Indica cada tipo de acelerador (0 si no tienes).",
     noFreeTime: "Ninguna de las horas de este jugador está libre. Toca una hora en la tabla para ponerlo ahí.",
     slotTaken: "Alguien acaba de ocupar esa hora. Elige otra.",
+    resetGameId: "El ID de juego es el número de 6 a 12 dígitos de la tarjeta de perfil del jugador.",
+    accountNotFound: "Ninguna cuenta usa el ID de juego {id}.",
+    resetOwn: "Esa es tu propia cuenta. Pide a otro admin que restablezca tu contraseña.",
+    resetFailed: "No se pudo restablecer la contraseña. Inténtalo de nuevo.",
+    passwordFailed: "No se pudo guardar tu contraseña nueva. Inténtalo de nuevo.",
   },
   success: {
     applicationUpdated: "Solicitud actualizada.",
@@ -464,7 +481,7 @@ const es: Messages = {
       manage: "Dónde encontrar cada cosa",
       cards: {
         events: "Crea un evento de KvK, abre las solicitudes y acepta jugadores en los turnos del castillo.",
-        accounts: "Aprueba a los nuevos jugadores y elige quién es líder.",
+        accounts: "Aprueba a los nuevos jugadores, elige quién es líder y restablece contraseñas olvidadas.",
         king: "Cambia el nombre y la alianza del rey que se muestran en la página de inicio.",
         server: "Indica la fecha de apertura del servidor. La página de inicio calcula de ahí su antigüedad.",
         messages: "Lee los mensajes de los jugadores y respóndelos.",
@@ -499,6 +516,23 @@ const es: Messages = {
       saveRole: "Guardar rol",
       makeMember: "Ya está en 1465",
       makeMemberHint: "Se ha trasladado a 1465: convertir en cuenta de miembro.",
+      reset: {
+        title: "Restablecer una contraseña",
+        intro: "Para un jugador que no puede iniciar sesión. Escribe su ID de juego, comprueba que es la cuenta correcta y restablécela. Recibirá una contraseña temporal y elegirá la suya al iniciar sesión con ella.",
+        gameId: "ID de juego del jugador",
+        find: "Buscar cuenta",
+        finding: "Buscando…",
+        check: "¿Es la cuenta correcta?",
+        confirm: "Restablecer contraseña",
+        resetting: "Restableciendo…",
+        cancel: "Cancelar",
+        done: "Contraseña restablecida para {name}.",
+        temp: "Contraseña temporal",
+        copy: "Copiar",
+        copied: "Copiada",
+        sendIt: "Envíasela ahora en el juego. Solo se muestra esta vez. Al iniciar sesión con ella, se le pedirá que elija una contraseña nueva.",
+        another: "Listo",
+      },
     },
     events: {
       title: "Eventos de KvK",

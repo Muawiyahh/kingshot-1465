@@ -27,6 +27,7 @@ const en = {
     adminNextKvk: "Next KvK · Admin",
     adminTransferMessages: "Transfer messages · Admin",
     schedule: "KvK schedule",
+    newPassword: "Choose a new password",
   },
   nav: {
     home: "Home",
@@ -116,6 +117,11 @@ const en = {
         fortress: "Fortress",
       },
       legion: "Legion {n}",
+      groups: {
+        bear: "Bear Trap",
+        sanctuary: "Sanctuary",
+      },
+      noneSet: "No times set yet.",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -269,6 +275,12 @@ const en = {
       openMessages: "Open messages",
       prompt: "Transferring from another kingdom?",
       link: "Create a transfer account",
+    },
+    newPassword: {
+      title: "Choose a new password",
+      subtitle: "An admin reset your password. Pick a new one to keep using the site.",
+      label: "New password",
+      save: "Save and continue",
     },
   },
   account: {
@@ -437,6 +449,11 @@ const en = {
     speedupsRequired: "Enter each kind of speedup (0 if you have none).",
     noFreeTime: "None of this player's times is free. Tap a time in the table to place them there.",
     slotTaken: "Someone else has just taken that time. Pick another.",
+    resetGameId: "A game ID is the 6–12 digit number on the player's profile card.",
+    accountNotFound: "No account uses the game ID {id}.",
+    resetOwn: "That's your own account. Ask another admin to reset your password.",
+    resetFailed: "Couldn't reset the password. Try again.",
+    passwordFailed: "Couldn't save your new password. Try again.",
   },
   success: {
     applicationUpdated: "Application updated.",
@@ -467,7 +484,7 @@ const en = {
       manage: "Where to find things",
       cards: {
         events: "Create a KvK event, open applications and accept players into castle slots.",
-        accounts: "Approve new players and choose who is a leader.",
+        accounts: "Approve new players, choose who is a leader and reset forgotten passwords.",
         king: "Change the King's name and alliance shown on the homepage.",
         server: "Set the date the server opened. The homepage counts the server's age from it.",
         messages: "Read and reply to messages from players.",
@@ -502,6 +519,23 @@ const en = {
       saveRole: "Save role",
       makeMember: "Joined 1465",
       makeMemberHint: "They've moved to 1465: turn this into a member account.",
+      reset: {
+        title: "Reset a password",
+        intro: "For a player who can't sign in. Enter their game ID, check it's the right account, then reset. They get a temporary password and choose their own when they sign in with it.",
+        gameId: "Player's game ID",
+        find: "Find account",
+        finding: "Finding…",
+        check: "Is this the right account?",
+        confirm: "Reset password",
+        resetting: "Resetting…",
+        cancel: "Cancel",
+        done: "Password reset for {name}.",
+        temp: "Temporary password",
+        copy: "Copy",
+        copied: "Copied",
+        sendIt: "Send it to them in-game now. It's only shown this once. When they sign in with it, they'll be asked to choose a new password.",
+        another: "Done",
+      },
     },
     events: {
       title: "KvK events",

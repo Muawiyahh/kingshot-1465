@@ -13,6 +13,7 @@ import { getI18n } from "@/lib/i18n/server";
 import { createClient } from "@/lib/supabase/server";
 import type { AccountStatus, Profile, UserRole } from "@/lib/types";
 import { makeMember, setAccountRole, setAccountStatus } from "../actions";
+import { ResetPassword } from "./reset-password";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -32,26 +33,26 @@ export default async function AccountsPage({
   const href = localePath(locale, "/admin/accounts");
   return (
     <>
-      <PageHeader eyebrow={t.admin.nav.groups.players} title={a.title}>
-        {a.intro}
-      </PageHeader>
-      {/* One loading boundary for tabs and list; the tab row shows (unhighlighted) at once. */}
-      <Suspense
-        fallback={
-          <>
-            <TabList
-              tabs={tabs}
-              active={null}
-              href={href}
-              param="status"
-              label={a.tabsLabel}
-            />
-            <RowsSkeleton rows={3} />
-          </>
-        }
-      >
-        <AccountsList searchParams={searchParams} tabs={tabs} href={href} />
-      </Suspense>
+        <PageHeader eyebrow={t.admin.nav.groups.players} title={a.title}>
+          {a.intro}
+        </PageHeader>
+        {/* One loading boundary for tabs and list; the tab row shows (unhighlighted) at once. */}
+        <Suspense
+          fallback={
+            <>
+              <TabList
+                tabs={tabs}
+                active={null}
+                href={href}
+                param="status"
+                label={a.tabsLabel}
+              />
+              <RowsSkeleton rows={3} />
+            </>
+          }
+        >
+          <AccountsList searchParams={searchParams} tabs={tabs} href={href} />
+        </Suspense>
     </>
   );
 }
@@ -83,6 +84,8 @@ async function AccountsList({
   const profiles = (data ?? []) as Profile[];
 
   return (
+    <>
+    {leader.role === "admin" && <ResetPassword />}
     <QueryTabs
       param="status"
       tabs={tabs}
@@ -204,6 +207,7 @@ async function AccountsList({
         </Card>
       )}
     </QueryTabs>
+    </>
   );
 }
 

@@ -25,6 +25,7 @@ const id: Messages = {
     adminNextKvk: "KvK berikutnya · Admin",
     adminTransferMessages: "Pesan transfer · Admin",
     schedule: "Jadwal KvK",
+    newPassword: "Pilih kata sandi baru",
   },
   nav: {
     home: "Beranda",
@@ -113,6 +114,11 @@ const id: Messages = {
         fortress: "Benteng",
       },
       legion: "Legiun {n}",
+      groups: {
+        bear: "Perangkap Beruang",
+        sanctuary: "Sanctuary",
+      },
+      noneSet: "Belum ada waktu.",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -266,6 +272,12 @@ const id: Messages = {
       openMessages: "Buka pesan",
       prompt: "Pindah dari kerajaan lain?",
       link: "Buat akun transfer",
+    },
+    newPassword: {
+      title: "Pilih kata sandi baru",
+      subtitle: "Admin telah mereset kata sandimu. Pilih yang baru untuk terus memakai situs ini.",
+      label: "Kata sandi baru",
+      save: "Simpan dan lanjutkan",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const id: Messages = {
     speedupsRequired: "Isi tiap jenis percepatan (0 kalau tidak punya).",
     noFreeTime: "Tidak ada waktu pilihan pemain ini yang kosong. Ketuk waktu di tabel untuk menempatkannya di sana.",
     slotTaken: "Waktu itu baru saja diambil orang lain. Pilih yang lain.",
+    resetGameId: "ID game adalah angka 6–12 digit di kartu profil pemain.",
+    accountNotFound: "Tidak ada akun dengan ID game {id}.",
+    resetOwn: "Itu akunmu sendiri. Minta admin lain untuk mereset kata sandimu.",
+    resetFailed: "Tidak bisa mereset kata sandi. Coba lagi.",
+    passwordFailed: "Tidak bisa menyimpan kata sandi barumu. Coba lagi.",
   },
   success: {
     applicationUpdated: "Pendaftaran diperbarui.",
@@ -464,7 +481,7 @@ const id: Messages = {
       manage: "Di mana menemukan apa",
       cards: {
         events: "Buat event KvK, buka pendaftaran, dan terima pemain ke slot kastil.",
-        accounts: "Setujui pemain baru dan tentukan siapa yang menjadi pemimpin.",
+        accounts: "Setujui pemain baru, tentukan siapa yang menjadi pemimpin, dan reset kata sandi yang terlupa.",
         king: "Ubah nama dan aliansi Raja yang tampil di beranda.",
         server: "Atur tanggal server dibuka. Beranda menghitung usia server dari tanggal ini.",
         messages: "Baca dan balas pesan dari pemain.",
@@ -499,6 +516,23 @@ const id: Messages = {
       saveRole: "Simpan peran",
       makeMember: "Sudah di 1465",
       makeMemberHint: "Sudah pindah ke 1465: jadikan akun anggota.",
+      reset: {
+        title: "Reset kata sandi",
+        intro: "Untuk pemain yang tidak bisa masuk. Masukkan ID game-nya, pastikan akunnya benar, lalu reset. Pemain mendapat kata sandi sementara dan memilih kata sandinya sendiri saat masuk dengannya.",
+        gameId: "ID game pemain",
+        find: "Cari akun",
+        finding: "Mencari…",
+        check: "Apakah ini akun yang benar?",
+        confirm: "Reset kata sandi",
+        resetting: "Mereset…",
+        cancel: "Batal",
+        done: "Kata sandi {name} telah direset.",
+        temp: "Kata sandi sementara",
+        copy: "Salin",
+        copied: "Tersalin",
+        sendIt: "Kirimkan sekarang lewat game. Kata sandi ini hanya ditampilkan sekali. Saat masuk dengannya, pemain akan diminta memilih kata sandi baru.",
+        another: "Selesai",
+      },
     },
     events: {
       title: "Event KvK",

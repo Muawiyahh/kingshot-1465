@@ -126,6 +126,13 @@ export type HallOfFameRow = {
 /** Result shape returned by Server Actions to useActionState forms. */
 export type ActionState = { ok?: boolean; error?: string; message?: string } | undefined;
 
+/**
+ * Admin → Accounts password reset: the account found by game ID (shown for the admin to check), then
+ * the temporary password once it's reset. The password only ever travels in this response.
+ */
+export type ResetAccount = { gameId: string; name: string; alliance: string | null; role: UserRole };
+export type ResetState = { error?: string; account?: ResetAccount; password?: string } | undefined;
+
 /** What auto-fill did: how many players it placed, and who it couldn't find a free time for. */
 export type FillReport = { placed: number; skipped: string[] };
 export type FillState = { ok?: boolean; error?: string; message?: string; report?: FillReport } | undefined;

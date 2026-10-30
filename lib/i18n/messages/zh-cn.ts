@@ -25,6 +25,7 @@ const zhCN: Messages = {
     adminNextKvk: "下一场 KvK · 管理",
     adminTransferMessages: "转服消息 · 管理",
     schedule: "KvK 排班表",
+    newPassword: "设置新密码",
   },
   nav: {
     home: "首页",
@@ -113,6 +114,11 @@ const zhCN: Messages = {
         fortress: "要塞",
       },
       legion: "军团 {n}",
+      groups: {
+        bear: "熊陷阱",
+        sanctuary: "圣所",
+      },
+      noneSet: "尚未设定时间。",
     },
     hof: {
       eyebrow: "名人堂",
@@ -266,6 +272,12 @@ const zhCN: Messages = {
       openMessages: "打开消息",
       prompt: "从其他王国转服？",
       link: "创建转服账户",
+    },
+    newPassword: {
+      title: "设置新密码",
+      subtitle: "管理员已重置你的密码。请设置一个新密码以继续使用本站。",
+      label: "新密码",
+      save: "保存并继续",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const zhCN: Messages = {
     speedupsRequired: "请填写每种加速（没有就填 0）。",
     noFreeTime: "该玩家选的时间都已被占用。请在表中点一个时间，把他安排在那里。",
     slotTaken: "这个时间刚被别人占用了，请换一个。",
+    resetGameId: "游戏 ID 是玩家资料卡上的 6–12 位数字。",
+    accountNotFound: "没有账户使用游戏 ID {id}。",
+    resetOwn: "这是你自己的账户。请让另一位管理员重置你的密码。",
+    resetFailed: "无法重置密码，请重试。",
+    passwordFailed: "无法保存你的新密码，请重试。",
   },
   success: {
     applicationUpdated: "申请已更新。",
@@ -464,7 +481,7 @@ const zhCN: Messages = {
       manage: "功能都在哪里",
       cards: {
         events: "创建 KvK 活动、开放申请，并把玩家接受到城堡时段。",
-        accounts: "审核新玩家，并设置谁是领袖。",
+        accounts: "审核新玩家，设置谁是领袖，并重置忘记的密码。",
         king: "修改首页上显示的国王名字和联盟。",
         server: "设置服务器的开服日期，首页据此计算服务器天数。",
         messages: "查看并回复玩家发来的消息。",
@@ -499,6 +516,23 @@ const zhCN: Messages = {
       saveRole: "保存角色",
       makeMember: "已加入 1465",
       makeMemberHint: "已转到 1465：改为成员账户。",
+      reset: {
+        title: "重置密码",
+        intro: "适用于无法登录的玩家。输入其游戏 ID，确认账户无误后重置。玩家会收到一个临时密码，用它登录后再设置自己的密码。",
+        gameId: "玩家的游戏 ID",
+        find: "查找账户",
+        finding: "查找中…",
+        check: "是这个账户吗？",
+        confirm: "重置密码",
+        resetting: "重置中…",
+        cancel: "取消",
+        done: "已重置 {name} 的密码。",
+        temp: "临时密码",
+        copy: "复制",
+        copied: "已复制",
+        sendIt: "现在就在游戏里发给对方。它只显示这一次。对方用它登录后，会被要求设置新密码。",
+        another: "完成",
+      },
     },
     events: {
       title: "KvK 活动",

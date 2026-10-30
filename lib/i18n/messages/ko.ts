@@ -25,6 +25,7 @@ const ko: Messages = {
     adminNextKvk: "다음 KvK · 관리자",
     adminTransferMessages: "서버 이동 메시지 · 관리자",
     schedule: "KvK 일정",
+    newPassword: "새 비밀번호 설정",
   },
   nav: {
     home: "홈",
@@ -113,6 +114,11 @@ const ko: Messages = {
         fortress: "요새",
       },
       legion: "군단 {n}",
+      groups: {
+        bear: "곰 함정",
+        sanctuary: "성역",
+      },
+      noneSet: "아직 정해진 시간이 없습니다.",
     },
     hof: {
       eyebrow: "명예의 전당",
@@ -266,6 +272,12 @@ const ko: Messages = {
       openMessages: "메시지 열기",
       prompt: "다른 왕국에서 이동하시나요?",
       link: "서버 이동 계정 만들기",
+    },
+    newPassword: {
+      title: "새 비밀번호 설정",
+      subtitle: "관리자가 비밀번호를 초기화했습니다. 사이트를 계속 이용하려면 새 비밀번호를 정하세요.",
+      label: "새 비밀번호",
+      save: "저장하고 계속",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const ko: Messages = {
     speedupsRequired: "가속 종류마다 값을 입력하세요(없으면 0).",
     noFreeTime: "이 플레이어가 고른 시간이 모두 찼습니다. 표에서 시간을 눌러 그곳에 배정하세요.",
     slotTaken: "방금 다른 사람이 그 시간을 가져갔습니다. 다른 시간을 고르세요.",
+    resetGameId: "게임 ID는 플레이어 프로필 카드에 있는 6~12자리 숫자입니다.",
+    accountNotFound: "게임 ID {id}를 쓰는 계정이 없습니다.",
+    resetOwn: "본인 계정입니다. 다른 관리자에게 비밀번호 초기화를 요청하세요.",
+    resetFailed: "비밀번호를 초기화하지 못했습니다. 다시 시도해 주세요.",
+    passwordFailed: "새 비밀번호를 저장하지 못했습니다. 다시 시도해 주세요.",
   },
   success: {
     applicationUpdated: "신청이 수정되었습니다.",
@@ -464,7 +481,7 @@ const ko: Messages = {
       manage: "기능 위치 안내",
       cards: {
         events: "KvK 이벤트를 만들고, 신청을 받고, 플레이어를 성 시간대에 수락합니다.",
-        accounts: "새 플레이어를 승인하고 리더를 지정합니다.",
+        accounts: "새 플레이어를 승인하고, 리더를 지정하고, 잊어버린 비밀번호를 초기화합니다.",
         king: "홈에 표시되는 왕의 이름과 연맹을 바꿉니다.",
         server: "서버가 열린 날짜를 정합니다. 홈은 이 날짜로 서버 경과일을 계산합니다.",
         messages: "플레이어가 보낸 메시지를 읽고 답장하세요.",
@@ -499,6 +516,23 @@ const ko: Messages = {
       saveRole: "역할 저장",
       makeMember: "1465 합류",
       makeMemberHint: "1465로 이동함: 멤버 계정으로 전환합니다.",
+      reset: {
+        title: "비밀번호 초기화",
+        intro: "로그인할 수 없는 플레이어용입니다. 게임 ID를 입력하고 올바른 계정인지 확인한 뒤 초기화하세요. 플레이어는 임시 비밀번호를 받고, 그것으로 로그인하면 자신의 비밀번호를 새로 정합니다.",
+        gameId: "플레이어 게임 ID",
+        find: "계정 찾기",
+        finding: "찾는 중…",
+        check: "이 계정이 맞나요?",
+        confirm: "비밀번호 초기화",
+        resetting: "초기화 중…",
+        cancel: "취소",
+        done: "{name}의 비밀번호를 초기화했습니다.",
+        temp: "임시 비밀번호",
+        copy: "복사",
+        copied: "복사됨",
+        sendIt: "지금 게임 안에서 보내 주세요. 이번 한 번만 표시됩니다. 이 비밀번호로 로그인하면 새 비밀번호를 정하라는 안내가 나옵니다.",
+        another: "완료",
+      },
     },
     events: {
       title: "KvK 이벤트",

@@ -25,6 +25,7 @@ const ptBR: Messages = {
     adminNextKvk: "Próximo KvK · Admin",
     adminTransferMessages: "Mensagens de transferência · Admin",
     schedule: "Escala do KvK",
+    newPassword: "Escolha uma nova senha",
   },
   nav: {
     home: "Início",
@@ -113,6 +114,11 @@ const ptBR: Messages = {
         fortress: "Fortaleza",
       },
       legion: "Legião {n}",
+      groups: {
+        bear: "Armadilha de Urso",
+        sanctuary: "Santuário",
+      },
+      noneSet: "Ainda sem horários.",
     },
     hof: {
       eyebrow: "Hall da Fama",
@@ -266,6 +272,12 @@ const ptBR: Messages = {
       openMessages: "Abrir mensagens",
       prompt: "Vindo de outro reino?",
       link: "Crie uma conta de transferência",
+    },
+    newPassword: {
+      title: "Escolha uma nova senha",
+      subtitle: "Um admin redefiniu sua senha. Escolha uma nova para continuar usando o site.",
+      label: "Nova senha",
+      save: "Salvar e continuar",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const ptBR: Messages = {
     speedupsRequired: "Informe cada tipo de acelerador (0 se não tiver).",
     noFreeTime: "Nenhum dos horários deste jogador está livre. Toque num horário da tabela para colocá-lo lá.",
     slotTaken: "Alguém acabou de pegar esse horário. Escolha outro.",
+    resetGameId: "O ID do jogo é o número de 6 a 12 dígitos no cartão de perfil do jogador.",
+    accountNotFound: "Nenhuma conta usa o ID do jogo {id}.",
+    resetOwn: "Essa é a sua própria conta. Peça a outro admin para redefinir sua senha.",
+    resetFailed: "Não foi possível redefinir a senha. Tente de novo.",
+    passwordFailed: "Não foi possível salvar sua nova senha. Tente de novo.",
   },
   success: {
     applicationUpdated: "Candidatura atualizada.",
@@ -464,7 +481,7 @@ const ptBR: Messages = {
       manage: "Onde encontrar cada coisa",
       cards: {
         events: "Crie um evento de KvK, abra as inscrições e aceite jogadores nos horários do castelo.",
-        accounts: "Aprove novos jogadores e escolha quem é líder.",
+        accounts: "Aprove novos jogadores, escolha quem é líder e redefina senhas esquecidas.",
         king: "Altere o nome e a aliança do rei exibidos na página inicial.",
         server: "Defina a data de abertura do servidor. A página inicial calcula a idade do servidor a partir dela.",
         messages: "Leia e responda às mensagens dos jogadores.",
@@ -499,6 +516,23 @@ const ptBR: Messages = {
       saveRole: "Salvar função",
       makeMember: "Entrou no 1465",
       makeMemberHint: "Já se transferiu para o 1465: transformar em conta de membro.",
+      reset: {
+        title: "Redefinir uma senha",
+        intro: "Para um jogador que não consegue entrar. Digite o ID do jogo dele, confira se é a conta certa e redefina. Ele recebe uma senha temporária e escolhe a própria ao entrar com ela.",
+        gameId: "ID do jogo do jogador",
+        find: "Buscar conta",
+        finding: "Buscando…",
+        check: "É a conta certa?",
+        confirm: "Redefinir senha",
+        resetting: "Redefinindo…",
+        cancel: "Cancelar",
+        done: "Senha redefinida para {name}.",
+        temp: "Senha temporária",
+        copy: "Copiar",
+        copied: "Copiada",
+        sendIt: "Envie agora pelo jogo. Ela só aparece desta vez. Ao entrar com ela, o jogador vai precisar escolher uma nova senha.",
+        another: "Pronto",
+      },
     },
     events: {
       title: "Eventos de KvK",

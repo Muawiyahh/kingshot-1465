@@ -7,7 +7,7 @@ import { useI18n } from "@/components/i18n-provider";
 import { Field, Notice, inputClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { LOCALES, LOCALE_INFO, localePath } from "@/lib/i18n/config";
-import { signIn, signUp, signUpTransfer } from "./actions";
+import { setNewPassword, signIn, signUp, signUpTransfer } from "./actions";
 
 export function LoginForm({ next }: { next?: string }) {
   const { locale, t } = useI18n();
@@ -90,6 +90,26 @@ export function SignupForm() {
         </Link>
       </p>
       <TransferPrompt />
+    </form>
+  );
+}
+
+/** The player's own password, replacing the temporary one an admin gave them. */
+export function NewPasswordForm() {
+  const { t } = useI18n();
+  const [state, action] = useActionState(setNewPassword, undefined);
+  return (
+    <form action={action} className="space-y-5">
+      <Field label={t.auth.newPassword.label} htmlFor="password" hint={t.auth.passwordHint}>
+        <input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required className={inputClass} />
+      </Field>
+      <Field label={t.auth.confirm} htmlFor="confirm">
+        <input id="confirm" name="confirm" type="password" autoComplete="new-password" required className={inputClass} />
+      </Field>
+      {state?.error && <Notice tone="error">{state.error}</Notice>}
+      <SubmitButton className="w-full" pendingText={t.common.saving}>
+        {t.auth.newPassword.save}
+      </SubmitButton>
     </form>
   );
 }

@@ -2,14 +2,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/supabase/config";
 import { LOCALE_COOKIE, isLocale, localePath, matchAcceptLanguage, splitLocale } from "@/lib/i18n/config";
+import { NEW_PASSWORD_PATH, mustChangePassword } from "@/lib/password-reset";
 
-const PROTECTED = ["/account", "/admin"];
+const PROTECTED = ["/account", "/admin", NEW_PASSWORD_PATH];
 
 /**
  * 1. Adds a language prefix to URLs that lack one (saved choice, else browser language).
  * 2. Keeps the language cookie in sync with the page being viewed (Server Actions read it).
  * 3. Refreshes the Supabase session and does an optimistic sign-in redirect. Real
  *    authorization happens in the data layer and RLS, not here.
+ * 4. Sends a player whose password an admin reset to choose a new one.
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -62,6 +64,14 @@ export async function proxy(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = localePath(locale, "/login");
     url.search = `?next=${encodeURIComponent(pathname)}`;
+    return rememberLocale(NextResponse.redirect(url));
+  }
+
+  // An admin reset this account's password: the player chooses a new one before using the site.
+  if (signedIn && request.method === "GET" && rest !== NEW_PASSWORD_PATH && mustChangePassword(data?.claims)) {
+    const url = request.nextUrl.clone();
+    url.pathname = localePath(locale, NEW_PASSWORD_PATH);
+    url.search = "";
     return rememberLocale(NextResponse.redirect(url));
   }
 

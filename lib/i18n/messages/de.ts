@@ -25,6 +25,7 @@ const de: Messages = {
     adminNextKvk: "Nächstes KvK · Admin",
     adminTransferMessages: "Transfer-Nachrichten · Admin",
     schedule: "KvK-Zeitplan",
+    newPassword: "Neues Passwort wählen",
   },
   nav: {
     home: "Start",
@@ -113,6 +114,11 @@ const de: Messages = {
         fortress: "Festung",
       },
       legion: "Legion {n}",
+      groups: {
+        bear: "Bärenfalle",
+        sanctuary: "Heiligtum",
+      },
+      noneSet: "Noch keine Zeiten eingetragen.",
     },
     hof: {
       eyebrow: "Ruhmeshalle",
@@ -266,6 +272,12 @@ const de: Messages = {
       openMessages: "Nachrichten öffnen",
       prompt: "Wechselst du aus einem anderen Königreich?",
       link: "Transferkonto erstellen",
+    },
+    newPassword: {
+      title: "Neues Passwort wählen",
+      subtitle: "Ein Admin hat dein Passwort zurückgesetzt. Wähle ein neues, um die Seite weiter zu nutzen.",
+      label: "Neues Passwort",
+      save: "Speichern und weiter",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const de: Messages = {
     speedupsRequired: "Gib jede Art von Beschleuniger an (0, wenn du keine hast).",
     noFreeTime: "Keine der Zeiten dieses Spielers ist frei. Tippe in der Tabelle auf eine Zeit, um ihn dort einzutragen.",
     slotTaken: "Diese Zeit wurde gerade vergeben. Wähle eine andere.",
+    resetGameId: "Eine Spiel-ID ist die 6- bis 12-stellige Zahl auf der Profilkarte des Spielers.",
+    accountNotFound: "Kein Konto nutzt die Spiel-ID {id}.",
+    resetOwn: "Das ist dein eigenes Konto. Bitte einen anderen Admin, dein Passwort zurückzusetzen.",
+    resetFailed: "Das Passwort konnte nicht zurückgesetzt werden. Versuche es erneut.",
+    passwordFailed: "Dein neues Passwort konnte nicht gespeichert werden. Versuche es erneut.",
   },
   success: {
     applicationUpdated: "Bewerbung aktualisiert.",
@@ -464,7 +481,7 @@ const de: Messages = {
       manage: "Wo du was findest",
       cards: {
         events: "Erstelle ein KvK-Event, öffne Bewerbungen und nimm Spieler in Burg-Slots an.",
-        accounts: "Genehmige neue Spieler und lege fest, wer Leiter ist.",
+        accounts: "Genehmige neue Spieler, lege fest, wer Leiter ist, und setze vergessene Passwörter zurück.",
         king: "Ändere Namen und Allianz des Königs auf der Startseite.",
         server: "Lege fest, wann der Server eröffnet wurde. Die Startseite berechnet daraus das Serveralter.",
         messages: "Lies Nachrichten von Spielern und antworte darauf.",
@@ -499,6 +516,23 @@ const de: Messages = {
       saveRole: "Rolle speichern",
       makeMember: "Zu 1465 gewechselt",
       makeMemberHint: "Ist zu 1465 gewechselt: zu einem Mitgliedskonto machen.",
+      reset: {
+        title: "Passwort zurücksetzen",
+        intro: "Für Spieler, die sich nicht anmelden können. Gib die Spiel-ID ein, prüfe, ob es das richtige Konto ist, und setze es dann zurück. Der Spieler bekommt ein vorläufiges Passwort und wählt bei der Anmeldung damit ein eigenes.",
+        gameId: "Spiel-ID des Spielers",
+        find: "Konto suchen",
+        finding: "Wird gesucht…",
+        check: "Ist das das richtige Konto?",
+        confirm: "Passwort zurücksetzen",
+        resetting: "Wird zurückgesetzt…",
+        cancel: "Abbrechen",
+        done: "Passwort für {name} zurückgesetzt.",
+        temp: "Vorläufiges Passwort",
+        copy: "Kopieren",
+        copied: "Kopiert",
+        sendIt: "Schicke es dem Spieler jetzt im Spiel. Es wird nur dieses eine Mal angezeigt. Bei der Anmeldung damit wird er gebeten, ein neues Passwort zu wählen.",
+        another: "Fertig",
+      },
     },
     events: {
       title: "KvK-Events",

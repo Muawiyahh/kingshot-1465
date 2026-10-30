@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { supabaseConfigured } from "@/lib/supabase/config";
 import { gameIdToEmail } from "@/lib/auth";
+import { NEW_PASSWORD_PATH, RESET_FLAG, mustChangePassword } from "@/lib/password-reset";
 import { isUuid } from "@/lib/messages";
 import { site } from "@/lib/site";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
@@ -197,11 +198,54 @@ export async function signIn(_prev: ActionState, formData: FormData): Promise<Ac
   // Open the site in the player's saved language.
   const { data: profile } = await supabase.from("profiles").select("language, role, status").eq("id", data.user.id).maybeSingle();
   const preferred = isLocale(profile?.language) ? profile.language : locale;
-  // Leaders and admins start in Admin, players in their account.
-  const home = profile?.status === "approved" && (profile.role === "leader" || profile.role === "admin") ? "/admin" : "/account";
-  const next = safeNext(formData.get("next"), localePath(locale, home));
   await rememberLanguageChosen();
+  // Signed in with a temporary password from an admin: choose a new one before anything else.
+  if (data.user.app_metadata?.[RESET_FLAG] === true) redirect(localePath(preferred, NEW_PASSWORD_PATH));
+  const next = safeNext(formData.get("next"), localePath(locale, homeFor(profile)));
   redirect(switchLocale(next, preferred));
+}
+
+/** Leaders and admins start in Admin, players in their account. */
+function homeFor(profile: { role: string; status: string } | null) {
+  return profile?.status === "approved" && (profile.role === "leader" || profile.role === "admin") ? "/admin" : "/account";
+}
+
+const newPasswordSchema = z
+  .object({
+    password: z.string().min(8, "passwordShort" satisfies ErrorKey),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "passwordMismatch" satisfies ErrorKey });
+
+/**
+ * After an admin reset their password, the player replaces the temporary one. Only accounts with
+ * the reset flag can do this without their current password; saving clears the flag.
+ */
+export async function setNewPassword(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const { locale, t } = await getActionI18n();
+  if (!supabaseConfigured || !process.env.SUPABASE_SERVICE_ROLE_KEY) return { error: t.errors.notConfigured };
+
+  const parsed = newPasswordSchema.safeParse({ password: formData.get("password"), confirm: formData.get("confirm") });
+  if (!parsed.success) return { error: errorText(t, parsed.error.issues[0].message) };
+
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return { error: t.errors.signInFirst };
+  if (!mustChangePassword(claims.claims)) redirect(localePath(locale, "/account"));
+
+  const { error } = await createAdminClient().auth.admin.updateUserById(userId, {
+    password: parsed.data.password,
+    // null removes the key; the rest of app_metadata is kept.
+    app_metadata: { [RESET_FLAG]: null },
+  });
+  if (error) return { error: t.errors.passwordFailed };
+  // A fresh session without the flag, so the site lets them through. Signing in again rather than
+  // refreshing: changing the password ends the account's existing sessions.
+  await supabase.auth.signInWithPassword({ email: claims.claims.email ?? "", password: parsed.data.password });
+
+  const { data: profile } = await supabase.from("profiles").select("role, status").eq("id", userId).maybeSingle();
+  redirect(localePath(locale, homeFor(profile)));
 }
 
 export async function signOut() {

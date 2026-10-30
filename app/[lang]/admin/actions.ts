@@ -1,17 +1,20 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
 import { getProfile, isLeader } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { planAutofill, type FillSlot } from "@/lib/autofill";
 import { addDays, clashingSlots, pickSlot, positionLabel, slotCount } from "@/lib/kvk";
 import { TIME_RE, eventsFor, isMonday } from "@/lib/alliance-events";
 import { ALLIANCE_TAGS } from "@/lib/alliances";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
+import { RESET_FLAG } from "@/lib/password-reset";
 import { getActionI18n } from "@/lib/i18n/action";
 import type { Messages } from "@/lib/i18n/messages";
 import type {
@@ -21,6 +24,7 @@ import type {
   FillReport,
   FillState,
   Profile,
+  ResetState,
   TransferFact,
 } from "@/lib/types";
 
@@ -77,6 +81,47 @@ export async function setAccountRole(formData: FormData) {
   await supabase.from("profiles").update({ role }).eq("id", id);
   await audit("account.role", id, { role });
   refresh();
+}
+
+// Letters and digits that can't be mistaken for each other (no 0/O, 1/I/L), easy to type on a phone.
+const TEMP_CHARS = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+/** A random temporary password in three groups, like "K7QM-X4PD-2RHW". */
+function tempPassword() {
+  const chars = Array.from({ length: 12 }, () => TEMP_CHARS[randomInt(TEMP_CHARS.length)]);
+  return [0, 4, 8].map((i) => chars.slice(i, i + 4).join("")).join("-");
+}
+
+/**
+ * Admins only. The first step finds the account by game ID so the admin can check it's the right
+ * player; the second gives it a random temporary password, which the player must replace the next
+ * time they sign in. The password is returned once and never stored or logged.
+ */
+export async function resetPassword(_prev: ResetState, formData: FormData): Promise<ResetState> {
+  const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  if (profile.role !== "admin") throw new Error("Only admins can reset passwords");
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return { error: t.errors.notConfigured };
+
+  const gameId = z.string().trim().regex(/^[0-9]{6,12}$/).safeParse(formData.get("gameId"));
+  if (!gameId.success) return { error: t.errors.resetGameId };
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, game_id, ingame_name, alliance_tag, role")
+    .eq("game_id", gameId.data)
+    .maybeSingle();
+  if (!data) return { error: fmt(t.errors.accountNotFound, { id: gameId.data }) };
+  if (data.id === profile.id) return { error: t.errors.resetOwn };
+  const account = { gameId: data.game_id, name: data.ingame_name, alliance: data.alliance_tag, role: data.role };
+  if (formData.get("step") !== "reset") return { account };
+
+  const password = tempPassword();
+  const { error } = await createAdminClient().auth.admin.updateUserById(data.id, {
+    password,
+    app_metadata: { [RESET_FLAG]: true },
+  });
+  if (error) return { account, error: t.errors.resetFailed };
+  await audit("account.password_reset", data.id);
+  return { account, password };
 }
 
 // ---------------------------------------------------------------------------

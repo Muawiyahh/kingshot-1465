@@ -25,6 +25,7 @@ const tl: Messages = {
     adminNextKvk: "Susunod na KvK · Admin",
     adminTransferMessages: "Mga transfer message · Admin",
     schedule: "Iskedyul ng KvK",
+    newPassword: "Pumili ng bagong password",
   },
   nav: {
     home: "Home",
@@ -113,6 +114,11 @@ const tl: Messages = {
         fortress: "Fortress",
       },
       legion: "Legion {n}",
+      groups: {
+        bear: "Bear Trap",
+        sanctuary: "Sanctuary",
+      },
+      noneSet: "Wala pang oras.",
     },
     hof: {
       eyebrow: "Hall of Fame",
@@ -266,6 +272,12 @@ const tl: Messages = {
       openMessages: "Buksan ang mga mensahe",
       prompt: "Lilipat mula sa ibang kaharian?",
       link: "Gumawa ng transfer account",
+    },
+    newPassword: {
+      title: "Pumili ng bagong password",
+      subtitle: "Ni-reset ng admin ang password mo. Pumili ng bago para patuloy na magamit ang site.",
+      label: "Bagong password",
+      save: "I-save at magpatuloy",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const tl: Messages = {
     speedupsRequired: "Ilagay ang bawat uri ng speedup (0 kung wala ka).",
     noFreeTime: "Wala nang bakante sa mga oras ng player na ito. Mag-tap ng oras sa table para ilagay siya roon.",
     slotTaken: "Kakakuha lang ng iba sa oras na iyon. Pumili ng iba.",
+    resetGameId: "Ang game ID ay ang 6–12 digit na numero sa profile card ng player.",
+    accountNotFound: "Walang account na gumagamit ng game ID na {id}.",
+    resetOwn: "Sarili mong account iyan. Humingi sa ibang admin na i-reset ang password mo.",
+    resetFailed: "Hindi ma-reset ang password. Subukan ulit.",
+    passwordFailed: "Hindi ma-save ang bago mong password. Subukan ulit.",
   },
   success: {
     applicationUpdated: "Na-update ang aplikasyon.",
@@ -464,7 +481,7 @@ const tl: Messages = {
       manage: "Saan makikita ang bawat bagay",
       cards: {
         events: "Gumawa ng KvK event, buksan ang mga aplikasyon, at tanggapin ang mga player sa mga castle slot.",
-        accounts: "Aprubahan ang mga bagong player at piliin kung sino ang lider.",
+        accounts: "Aprubahan ang mga bagong player, piliin kung sino ang lider at i-reset ang mga nakalimutang password.",
         king: "Baguhin ang pangalan at alliance ng Hari na lumalabas sa homepage.",
         server: "Itakda ang petsa ng pagbukas ng server. Dito binibilang ng homepage ang edad ng server.",
         messages: "Basahin at sagutin ang mga mensahe ng mga player.",
@@ -499,6 +516,23 @@ const tl: Messages = {
       saveRole: "I-save ang role",
       makeMember: "Nasa 1465 na",
       makeMemberHint: "Lumipat na sa 1465: gawing member account.",
+      reset: {
+        title: "Mag-reset ng password",
+        intro: "Para sa player na hindi maka-sign in. Ilagay ang game ID niya, tiyaking tama ang account, saka i-reset. Makakatanggap siya ng pansamantalang password at pipili ng sarili niya kapag nag-sign in gamit iyon.",
+        gameId: "Game ID ng player",
+        find: "Hanapin ang account",
+        finding: "Hinahanap…",
+        check: "Ito ba ang tamang account?",
+        confirm: "I-reset ang password",
+        resetting: "Nire-reset…",
+        cancel: "Kanselahin",
+        done: "Na-reset ang password ni {name}.",
+        temp: "Pansamantalang password",
+        copy: "Kopyahin",
+        copied: "Nakopya",
+        sendIt: "Ipadala ito sa kanya sa game ngayon. Isang beses lang ito ipapakita. Kapag nag-sign in siya gamit ito, hihilingin sa kanyang pumili ng bagong password.",
+        another: "Tapos na",
+      },
     },
     events: {
       title: "Mga KvK event",

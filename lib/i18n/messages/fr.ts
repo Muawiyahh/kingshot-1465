@@ -25,6 +25,7 @@ const fr: Messages = {
     adminNextKvk: "Prochain KvK · Admin",
     adminTransferMessages: "Messages de transfert · Admin",
     schedule: "Planning du KvK",
+    newPassword: "Choisir un nouveau mot de passe",
   },
   nav: {
     home: "Accueil",
@@ -113,6 +114,11 @@ const fr: Messages = {
         fortress: "Forteresse",
       },
       legion: "Légion {n}",
+      groups: {
+        bear: "Piège à ours",
+        sanctuary: "Sanctuaire",
+      },
+      noneSet: "Aucun horaire pour l'instant.",
     },
     hof: {
       eyebrow: "Panthéon",
@@ -266,6 +272,12 @@ const fr: Messages = {
       openMessages: "Ouvrir les messages",
       prompt: "Vous venez d'un autre royaume ?",
       link: "Créer un compte de transfert",
+    },
+    newPassword: {
+      title: "Choisissez un nouveau mot de passe",
+      subtitle: "Un admin a réinitialisé votre mot de passe. Choisissez-en un nouveau pour continuer à utiliser le site.",
+      label: "Nouveau mot de passe",
+      save: "Enregistrer et continuer",
     },
   },
   account: {
@@ -434,6 +446,11 @@ const fr: Messages = {
     speedupsRequired: "Indiquez chaque type d'accélérateur (0 si vous n'en avez pas).",
     noFreeTime: "Aucune des heures de ce joueur n'est libre. Touchez une heure dans le tableau pour l'y placer.",
     slotTaken: "Quelqu'un vient de prendre cette heure. Choisissez-en une autre.",
+    resetGameId: "L'ID de jeu est le nombre de 6 à 12 chiffres sur la carte de profil du joueur.",
+    accountNotFound: "Aucun compte n'utilise l'ID de jeu {id}.",
+    resetOwn: "C'est votre propre compte. Demandez à un autre admin de réinitialiser votre mot de passe.",
+    resetFailed: "Impossible de réinitialiser le mot de passe. Réessayez.",
+    passwordFailed: "Impossible d'enregistrer votre nouveau mot de passe. Réessayez.",
   },
   success: {
     applicationUpdated: "Candidature mise à jour.",
@@ -464,7 +481,7 @@ const fr: Messages = {
       manage: "Où trouver quoi",
       cards: {
         events: "Créez un événement KvK, ouvrez les candidatures et acceptez des joueurs sur les créneaux du château.",
-        accounts: "Approuvez les nouveaux joueurs et choisissez qui est chef.",
+        accounts: "Approuvez les nouveaux joueurs, choisissez qui est chef et réinitialisez les mots de passe oubliés.",
         king: "Modifiez le nom et l'alliance du roi affichés sur la page d'accueil.",
         server: "Indiquez la date d'ouverture du serveur. La page d'accueil en déduit l'âge du serveur.",
         messages: "Lisez les messages des joueurs et répondez-y.",
@@ -499,6 +516,23 @@ const fr: Messages = {
       saveRole: "Enregistrer le rôle",
       makeMember: "A rejoint 1465",
       makeMemberHint: "Ce joueur a rejoint 1465 : en faire un compte membre.",
+      reset: {
+        title: "Réinitialiser un mot de passe",
+        intro: "Pour un joueur qui ne peut pas se connecter. Saisissez son ID de jeu, vérifiez que c'est le bon compte, puis réinitialisez. Il reçoit un mot de passe temporaire et choisit le sien en se connectant avec.",
+        gameId: "ID de jeu du joueur",
+        find: "Trouver le compte",
+        finding: "Recherche…",
+        check: "Est-ce le bon compte ?",
+        confirm: "Réinitialiser le mot de passe",
+        resetting: "Réinitialisation…",
+        cancel: "Annuler",
+        done: "Mot de passe réinitialisé pour {name}.",
+        temp: "Mot de passe temporaire",
+        copy: "Copier",
+        copied: "Copié",
+        sendIt: "Envoyez-le-lui maintenant dans le jeu. Il ne s'affiche qu'une seule fois. En se connectant avec, il devra choisir un nouveau mot de passe.",
+        another: "Terminé",
+      },
     },
     events: {
       title: "Événements KvK",

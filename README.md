@@ -59,7 +59,7 @@ The site is in English, German, Simplified and Traditional Chinese, French, Span
 The homepage is short and aimed at two kinds of visitor: members checking their alliance's times, and players from other kingdoms thinking of transferring. Applying for castle positions isn't on it; that lives in the account area.
 
 1. **Hero:** the kingdom's key facts (King, alliances, players, server time and age), with buttons to the Transfer and Alliance events sections. The Next KvK card counts down (days, hours, minutes, seconds) to the date leaders set in **Admin → KvK → Next KvK**; without one it counts down to the next KvK event, and while an event runs it shows the day.
-2. **Alliance events:** each alliance's times, in this order: Bear Trap 1 and 2, Swordland (Legion 1 and 2), Tri-Alliance (Legion 1 and 2), Vikings (Day 1 and 2), Sanctuary 1 and 2, and Fortress last, for GGG, KNG, ERA and ALT only (set in `lib/alliance-events.ts`). The two runs of Swordland, Tri-Alliance and Vikings share a heading in the table; times saved before the split count as Legion 1 / Day 1. Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
+2. **Alliance events:** each alliance's times, in this order: Bear Trap 1 and 2, Swordland (Legion 1 and 2), Tri-Alliance (Legion 1 and 2), Vikings (Day 1 and 2), Sanctuary 1 and 2, and Fortress last, for GGG, KNG, ERA and ALT only (set in `lib/alliance-events.ts`). Each alliance gets a card tinted with its banner colour: one row per event, with its two runs side by side (#1 and #2, Legion 1 and 2, Day 1 and 2) so the times line up. Times saved before the split count as Legion 1 / Day 1. Leaders enter them on a 24-hour UTC clock; they are stored in UTC; visitors can switch to their own time zone, and the weekdays shift with it when a time crosses midnight. Phones show one alliance at a time.
 3. **Hall of Fame:** one player from each alliance for the week, with their quote. The latest week up to today is shown.
 4. **Transfer to 1465:** a short pitch, the kingdom at a glance (leaders' facts plus live numbers: server age, alliances, governors, King, next KvK), three steps for contacting the kingdom, and the transfer managers as compact rows with a **Message** button (see **Transfer accounts** below) and a tap-to-copy game ID. Past five managers, the rest fold behind **Show all**.
 5. **FAQ** and a sign-up box.
@@ -160,6 +160,16 @@ How it behaves:
   - the KvK schedule is for members (approved or waiting for approval) and leaders only, and drafts for leaders only.
 - Every leader action is written to `audit_log`.
 - Logins use the game ID with a site-specific password. Players should never reuse their game account password.
+- **Forgotten passwords:** logins have no real email, so admins reset them in **Admin → Accounts → Reset a password**:
+  1. Enter the player's game ID and check that the account shown is the right one.
+  2. Reset. A random temporary password (like `K7QM-X4PD-2RHW`) is shown once, to send to the player in-game.
+  3. The player signs in with it and must choose a new password at `/new-password` before using the site.
+
+  Details:
+  - Only admins can reset passwords, and not their own.
+  - The reset signs the player out of other devices within the hour.
+  - The audit log records the reset but never the password.
+  - It needs `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Deploy (Vercel)
 
