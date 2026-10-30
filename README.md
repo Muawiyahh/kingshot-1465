@@ -24,6 +24,7 @@ Next.js 16 (App Router, Cache Components) · Tailwind CSS v4 · Motion · Supaba
    - `0009_next_kvk.sql`
    - `0010_notifications.sql`
    - `0011_appointments.sql`
+   - `0012_any_transfer_manager.sql`
 
    Paste each one into a new query and click Run.
 4. **Add the keys:** copy `.env.example` to `.env.local` and fill it in from *Project Settings → API*.
@@ -68,13 +69,13 @@ Leaders set everything specific in **Admin → Homepage**:
 
 - **Alliance events:** pick an alliance, then set each event's time (UTC), days of the week and an optional short note. Clearing a row removes it from the homepage.
 - **Hall of Fame:** pick a week, then type a player and a quote for each alliance. A blank name leaves that alliance out for the week.
-- **Transfers:** the pitch, kingdom facts, and which leaders and admins are transfer managers (tick them in the list, with an optional note such as the languages they speak). With the pitch left empty, the site's own pitch is shown, translated into every language; anything leaders type is shown as written.
+- **Transfers:** the pitch, kingdom facts, and who the transfer managers are (up to 12; tick them in the list, with an optional note such as the languages they speak). The list shows the leaders and admins; admins can also add any approved member with **Add an account** (by game ID, needs `0012_any_transfer_manager.sql`). A member who is a transfer manager answers transfer accounts from their own **Messages**. With the pitch left empty, the site's own pitch is shown, translated into every language; anything leaders type is shown as written.
 
 ### Transfer accounts
 
 Players still in another kingdom can sign up at **/transfer** (the homepage's **Message a transfer manager** and **Message** buttons lead there) with their game ID, name, current kingdom and a password. The account is approved straight away and opens in **Messages**:
 
-- they can message only the transfer managers, or a leader who has written to them first. Until leaders pick any transfer managers, they can message every admin instead, so a new transfer account always has someone to talk to;
+- they can message only the transfer managers, or someone who has written to them first. Until leaders pick any transfer managers, they can message every admin instead, so a new transfer account always has someone to talk to;
 - they can't apply for castle positions, and the Governors count on the homepage leaves them out;
 - leaders see them under **Admin → Accounts → Transfers**, and their messages carry a "Transfer · #1234" tag. Once a player has moved to 1465, **Joined 1465** turns the account into a normal member account.
 

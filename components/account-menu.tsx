@@ -21,12 +21,14 @@ export function AccountMenu({
   gameId,
   unread,
   leader,
+  transfer,
 }: {
   name: string;
   tag: string | null;
   gameId: string;
   unread: number;
   leader: boolean;
+  transfer: boolean;
 }) {
   const { locale, t } = useI18n();
   const [open, setOpen] = useState(false);
@@ -57,13 +59,18 @@ export function AccountMenu({
   }, [open]);
 
   // Leaders don't use the players' overview, castle appointments or schedule: Admin covers them.
+  // Transfer accounts (still in another kingdom) have no castle appointments or schedule.
   type Item = { key: SectionKey; path: string; label: string; count?: number };
   const playerOnly: Item[] = leader
     ? []
     : [
         { key: "overview" as const, path: "/account", label: t.account.nav.label },
-        { key: "appointments" as const, path: "/account/appointments", label: t.account.nav.appointments },
-        { key: "schedule" as const, path: "/account/schedule", label: t.account.nav.schedule },
+        ...(transfer
+          ? []
+          : [
+              { key: "appointments" as const, path: "/account/appointments", label: t.account.nav.appointments },
+              { key: "schedule" as const, path: "/account/schedule", label: t.account.nav.schedule },
+            ]),
       ];
   const items: Item[] = [
     ...playerOnly,

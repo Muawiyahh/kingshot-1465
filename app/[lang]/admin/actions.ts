@@ -23,6 +23,7 @@ import type {
   EventStatus,
   FillReport,
   FillState,
+  ManagerLookup,
   Profile,
   ResetState,
   TransferFact,
@@ -272,9 +273,30 @@ export async function saveHallOfFame(_prev: ActionState, formData: FormData): Pr
 }
 
 const MAX_FACTS = 8;
-const MAX_MANAGERS = 6;
+// The homepage folds the list after five, so a longer list stays compact.
+const MAX_MANAGERS = 12;
 
-/** Saves the Transfer to 1465 section: pitch, kingdom facts and which leaders are transfer managers. */
+/**
+ * Admins only: finds a member by game ID to add to the transfer managers in Admin → Transfers.
+ * Nothing is saved until the form is.
+ */
+export async function findTransferManager(gameId: string): Promise<ManagerLookup> {
+  const [{ profile, supabase }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
+  if (profile.role !== "admin") throw new Error("Only admins can add any account");
+  const id = z.string().trim().regex(/^[0-9]{6,12}$/).safeParse(gameId);
+  if (!id.success) return { error: t.errors.resetGameId };
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, ingame_name, alliance_tag, role, status, transfer")
+    .eq("game_id", id.data)
+    .maybeSingle();
+  if (!data) return { error: fmt(t.errors.accountNotFound, { id: id.data }) };
+  if (data.transfer) return { error: t.errors.managerTransfer };
+  if (data.status !== "approved") return { error: t.errors.managerNotApproved };
+  return { account: { id: data.id, ingame_name: data.ingame_name, alliance_tag: data.alliance_tag, role: data.role } };
+}
+
+/** Saves the Transfer to 1465 section: pitch, kingdom facts and who the transfer managers are. */
 export async function saveTransfers(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const [{ profile, supabase, audit }, { t }] = await Promise.all([leaderContext(), getActionI18n()]);
   const pitch = field(formData, "pitch");
@@ -292,21 +314,23 @@ export async function saveTransfers(_prev: ActionState, formData: FormData): Pro
     facts.push({ label, value });
   }
 
-  // Managers: the ticked leaders and admins, in the order shown, each with an optional note.
+  // Managers: the ticked accounts, in the order shown, each with an optional note.
   const managers = [...new Set(fields(formData, "manager"))].filter((id) => uuid.safeParse(id).success);
   const notes = managers.map((id) => field(formData, `note.${id}`));
   if (facts.length > MAX_FACTS || managers.length > MAX_MANAGERS) return { error: t.errors.tooManyRows };
   if (notes.some((n) => n.length > 40)) return { error: t.errors.textTooLong };
 
-  // Only approved leaders and admins can answer transfer accounts.
+  // Approved member accounts only. Leaders pick from the leaders and admins; only admins add other
+  // members, though leaders can keep the ones already on the list.
   if (managers.length) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id")
-      .in("id", managers)
-      .in("role", ["leader", "admin"])
-      .eq("status", "approved");
-    if (error || data.length !== managers.length) return { error: t.errors.generic };
+    const [{ data, error }, { data: current }] = await Promise.all([
+      supabase.from("profiles").select("id, role, status, transfer").in("id", managers),
+      supabase.from("transfer_managers").select("profile_id"),
+    ]);
+    const listed = new Set((current ?? []).map((r) => r.profile_id as string));
+    const allowed = (p: { id: string; role: string; status: string; transfer: boolean }) =>
+      p.status === "approved" && !p.transfer && (p.role !== "player" || profile.role === "admin" || listed.has(p.id));
+    if (error || data.length !== managers.length || !data.every(allowed)) return { error: t.errors.generic };
   }
 
   // Replace the list: drop anyone unticked, then save the rest with their order and note.

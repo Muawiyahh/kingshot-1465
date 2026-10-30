@@ -1,22 +1,20 @@
 "use client";
 
-import { useActionState, useRef, useState, type ReactNode } from "react";
+import { useActionState, useRef, useState, useTransition, type ReactNode } from "react";
 import clsx from "clsx";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, UserPlus } from "lucide-react";
 import { AllianceAvatar } from "@/components/alliance-banner";
 import { useI18n } from "@/components/i18n-provider";
 import { Button, Notice, inputClass, textareaClass } from "@/components/ui";
 import { SubmitButton } from "@/components/submit-button";
 import { fmt } from "@/lib/i18n/format";
-import type { KingdomSettings, TransferFact, UserRole } from "@/lib/types";
-import { saveTransfers } from "../actions";
+import { rich } from "@/lib/i18n/rich";
+import type { KingdomSettings, ManagerOption, TransferFact } from "@/lib/types";
+import { findTransferManager, saveTransfers } from "../actions";
 
 const PITCH_MAX = 400;
 const MAX_FACTS = 8;
-const MAX_MANAGERS = 6;
-
-/** An approved leader or admin who can be made a transfer manager. */
-export type LeaderOption = { id: string; ingame_name: string; alliance_tag: string | null; role: UserRole };
+const MAX_MANAGERS = 12;
 
 type Row<T> = T & { key: number };
 
@@ -26,13 +24,20 @@ type Row<T> = T & { key: number };
  */
 export function TransfersForm({
   settings,
-  leaders,
+  options,
   managers: saved,
+  canAddAny,
+  anyAccountReady,
 }: {
   settings: KingdomSettings;
-  leaders: LeaderOption[];
+  /** Who can be ticked: leaders and admins, plus members already on the list. */
+  options: ManagerOption[];
   /** Current transfer managers, in display order. */
   managers: { id: string; note: string }[];
+  /** Admins can add any member by game ID. */
+  canAddAny: boolean;
+  /** Whether 0012_any_transfer_manager.sql has been run, without which other members can't be managers. */
+  anyAccountReady: boolean;
 }) {
   const { t } = useI18n();
   const s = t.admin.home.transfers;
@@ -44,8 +49,12 @@ export function TransfersForm({
   const [facts, setFacts] = useState<Row<TransferFact>[]>(() =>
     (Array.isArray(settings.transfer_facts) ? settings.transfer_facts : []).map((f, key) => ({ ...f, key })),
   );
-  // Ticked managers in display order; leaving a leader out means unticking them.
-  const [picked, setPicked] = useState(() => saved.filter((m) => leaders.some((l) => l.id === m.id)));
+  // Members an admin has looked up here, shown with the others until the form is saved.
+  const [added, setAdded] = useState<ManagerOption[]>([]);
+  // After a save the server lists them too, so they aren't repeated.
+  const leaders = [...options, ...added.filter((a) => !options.some((o) => o.id === a.id))];
+  // Ticked managers in display order; leaving someone out means unticking them.
+  const [picked, setPicked] = useState(() => saved.filter((m) => options.some((l) => l.id === m.id)));
 
   function addFact() {
     const key = nextKey.current++;
@@ -61,10 +70,16 @@ export function TransfersForm({
   // Managers first, in their order; everyone else after, by name.
   const byId = new Map(leaders.map((l) => [l.id, l]));
   const ordered = [
-    ...picked.map((m) => byId.get(m.id)).filter((l): l is LeaderOption => Boolean(l)),
+    ...picked.map((m) => byId.get(m.id)).filter((l): l is ManagerOption => Boolean(l)),
     ...leaders.filter((l) => !picked.some((m) => m.id === l.id)),
   ];
   const full = picked.length >= MAX_MANAGERS;
+
+  // Adds a looked-up member to the list, ticked.
+  function addAccount(account: ManagerOption) {
+    if (!leaders.some((l) => l.id === account.id)) setAdded((all) => [...all, account]);
+    if (!picked.some((m) => m.id === account.id) && !full) setPicked((all) => [...all, { id: account.id, note: "" }]);
+  }
 
   return (
     <form action={action} className="space-y-10">
@@ -122,9 +137,9 @@ export function TransfersForm({
       <fieldset>
         <legend className="text-sm font-medium">{s.managers}</legend>
         <p className="mt-1 text-xs text-muted">{s.managersHint}</p>
-        {leaders.length === 0 ? (
+        {leaders.length === 0 && !canAddAny ? (
           <p className="mt-4 text-sm text-muted">{s.noLeaders}</p>
-        ) : (
+        ) : leaders.length === 0 ? null : (
           <ul className="mt-4 divide-y divide-border rounded-2xl shadow-[inset_0_0_0_1px_var(--border)]">
             {ordered.map((l) => {
               const mine = picked.find((m) => m.id === l.id);
@@ -165,12 +180,81 @@ export function TransfersForm({
             })}
           </ul>
         )}
+        {canAddAny &&
+          (anyAccountReady ? (
+            <AddAccount onFound={addAccount} full={full} />
+          ) : (
+            <div className="mt-4">
+              <Notice tone="warning">
+                {rich(s.addNeedsUpdate, { file: <span className="font-mono [overflow-wrap:anywhere]">supabase/migrations/0012_any_transfer_manager.sql</span> })}
+              </Notice>
+            </div>
+          ))}
       </fieldset>
 
       {state?.error && <Notice tone="error">{state.error}</Notice>}
       {state?.ok && <Notice tone="success">{state.message}</Notice>}
       <SubmitButton pendingText={t.common.saving}>{s.save}</SubmitButton>
     </form>
+  );
+}
+
+/**
+ * Admins add any member as a transfer manager by game ID. It's looked up straight away and joins
+ * the list ticked; saving the form makes it stick.
+ */
+function AddAccount({ onFound, full }: { onFound: (account: ManagerOption) => void; full: boolean }) {
+  const { t } = useI18n();
+  const s = t.admin.home.transfers;
+  const [gameId, setGameId] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+
+  const add = () =>
+    start(async () => {
+      const result = await findTransferManager(gameId);
+      setError(result?.error ?? null);
+      if (result?.account) {
+        onFound(result.account);
+        setGameId("");
+      }
+    });
+
+  return (
+    <div className="mt-4 rounded-2xl bg-white/[0.03] p-4 shadow-[inset_0_0_0_1px_var(--border)]">
+      <label htmlFor="managerGameId" className="block text-sm font-medium">
+        {s.addAccount}
+      </label>
+      <p className="mt-1 text-xs text-muted">{s.addAccountHint}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {/* No name: it isn't part of the saved form. Enter adds instead of saving. */}
+        <input
+          id="managerGameId"
+          inputMode="numeric"
+          autoComplete="off"
+          value={gameId}
+          placeholder={t.auth.gameIdPlaceholder}
+          onChange={(e) => setGameId(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (gameId.trim() && !full) add();
+            }
+          }}
+          className={`${inputClass} max-w-64 flex-1 basis-48 font-mono`}
+        />
+        <Button type="button" variant="secondary" onClick={add} disabled={pending || full || !gameId.trim()} aria-busy={pending}>
+          {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <UserPlus className="size-4" aria-hidden />}
+          {pending ? s.adding : s.add}
+        </Button>
+      </div>
+      {full && <p className="mt-2 text-xs text-muted">{fmt(s.listFull, { n: MAX_MANAGERS })}</p>}
+      {error && (
+        <div className="mt-3">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -5,7 +5,7 @@ import { ArrowLeftRight, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { accountGroups } from "@/components/account-sidebar";
 import { AllianceBanner } from "@/components/alliance-banner";
 import { SectionCards } from "@/components/section-cards";
-import { Bone } from "@/components/skeleton";
+import { Bone, CardGridSkeleton } from "@/components/skeleton";
 import { ButtonLink, Card, Eyebrow, Notice } from "@/components/ui";
 import { getUserId, isLeader } from "@/lib/auth";
 import { requireProfile } from "@/lib/auth-guards";
@@ -40,18 +40,19 @@ const loadAccount = cache(async () => {
 });
 
 /**
- * One loading boundary, so the page appears in a single step. The placeholder already shows the
- * section cards and the banner's outline.
+ * One loading boundary, so the page appears in a single step. The placeholder shows the banner's
+ * outline and blank cards: which sections there are depends on the account (transfer accounts have
+ * fewer), so no real card shows before the account is known.
  */
 export default async function AccountPage({ searchParams }: PageProps<"/[lang]/account">) {
-  const { locale, t } = await getI18n();
+  const { t } = await getI18n();
   return (
     <Suspense
       fallback={
         <>
           <IdentitySkeleton />
           <h2 className="mt-12 mb-4 font-display text-xl font-semibold">{t.account.manage}</h2>
-          <SectionCards cards={sectionCards(locale, t)} />
+          <CardGridSkeleton count={2} />
         </>
       }
     >
@@ -153,8 +154,8 @@ async function Identity({ searchParams }: { searchParams: PageProps<"/[lang]/acc
 function sectionCards(
   locale: Locale,
   t: Messages,
-  current: Partial<Record<string, string>> = {},
-  { transfer = false, leader = false } = {},
+  current: Partial<Record<string, string>>,
+  { transfer, leader }: { transfer: boolean; leader: boolean },
 ) {
   return accountGroups(t, { transfer, leader })
     .flatMap((g) => g.items)
@@ -163,7 +164,11 @@ function sectionCards(
       key: item.key,
       href: localePath(locale, item.href),
       label: item.label,
-      description: t.account.cards[item.key as keyof typeof t.account.cards],
+      // Transfer accounts can only change their name, not their alliance.
+      description:
+        transfer && item.key === "profile"
+          ? t.account.cards.profileTransfer
+          : t.account.cards[item.key as keyof typeof t.account.cards],
       current: current[item.key],
     }));
 }

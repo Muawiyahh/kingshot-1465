@@ -101,8 +101,12 @@ export type KingdomSettings = {
 /** A line of kingdom facts in the Transfer section, e.g. "Min. power" → "50M". */
 export type TransferFact = { label: string; value: string };
 
-/** A leader or admin who answers transfer accounts, as the homepage lists them. */
+/** A member who answers transfer accounts, as the homepage lists them. */
 export type TransferManager = { profileId: string; name: string; alliance: string | null; gameId: string; note: string | null };
+
+/** An account Admin → Transfers can tick as a transfer manager: leaders and admins, plus any member an admin adds. */
+export type ManagerOption = { id: string; ingame_name: string; alliance_tag: string | null; role: UserRole };
+export type ManagerLookup = { error?: string; account?: ManagerOption } | undefined;
 
 /** One alliance's time for one event (0007_homepage_content.sql). */
 export type AllianceEventRow = {

@@ -57,6 +57,7 @@ export async function UserNav() {
         gameId={profile.game_id}
         unread={unread}
         leader={leader}
+        transfer={Boolean(profile.transfer)}
       />
     </>
   );
