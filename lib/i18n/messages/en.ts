@@ -41,8 +41,7 @@ const en = {
     accountMenu: "Account menu",
   },
   footer: {
-    credit: "Made with {heart} by {name}",
-    heart: "love",
+    official: "Official server of {n}",
     label: "Footer",
   },
   common: {

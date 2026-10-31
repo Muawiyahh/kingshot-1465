@@ -39,8 +39,7 @@ const id: Messages = {
     accountMenu: "Menu akun",
   },
   footer: {
-    credit: "Dibuat dengan {heart} oleh {name}",
-    heart: "cinta",
+    official: "Server resmi {n}",
     label: "Footer",
   },
   common: {

@@ -39,8 +39,7 @@ const fr: Messages = {
     accountMenu: "Menu du compte",
   },
   footer: {
-    credit: "Fait avec {heart} par {name}",
-    heart: "amour",
+    official: "Serveur officiel de {n}",
     label: "Pied de page",
   },
   common: {

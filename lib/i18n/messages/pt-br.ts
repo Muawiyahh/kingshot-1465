@@ -39,8 +39,7 @@ const ptBR: Messages = {
     accountMenu: "Menu da conta",
   },
   footer: {
-    credit: "Feito com {heart} por {name}",
-    heart: "amor",
+    official: "Servidor oficial de {n}",
     label: "Rodapé",
   },
   common: {

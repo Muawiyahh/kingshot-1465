@@ -39,8 +39,7 @@ const zhCN: Messages = {
     accountMenu: "账户菜单",
   },
   footer: {
-    credit: "由 {name} 用 {heart} 制作",
-    heart: "爱",
+    official: "{n} 官方服务器",
     label: "页脚",
   },
   common: {

@@ -1,14 +1,12 @@
 import Link from "next/link";
 import { Crest } from "@/components/crest";
-import { FlamingHeart } from "@/components/flaming-heart";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { localePath } from "@/lib/i18n/config";
 import { fmt } from "@/lib/i18n/format";
-import { rich } from "@/lib/i18n/rich";
 import { getI18n } from "@/lib/i18n/server";
 import { site } from "@/lib/site";
 
-/** Kingdom name on the left, the site's credit in the middle, the language picker and Discord (when set) on the right. */
+/** Kingdom name on the left, the official-server line in the middle, the language picker and Discord (when set) on the right. */
 export async function SiteFooter() {
   const { locale, t } = await getI18n();
   return (
@@ -18,12 +16,7 @@ export async function SiteFooter() {
           <Crest className="size-7" />
           <span className="font-display font-semibold">{fmt(t.common.kingdomName, { n: site.kingdom })}</span>
         </Link>
-        <p className="text-sm text-muted sm:text-center">
-          {rich(t.footer.credit, {
-            heart: <FlamingHeart label={t.footer.heart} />,
-            name: <span className="font-medium text-gold-soft">{site.creator}</span>,
-          })}
-        </p>
+        <p className="text-sm text-muted sm:text-center">{fmt(t.footer.official, { n: site.kingdom })}</p>
         <nav aria-label={t.footer.label} className="flex items-center justify-center gap-4 text-sm text-muted sm:justify-end">
           <LanguageSwitcher />
           {site.discordUrl && (

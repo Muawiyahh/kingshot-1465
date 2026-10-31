@@ -39,8 +39,7 @@ const ko: Messages = {
     accountMenu: "계정 메뉴",
   },
   footer: {
-    credit: "{name}님이 {heart} 담아 만들었어요",
-    heart: "사랑",
+    official: "{n} 공식 서버",
     label: "바닥글",
   },
   common: {

@@ -39,8 +39,7 @@ const tl: Messages = {
     accountMenu: "Menu ng account",
   },
   footer: {
-    credit: "Ginawa nang may {heart} ni {name}",
-    heart: "pagmamahal",
+    official: "Opisyal na server ng {n}",
     label: "Footer",
   },
   common: {

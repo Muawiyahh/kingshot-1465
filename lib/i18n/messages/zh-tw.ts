@@ -39,8 +39,7 @@ const zhTW: Messages = {
     accountMenu: "帳號選單",
   },
   footer: {
-    credit: "由 {name} 用 {heart} 製作",
-    heart: "愛",
+    official: "{n} 官方伺服器",
     label: "頁尾",
   },
   common: {
