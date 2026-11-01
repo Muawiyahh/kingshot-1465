@@ -16,7 +16,11 @@ export async function SiteFooter() {
           <Crest className="size-7" />
           <span className="font-display font-semibold">{fmt(t.common.kingdomName, { n: site.kingdom })}</span>
         </Link>
-        <p className="text-sm text-muted sm:text-center">{fmt(t.footer.official, { n: site.kingdom })}</p>
+        <p className="sm:text-center">
+          <span className="fiery-text inline-block font-semibold leading-none">
+            {fmt(t.footer.official, { n: site.kingdom })}
+          </span>
+        </p>
         <nav aria-label={t.footer.label} className="flex items-center justify-center gap-4 text-sm text-muted sm:justify-end">
           <LanguageSwitcher />
           {site.discordUrl && (
